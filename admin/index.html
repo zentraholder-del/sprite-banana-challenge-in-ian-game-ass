@@ -765,6 +765,7 @@
         <button data-tab="blacklist" onclick="showTab('blacklist', this)">Blacklist</button>
         <button data-tab="messages" onclick="showTab('messages', this)">Messaging</button>
         <button data-tab="users" onclick="showTab('users', this)">Users</button>
+        <button data-tab="playerdms" onclick="showTab('playerdms', this)">Player DMs</button>
         <button data-tab="reports" onclick="showTab('reports', this)">Reports</button>
         <button data-tab="troll" onclick="showTab('troll', this)">Troll</button>
         <button data-tab="activity" onclick="showTab('activity', this)">Activity</button>
@@ -862,6 +863,12 @@
         <div class="inline-form">
           <input id="userSearch" placeholder="Filter by username…" maxlength="32" oninput="filterTable('userList', this.value)" aria-label="Filter users by username" />
         </div>
+        <div class="inline-form" id="xpGrantPanel" style="align-items:center;display:none">
+          <input id="xpGrantAmount" type="number" inputmode="numeric" min="1" max="10000" value="100" style="flex:0 0 100px;min-width:100px" aria-label="XP amount" />
+          <button class="btn small" id="xpOnlineBtn" onclick="grantXpEveryone('online', this)">Give online</button>
+          <button class="btn small" id="xpAllBtn" onclick="grantXpEveryone('all', this)">Give everyone</button>
+          <span class="muted">Owner-only XP grants</span>
+        </div>
         <div id="userList"><p class="muted">Loading…</p></div>
         <div id="dmThread" style="display:none; margin-top:20px; border-top:1px solid rgba(255,255,255,0.07); padding-top:20px;">
           <h2>DM with <span id="dmUser"></span></h2>
@@ -870,6 +877,16 @@
             <input id="dmInput" placeholder="Message as admin…" maxlength="500" />
             <button class="btn small" onclick="sendDm()">Send</button>
           </div>
+        </div>
+      </div>
+
+      <div class="card section" id="sec-playerdms">
+        <h2>Player DMs</h2>
+        <p class="sub">Read-only moderation view. Owner and admin only — players are told DMs are moderated.</p>
+        <div id="spyList"><p class="muted">Loading…</p></div>
+        <div id="spyThread" style="display:none; margin-top:20px; border-top:1px solid rgba(255,255,255,0.07); padding-top:20px;">
+          <h2>Thread: <span id="spyPair"></span></h2>
+          <div class="dm-hist" id="spyHistory"></div>
         </div>
       </div>
 
@@ -1054,7 +1071,7 @@
     // Hide tabs the current rank may not use; note restrictions.
     function applyRankGating() {
       const note = document.getElementById('rankNote');
-      const hideForMod = ['requests', 'adminreqs', 'keys', 'troll', 'activity'];
+      const hideForMod = ['requests', 'adminreqs', 'keys', 'troll', 'activity', 'playerdms'];
       document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
         const tab = b.getAttribute('data-tab');
         if (myRank === 'mod' && hideForMod.indexOf(tab) !== -1) {
@@ -1069,6 +1086,8 @@
         else if (myRank === 'mod') note.textContent = 'Signed in as MOD — blacklist, messages and users only.';
         else note.textContent = '';
       }
+      const xpPanel = document.getElementById('xpGrantPanel');
+      if (xpPanel) xpPanel.style.display = myRank === 'owner' ? '' : 'none';
     }
 
     // Keys are stored as plaintext uppercase (no hashing anywhere).
@@ -1148,7 +1167,7 @@
     }
 
     function showTab(name, btn) {
-      const modBlocked = ['requests', 'adminreqs', 'keys', 'troll', 'activity'];
+      const modBlocked = ['requests', 'adminreqs', 'keys', 'troll', 'activity', 'playerdms'];
       if (myRank === 'mod' && modBlocked.indexOf(name) !== -1) {
         toast('Insufficient rank', 'err');
         return;
@@ -1175,6 +1194,7 @@
       if (name === 'blacklist') startPoller('blacklist', loadBlacklist, 10000);
       if (name === 'messages') { startPoller('announce', loadAnnouncements, 3000); startPoller('chatmod', loadChatMod, 3000); loadSlowStatus(); }
       if (name === 'users') { startPoller('users', loadUsers, 3000); startPoller('dms', pollDms, 3000); }
+      if (name === 'playerdms') startPoller('spydms', loadDmSpy, 3000);
       if (name === 'reports') startPoller('reports', loadReports, 3000);
       if (name === 'troll') { loadTrollTargets(); startPoller('trollstates', refreshTrollStates, 10000); }
       if (name === 'activity') startPoller('activity', loadActivity, 5000);
@@ -2452,13 +2472,16 @@
               '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
               '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 60)">Ban 1h</button>'
             : '';
+          const xpBtn = (myRank === 'owner' && !isMe && urank !== 'owner')
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">＋XP</button>'
+            : '';
           html += '<tr class="arow" style="animation-delay:' + (ui * 40) + 'ms"><td>' + esc(u.username) + ' ' + presencePill(u.last_seen) +
             '</td><td>' + rankCell +
             '</td><td>' + esc(u.current_game || 'Browsing') +
             '</td><td class="muted">' + esc(new Date(u.last_seen).toLocaleString()) +
             '</td><td><div class="row-actions">' +
             '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
-            warnBtn + muteBtn + banBtns +
+            warnBtn + muteBtn + banBtns + xpBtn +
             '</div></td></tr>';
         });
         box.innerHTML = html + '</table>';
@@ -2642,6 +2665,70 @@
       dd.classList.add('open');
     });
 
+    /* ---------- owner XP grants (owner only) ---------- */
+
+    async function grantXp(username, amount) {
+      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return false; }
+      if (!username || !(amount > 0)) return false;
+      try {
+        const cur = await sb.from('xp_balances').select('balance, lifetime').eq('username', username).maybeSingle();
+        let bal = 0, life = 0;
+        if (!cur.error && cur.data) { bal = cur.data.balance || 0; life = cur.data.lifetime || 0; }
+        const up = await sb.from('xp_balances').upsert({ username: username, balance: bal + amount, lifetime: life + amount });
+        if (up.error) throw up.error;
+        try {
+          await sb.from('xp_purchases').insert({ username: username, item: 'owner grant', cost: 0 });
+        } catch (e) { console.error('grant log failed:', e); }
+        return true;
+      } catch (e) {
+        console.error('grant xp failed:', e, { username: username, amount: amount });
+        return false;
+      }
+    }
+
+    async function grantXpPrompt(btn) {
+      const username = btn.getAttribute('data-user');
+      if (!username) return;
+      const raw = prompt('Give how much XP to ' + username + '?');
+      if (raw === null) return;
+      const amount = parseInt(raw, 10);
+      if (isNaN(amount) || amount <= 0 || amount > 100000) { toast('Enter 1–100000 XP.', 'err'); return; }
+      if (await grantXp(username, amount)) toast('Gave ' + amount + ' XP to ' + username, 'ok');
+      else toast('Grant failed.', 'err');
+    }
+
+    async function grantXpEveryone(which, btn) {
+      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return; }
+      const inp = document.getElementById('xpGrantAmount');
+      let amount = inp ? parseInt(inp.value, 10) : NaN;
+      if (isNaN(amount) || amount <= 0 || amount > 10000) { toast('Enter 1–10000 XP.', 'err'); return; }
+      setBtnLoading(btn, true);
+      try {
+        let names = [];
+        if (which === 'online') {
+          const r = await sb.from('active_sessions').select('username').limit(200);
+          if (r.error) throw r.error;
+          names = (r.data || []).map(x => x.username).filter(Boolean);
+        } else {
+          const r = await sb.from('license_keys').select('used_by').not('used_by', 'is', null).limit(500);
+          if (r.error) throw r.error;
+          const set = {};
+          (r.data || []).forEach(x => { if (x.used_by) set[x.used_by] = true; });
+          names = Object.keys(set);
+        }
+        let okCount = 0;
+        for (const u of names) {
+          if (await grantXp(u, amount)) okCount++;
+        }
+        toast('Gave ' + amount + ' XP to ' + okCount + '/' + names.length + ' users', okCount ? 'ok' : 'err');
+      } catch (e) {
+        console.error('grant everyone failed:', e);
+        toast('Grant failed.', 'err');
+      } finally {
+        setBtnLoading(btn, false, which === 'online' ? 'Give online' : 'Give everyone');
+      }
+    }
+
     /* ---------- player reports ---------- */
 
     async function loadReports() {
@@ -2736,6 +2823,92 @@
         console.error('mute reported failed:', e, { id: reportId });
         setBtnLoading(btn, false, 'Mute 30m');
         toast('Mute failed.', 'err');
+      }
+    }
+
+    /* ---------- player DM spy (owner + admin, read-only) ---------- */
+
+    let spyPair = null;
+
+    async function loadDmSpy() {
+      const box = document.getElementById('spyList');
+      if (!box) return;
+      if (myRank !== 'owner' && myRank !== 'admin') {
+        box.innerHTML = '<div class="empty-state"><div class="big">🔒</div>Insufficient rank.</div>';
+        return;
+      }
+      const first = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (first) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      try {
+        const { data, error } = await sb
+          .from('direct_messages')
+          .select('from_username, to_username, content, created_at')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (error) throw error;
+        const pairs = {};
+        (data || []).forEach(m => {
+          const a = m.from_username || '?';
+          const b = m.to_username || '?';
+          if (a === b) return;
+          const key = [a, b].sort().join(' <> ');
+          if (!pairs[key]) pairs[key] = { a: [a, b].sort()[0], b: [a, b].sort()[1], preview: m.content || '', when: m.created_at };
+        });
+        const keys = Object.keys(pairs).slice(0, 30);
+        if (keys.length === 0) {
+          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No DM threads yet.</div>';
+          return;
+        }
+        let html = '<table><tr><th>Thread</th><th>Latest</th><th></th></tr>';
+        keys.forEach((k, i) => {
+          const p = pairs[k];
+          html += '<tr class="arow" style="animation-delay:' + (i * 40) + 'ms"><td>' + esc(p.a) + ' <> ' + esc(p.b) +
+            '</td><td>' + esc(String(p.preview).slice(0, 60)) +
+            '</td><td><button class="btn small" data-a="' + esc(p.a) + '" data-b="' + esc(p.b) +
+            '" onclick="openSpyThread(this)">Read</button></td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error('spy list failed:', e);
+        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load threads.</div>';
+      }
+    }
+
+    async function openSpyThread(btn) {
+      if (myRank !== 'owner' && myRank !== 'admin') { toast('Insufficient rank', 'err'); return; }
+      const a = btn.getAttribute('data-a');
+      const b = btn.getAttribute('data-b');
+      spyPair = [a, b];
+      document.getElementById('spyPair').textContent = a + ' <> ' + b;
+      document.getElementById('spyThread').style.display = 'block';
+      const box = document.getElementById('spyHistory');
+      box.innerHTML = '<p class="muted">Loading…</p>';
+      try {
+        const [r1, r2] = await Promise.all([
+          sb.from('direct_messages').select('from_username, content, created_at').eq('from_username', a).eq('to_username', b).order('created_at', { ascending: true }).limit(100),
+          sb.from('direct_messages').select('from_username, content, created_at').eq('from_username', b).eq('to_username', a).order('created_at', { ascending: true }).limit(100)
+        ]);
+        if (r1.error) throw r1.error;
+        if (r2.error) throw r2.error;
+        const rows = (r1.data || []).concat(r2.data || []).sort((x, y) => new Date(x.created_at) - new Date(y.created_at));
+        if (rows.length === 0) {
+          box.innerHTML = '<p class="muted">No messages.</p>';
+          return;
+        }
+        box.innerHTML = '';
+        rows.forEach(m => {
+          const div = document.createElement('div');
+          div.className = 'dm-line';
+          div.innerHTML = '<span class="who"></span><span class="when"></span><br><span class="text"></span>';
+          div.querySelector('.who').textContent = m.from_username;
+          div.querySelector('.when').textContent = new Date(m.created_at).toLocaleString();
+          div.querySelector('.text').textContent = m.content;
+          box.appendChild(div);
+        });
+        box.scrollTop = box.scrollHeight;
+      } catch (e) {
+        console.error('spy thread failed:', e);
+        box.innerHTML = '<p class="muted">Failed to load thread.</p>';
       }
     }
 

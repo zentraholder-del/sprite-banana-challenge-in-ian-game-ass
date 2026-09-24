@@ -168,6 +168,82 @@
       min-width: 44px; min-height: 44px; margin-left: 2px;
     }
     .flag-btn:hover { color: #ef4444; }
+    /* XP / shop / quests / trivia / friends */
+    .xp-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 20px;
+      padding: 6px 12px; font-size: 12px; font-weight: 700; color: #f59e0b;
+    }
+    .nav-right .xp-chip { margin-right: 4px; }
+    .shop-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .shop-item {
+      display: flex; align-items: center; gap: 12px; text-align: left;
+      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 12px;
+      padding: 12px; width: 100%; color: #e2e2f0; cursor: pointer; min-height: 44px;
+      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+      font-family: inherit;
+    }
+    .shop-item:hover { border-color: #7c3aed; }
+    .shop-item .emoji { font-size: 22px; }
+    .shop-item .info { flex: 1; }
+    .shop-item .info b { display: block; font-size: 13px; }
+    .shop-item .info span { font-size: 11px; color: #6b6b8a; }
+    .shop-item .cost { font-weight: 800; color: #f59e0b; font-size: 13px; white-space: nowrap; }
+    .swatches { display: flex; gap: 8px; margin-top: 8px; }
+    .swatches button {
+      width: 44px; height: 44px; border-radius: 10px; border: 2px solid #2a2a3d; cursor: pointer;
+    }
+    .swatches button:hover { border-color: #7c3aed; }
+    .quest-row { padding: 8px 0; border-bottom: 1px solid #1e1e2e; font-size: 13px; }
+    .quest-row:last-child { border-bottom: none; }
+    .quest-row .qtop { display: flex; align-items: center; gap: 8px; }
+    .quest-row .qxp { margin-left: auto; color: #f59e0b; font-weight: 700; font-size: 12px; white-space: nowrap; }
+    .quest-bar { height: 6px; background: #1a1a24; border-radius: 6px; margin-top: 6px; overflow: hidden; }
+    .quest-bar i { display: block; height: 100%; background: #7c3aed; border-radius: 6px; transition: width 0.3s ease-out; }
+    .quest-done { color: #10b981; font-size: 12px; font-weight: 700; }
+    .trivia-box {
+      border-left: 3px solid #f59e0b; background: #1a1a24; border-radius: 0 10px 10px 0;
+      padding: 8px 12px; margin: 0 0 8px 0; font-size: 12px; color: #e2e2f0;
+    }
+    .trivia-box small { color: #6b6b8a; display: block; margin-top: 2px; }
+    .typing-line { font-size: 11px; color: #6b6b8a; min-height: 16px; padding: 0 14px 4px; font-style: italic; }
+    .friends-fab {
+      position: fixed; left: 22px; bottom: 86px; z-index: 50;
+      width: 52px; height: 52px; border: none; border-radius: 50%;
+      background: #7c3aed; color: #fff; font-size: 22px; cursor: pointer;
+      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .friends-fab:hover { background: #6d28d9; }
+    .friends-fab:active { transform: scale(0.97); }
+    .friends-panel {
+      position: fixed; left: 22px; bottom: 150px; z-index: 50;
+      width: 300px; max-height: 420px; display: none; flex-direction: column; overflow: hidden;
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+    }
+    .friends-panel.open { display: flex; animation: panelUp 0.2s cubic-bezier(0.22,1,0.36,1); }
+    .friend-row {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+      font-size: 13px; color: #e2e2f0; border-bottom: 1px solid #1e1e2e;
+    }
+    .friend-row:last-child { border-bottom: none; }
+    .friend-row .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mini-act {
+      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 8px; color: #e2e2f0;
+      font-size: 11px; padding: 8px 10px; cursor: pointer; min-height: 36px;
+    }
+    .mini-act:hover { border-color: #7c3aed; }
+    .sec-label { font-size: 11px; font-weight: 700; color: #6b6b8a; text-transform: uppercase; letter-spacing: 0.6px; padding: 10px 12px 4px; }
+    .spec-badge {
+      display: inline-block; margin-top: 8px; padding: 3px 10px;
+      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 20px;
+      font-size: 11px; color: #10b981; font-weight: 600;
+    }
+    .chat-status { font-size: 11px; color: #6b6b8a; font-style: italic; margin-top: 2px; }
+    .uname-glow { text-shadow: 0 0 8px currentColor; font-weight: 700; }
+    .shout-box {
+      border-left: 3px solid #f59e0b; background: #1a1a24; border-radius: 0 10px 10px 0;
+      padding: 8px 12px; margin-bottom: 8px; font-size: 12.5px; color: #e2e2f0;
+    }
 
     .search-wrap {
       margin-top: 16px;
@@ -958,6 +1034,8 @@
     <div class="nav-right">
       <span class="nav-user" id="navUser"></span>
       <span id="adminReqWrap"></span>
+      <span class="xp-chip" id="xpChip" title="Your XP">⭐ <span id="xpBal">0</span></span>
+      <button class="mini-btn" onclick="openShop()">🛒 Shop</button>
       <button class="logout-btn" onclick="logout()">Sign out</button>
     </div>
   </nav>
@@ -983,6 +1061,17 @@
       <div id="leaderList"><div class="skel" style="height:32px"></div></div>
     </div>
 
+    <div class="leader-card" id="questCard">
+      <h3>📜 Daily quests</h3>
+      <div id="questList"><div class="skel" style="height:32px"></div></div>
+    </div>
+
+    <div class="leader-card" id="xpBoardCard">
+      <h3>⭐ XP leaders <small style="color:#6b6b8a;font-weight:400">(<a href="#" id="xpBoardToggle" onclick="toggleXpBoard(event)" style="color:#7c3aed">week</a>)</small></h3>
+      <div id="xpBoardList"><div class="skel" style="height:32px"></div></div>
+    </div>
+
+    <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
       <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()">★ Favorites</button>
     </div>
@@ -1007,6 +1096,9 @@
     <div class="chat-msgs" id="chatMsgs">
       <div class="chat-empty">Loading messages…</div>
     </div>
+    <div class="trivia-box" id="triviaBox" style="display:none"></div>
+    <div id="shoutBox"></div>
+    <div class="typing-line" id="typingLine"></div>
     <div class="reply-bar" id="replyBar">
       <span>↩</span><span class="preview" id="replyPreview"></span>
       <button onclick="cancelReply()" aria-label="Cancel reply">✕</button>
@@ -1021,17 +1113,41 @@
   <button class="dm-fab" id="dmFab" onclick="toggleDm()" title="Messages from admin">✉️<span class="dm-dot" id="dmDot"></span></button>
   <div class="chat-panel dm-panel" id="dmPanel">
     <div class="chat-head">
-      <span>Admin DMs</span>
+      <span id="dmPeerName">Admin DMs</span>
       <small id="dmStatus">live</small>
     </div>
-    <div class="dm-note">Only you and the admin see this thread.</div>
+    <div class="dm-note" id="dmNote">Only you and the admin see this thread.</div>
     <div class="chat-msgs" id="dmMsgs">
       <div class="chat-empty">No messages yet.</div>
     </div>
+    <div class="typing-line" id="dmTypingLine"></div>
     <form class="chat-form" onsubmit="return sendDmReply(event)">
-      <input id="dmInput" type="text" placeholder="Reply to admin…" maxlength="500" autocomplete="off" />
+      <input id="dmInput" type="text" placeholder="Reply…" maxlength="500" autocomplete="off" />
       <button type="submit">Send</button>
     </form>
+  </div>
+
+  <!-- FRIENDS -->
+  <button class="friends-fab" id="friendsFab" onclick="toggleFriends()" title="Friends">👥</button>
+  <div class="friends-panel" id="friendsPanel">
+    <div class="chat-head">
+      <span>Friends</span>
+      <small>live</small>
+    </div>
+    <div class="chat-msgs" id="friendsBody" style="max-height:340px">
+      <div class="chat-empty">Loading…</div>
+    </div>
+  </div>
+
+  <!-- SHOP -->
+  <div class="overlay" id="shopOverlay" onclick="if(event.target===this)closeShop()">
+    <div class="modal" style="max-width:420px">
+      <h2>🛒 XP Shop</h2>
+      <p>Balance: <b id="shopBal" style="color:#f59e0b">0</b> XP</p>
+      <div class="shop-grid" id="shopGrid"></div>
+      <div id="shopExtra"></div>
+      <div style="margin-top:14px"><button class="mini-btn" onclick="closeShop()">Done</button></div>
+    </div>
   </div>
 
   <!-- APPROVED MODAL (pops like the request form) -->
@@ -1188,6 +1304,7 @@
       meta.className = 'meta';
       const strong = document.createElement('strong');
       strong.textContent = uname;
+      applyNameStyle(strong, uname);
       meta.appendChild(strong);
       const badgeSpan = document.createElement('span');
       badgeSpan.innerHTML = rankBadgeHtml(msg.rank);
@@ -1210,6 +1327,13 @@
       flagBtn.onclick = () => sendReport(msg.id, uname);
       meta.appendChild(flagBtn);
       div.appendChild(meta);
+      const uc = cosmeticsMap[uname] || {};
+      if (uc.status) {
+        const cst = document.createElement('div');
+        cst.className = 'chat-status';
+        cst.textContent = uc.status;
+        div.appendChild(cst);
+      }
       // Quoted reply preview, if this message is a reply.
       const replyUser = msg.reply_username || null;
       const replyPrev = msg.reply_preview || null;
@@ -1252,7 +1376,7 @@
       try {
         let res = await sb
           .from('messages')
-          .select('id, username, content, created_at, rank, reply_to, reply_preview, reply_username')
+          .select('id, username, content, created_at, rank, reply_to, reply_preview, reply_username, shoutout_until')
           .order('created_at', { ascending: true })
           .limit(50);
         if (res.error && /column/i.test(res.error.message || '')) {
@@ -1269,7 +1393,9 @@
         if (!data || data.length === 0) {
           box.innerHTML = '<div class="chat-empty">💬 No messages yet — say hi.</div>';
         } else {
-          data.forEach((m, i) => appendMessage(m, i * 40));
+          liveShouts = [];
+          data.forEach((m, i) => { appendMessage(m, i * 40); noteShout(m); });
+          renderShouts();
         }
         document.getElementById('chatStatus').textContent = 'live';
       } catch (e) {
@@ -1284,7 +1410,7 @@
       sb.channel('ls-messages')
         .on('postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'messages' },
-          payload => appendMessage(payload.new))
+          payload => { appendMessage(payload.new); noteShout(payload.new); })
         .subscribe();
     }
 
@@ -1331,7 +1457,9 @@
       const sendBtn = document.querySelector('.chat-form button[type="submit"]');
       if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '…'; }
       try {
-        const payload = { username, content: content.slice(0, 500), rank: myRank() };
+        let msgText = content.slice(0, 500);
+        if (isSparkleActive(myCosmetics)) msgText = '✨ ' + msgText;
+        const payload = { username, content: msgText, rank: myRank() };
         if (replyTo && replyTo.id) {
           payload.reply_to = replyTo.id;
           payload.reply_preview = replyTo.preview;
@@ -1353,6 +1481,7 @@
         if (error) throw error;
         cancelReply();
         lastChatSent = Date.now();
+        claimTrivia(content);
         if (status.textContent === 'blocked') status.textContent = 'live';
       } catch (err) {
         console.error(err);
@@ -1379,6 +1508,617 @@
         console.error('report failed:', e);
         toast('Report failed', 'err');
       }
+    }
+
+    /* ---------- XP, levels, leaderboard, cosmetics ---------- */
+
+    let myXpBal = 0;
+    let myXpLife = 0;
+    let myCosmetics = {};
+    let cosmeticsMap = {};
+    let xpBoardMode = 'week'; // or 'all'
+
+    function levelForXp(lifetime) {
+      return Math.floor((parseInt(lifetime, 10) || 0) / 500) + 1;
+    }
+
+    function meName() {
+      try { return (localStorage.getItem(LS_USER) || 'anon').slice(0, 32); }
+      catch (e) { return 'anon'; }
+    }
+
+    async function addXP(amount, reason) {
+      const me = meName();
+      if (!me || me === 'anon' || !(amount > 0)) return;
+      try {
+        const oldLevel = levelForXp(myXpLife);
+        const cur = await sb.from('xp_balances').select('balance, lifetime').eq('username', me).maybeSingle();
+        let bal = 0, life = 0;
+        if (!cur.error && cur.data) { bal = cur.data.balance || 0; life = cur.data.lifetime || 0; }
+        bal += amount; life += amount;
+        const up = await sb.from('xp_balances').upsert({ username: me, balance: bal, lifetime: life });
+        if (up.error) throw up.error;
+        const day = new Date().toISOString().slice(0, 10);
+        try {
+          const d = await sb.from('xp_daily').select('id, amount').eq('username', me).eq('day', day).maybeSingle();
+          if (!d.error) {
+            if (d.data) await sb.from('xp_daily').update({ amount: (d.data.amount || 0) + amount }).eq('id', d.data.id);
+            else await sb.from('xp_daily').insert({ username: me, day: day, amount: amount });
+          }
+        } catch (e) { console.error('xp daily failed:', e); }
+        myXpBal = bal; myXpLife = life;
+        renderXpChip();
+        if (levelForXp(life) > oldLevel) toast('Level up! You are now level ' + levelForXp(life), 'ok');
+        else if (reason) toast('+' + amount + ' XP' + (reason ? ' — ' + reason : ''), 'ok');
+      } catch (e) { console.error('addXP failed:', e); }
+    }
+
+    async function spendXP(amount) {
+      const me = meName();
+      if (!me || me === 'anon' || !(amount > 0)) return false;
+      try {
+        const cur = await sb.from('xp_balances').select('balance').eq('username', me).maybeSingle();
+        const bal = (!cur.error && cur.data) ? (cur.data.balance || 0) : 0;
+        if (bal < amount) { toast('Not enough XP (need ' + amount + ')', 'err'); return false; }
+        const up = await sb.from('xp_balances').update({ balance: bal - amount }).eq('username', me);
+        if (up.error) throw up.error;
+        myXpBal = bal - amount;
+        renderXpChip();
+        return true;
+      } catch (e) { console.error('spendXP failed:', e); toast('Purchase failed', 'err'); return false; }
+    }
+
+    function renderXpChip() {
+      const el = document.getElementById('xpBal');
+      if (el) el.textContent = String(myXpBal);
+      const sb2 = document.getElementById('shopBal');
+      if (sb2) sb2.textContent = String(myXpBal);
+    }
+
+    function toggleXpBoard(e) {
+      if (e) e.preventDefault();
+      xpBoardMode = xpBoardMode === 'week' ? 'all' : 'week';
+      const t = document.getElementById('xpBoardToggle');
+      if (t) t.textContent = xpBoardMode;
+      loadXpBoard();
+    }
+
+    async function loadXpBoard() {
+      const box = document.getElementById('xpBoardList');
+      if (!box) return;
+      try {
+        let rows = [];
+        if (xpBoardMode === 'week') {
+          const since = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+          const r = await sb.from('xp_daily').select('username, amount').gte('day', since).limit(500);
+          if (r.error) throw r.error;
+          const agg = {};
+          (r.data || []).forEach(x => { if (x.username) agg[x.username] = (agg[x.username] || 0) + (x.amount || 0); });
+          rows = Object.keys(agg).map(u => ({ username: u, xp: agg[u] })).sort((a, b) => b.xp - a.xp).slice(0, 10);
+        } else {
+          const r = await sb.from('xp_balances').select('username, lifetime').order('lifetime', { ascending: false }).limit(10);
+          if (r.error) throw r.error;
+          rows = (r.data || []).map(x => ({ username: x.username, xp: x.lifetime || 0 }));
+        }
+        box.innerHTML = '';
+        if (rows.length === 0) {
+          box.innerHTML = '<div style="font-size:13px;color:#6b6b8a">No XP yet — play games to earn!</div>';
+          return;
+        }
+        const medals = ['🥇', '🥈', '🥉'];
+        rows.forEach((r, i) => {
+          const div = document.createElement('div');
+          div.className = 'leader-row';
+          const rk = document.createElement('span');
+          rk.className = 'leader-rank';
+          rk.textContent = medals[i] || ((i + 1) + '.');
+          const nm = document.createElement('span');
+          nm.textContent = r.username || 'anon';
+          applyNameStyle(nm, r.username);
+          const tm = document.createElement('span');
+          tm.className = 'leader-time';
+          tm.textContent = r.xp + ' XP';
+          div.appendChild(rk);
+          div.appendChild(nm);
+          div.appendChild(tm);
+          box.appendChild(div);
+        });
+      } catch (e) { console.error('xp board failed:', e); }
+    }
+
+    async function loadMyXp() {
+      const me = meName();
+      if (!me || me === 'anon') return;
+      try {
+        const b = await sb.from('xp_balances').select('balance, lifetime').eq('username', me).maybeSingle();
+        if (!b.error && b.data) {
+          myXpBal = b.data.balance || 0;
+          myXpLife = b.data.lifetime || 0;
+          renderXpChip();
+        }
+      } catch (e) { console.error('loadMyXp failed:', e); }
+      try {
+        const c = await sb.from('user_cosmetics').select('*').eq('username', me).maybeSingle();
+        if (!c.error) {
+          myCosmetics = c.data || {};
+          const st = document.querySelector('#navUser strong');
+          if (st) applyNameStyle(st, me);
+        }
+      } catch (e) { console.error('loadMyCosmetics failed:', e); }
+    }
+
+    async function loadCosmeticsMap() {
+      try {
+        const r = await sb.from('user_cosmetics').select('*').limit(200);
+        if (!r.error) {
+          cosmeticsMap = {};
+          (r.data || []).forEach(x => { if (x.username) cosmeticsMap[x.username] = x; });
+        }
+      } catch (e) { console.error('cosmetics map failed:', e); }
+    }
+
+    function isVipActive(c) {
+      try { return c && c.vip_until && new Date(c.vip_until).getTime() > Date.now(); }
+      catch (e) { return false; }
+    }
+    function isGoldActive(c) {
+      try {
+        if (isVipActive(c)) return true;
+        return c && c.gold_until && new Date(c.gold_until).getTime() > Date.now();
+      } catch (e) { return false; }
+    }
+    function isSparkleActive(c) {
+      try { return c && c.sparkle_until && new Date(c.sparkle_until).getTime() > Date.now(); }
+      catch (e) { return false; }
+    }
+    function isDblActive(c) {
+      try {
+        if (isVipActive(c)) return true;
+        return c && c.dbl_until && new Date(c.dbl_until).getTime() > Date.now();
+      } catch (e) { return false; }
+    }
+
+    // Pinned shoutouts (60s paid pins, newest first).
+    let liveShouts = [];
+    function renderShouts() {
+      const box = document.getElementById('shoutBox');
+      if (!box) return;
+      const now = Date.now();
+      liveShouts = liveShouts.filter(s => s.until > now);
+      box.innerHTML = '';
+      liveShouts.slice(0, 3).forEach(s => {
+        const d = document.createElement('div');
+        d.className = 'shout-box';
+        const head = document.createElement('div');
+        head.style.cssText = 'font-size:11px;color:#f59e0b;font-weight:800;margin-bottom:2px';
+        head.textContent = '📢 SHOUTOUT from ' + s.user;
+        const body = document.createElement('div');
+        body.textContent = s.text;
+        d.appendChild(head);
+        d.appendChild(body);
+        box.appendChild(d);
+      });
+      const next = liveShouts.length ? Math.min.apply(null, liveShouts.map(s => s.until)) - now : 0;
+      if (next > 0) setTimeout(renderShouts, Math.min(next + 200, 65000));
+    }
+    function noteShout(msg) {
+      if (!msg || !msg.shoutout_until) return;
+      const until = new Date(msg.shoutout_until).getTime();
+      if (!(until > Date.now())) return;
+      liveShouts.unshift({ user: msg.username || 'anon', text: msg.content || '', until: until });
+      renderShouts();
+    }
+    function applyNameStyle(el, username) {
+      if (!el) return;
+      const c = cosmeticsMap[username] || (username === meName() ? myCosmetics : null) || {};
+      if (isGoldActive(c)) {
+        el.style.color = '#f59e0b';
+        el.style.fontWeight = '700';
+      } else if (c.name_color) {
+        el.style.color = c.name_color;
+      }
+      if (c.glow) el.classList.add('uname-glow');
+    }
+
+    /* ---------- XP shop ---------- */
+
+    const SHOP_ITEMS = [
+      { id: 'shoutout', emoji: '📢', name: 'Shoutout', desc: 'Pin your message in chat for 60 seconds', cost: 100 },
+      { id: 'gold24', emoji: '🥇', name: 'Gold name (24h)', desc: 'Gold username for a full day', cost: 150 },
+      { id: 'status', emoji: '💭', name: 'Status message', desc: 'A custom line under your name, forever', cost: 200 },
+      { id: 'sparkle', emoji: '✨', name: 'Sparkle chat (7d)', desc: '✨ prefix on your messages for a week', cost: 250 },
+      { id: 'hideonline', emoji: '🥷', name: 'Hide online (forever)', desc: 'Lurk without the green dot', cost: 300 },
+      { id: 'namecolor', emoji: '🎨', name: 'Name color', desc: 'Pick your permanent username color', cost: 500 },
+      { id: 'mystery', emoji: '🎁', name: 'Mystery box', desc: 'Gamble: 10–200 XP or bonus flair', cost: 100 },
+      { id: 'doubleday', emoji: '🔥', name: 'Double XP day', desc: 'Double earnings for 24 hours', cost: 500 },
+      { id: 'glow', emoji: '💡', name: 'Name glow', desc: 'Permanent glowing username', cost: 800 },
+      { id: 'vipweek', emoji: '👑', name: 'VIP week', desc: 'Gold badge + double XP for 7 days', cost: 1000 },
+      { id: 'clearwarn', emoji: '🧹', name: 'Clear 1 warning', desc: 'Wipe your most recent warning', cost: 2500 }
+    ];
+    const NAME_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#60a5fa', '#a78bfa', '#f472b6'];
+
+    function openShop() {
+      renderXpChip();
+      renderShop();
+      document.getElementById('shopOverlay').classList.add('show');
+    }
+    function closeShop() {
+      document.getElementById('shopOverlay').classList.remove('show');
+      document.getElementById('shopExtra').innerHTML = '';
+    }
+
+    function renderShop() {
+      const grid = document.getElementById('shopGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      SHOP_ITEMS.forEach(it => {
+        const b = document.createElement('button');
+        b.className = 'shop-item';
+        const em = document.createElement('span');
+        em.className = 'emoji';
+        em.textContent = it.emoji;
+        const info = document.createElement('div');
+        info.className = 'info';
+        const nm = document.createElement('b');
+        nm.textContent = it.name;
+        const ds = document.createElement('span');
+        ds.textContent = it.desc;
+        info.appendChild(nm);
+        info.appendChild(ds);
+        const cost = document.createElement('span');
+        cost.className = 'cost';
+        cost.textContent = it.cost + ' XP';
+        b.appendChild(em);
+        b.appendChild(info);
+        b.appendChild(cost);
+        b.onclick = () => buyItem(it.id);
+        grid.appendChild(b);
+      });
+    }
+
+    async function saveCosmetics(patch) {
+      const me = meName();
+      try {
+        const cur = await sb.from('user_cosmetics').select('*').eq('username', me).maybeSingle();
+        const base = (!cur.error && cur.data) ? cur.data : { username: me };
+        delete base.id;
+        const merged = Object.assign({}, base, patch);
+        const up = await sb.from('user_cosmetics').upsert(merged);
+        if (up.error) throw up.error;
+        myCosmetics = merged;
+        loadCosmeticsMap();
+        return true;
+      } catch (e) {
+        console.error('save cosmetics failed:', e);
+        toast('Save failed', 'err');
+        return false;
+      }
+    }
+
+    async function logPurchase(item, cost) {
+      try {
+        await sb.from('xp_purchases').insert({ username: meName(), item: item, cost: cost });
+      } catch (e) { console.error('purchase log failed:', e); }
+    }
+
+    async function buyItem(id) {
+      const it = SHOP_ITEMS.find(x => x.id === id);
+      if (!it) return;
+      const extra = document.getElementById('shopExtra');
+      extra.innerHTML = '';
+      if (id === 'namecolor') {
+        // color picker step (no charge until a swatch is picked)
+        const wrap = document.createElement('div');
+        wrap.innerHTML = '<p class="muted">Pick your color (500 XP):</p>';
+        const row = document.createElement('div');
+        row.className = 'swatches';
+        NAME_COLORS.forEach(col => {
+          const s = document.createElement('button');
+          s.style.background = col;
+          s.setAttribute('aria-label', 'Pick ' + col);
+          s.onclick = async () => {
+            if (!await spendXP(500)) return;
+            if (await saveCosmetics({ name_color: col })) {
+              toast('Name color set!', 'ok');
+              logPurchase('namecolor:' + col, 500);
+              closeShop();
+            }
+          };
+          row.appendChild(s);
+        });
+        wrap.appendChild(row);
+        extra.appendChild(wrap);
+        return;
+      }
+      if (id === 'status') {
+        const cur = (myCosmetics.status || '');
+        const val = prompt('Your status message (blank to clear):', cur);
+        if (val === null) return;
+        if (!await spendXP(200)) return;
+        if (await saveCosmetics({ status: String(val).slice(0, 60) })) {
+          toast('Status saved!', 'ok');
+          logPurchase('status', 200);
+          closeShop();
+        }
+        return;
+      }
+      if (!(await spendXP(it.cost))) return;
+      const now = Date.now();
+      if (id === 'shoutout') {
+        const msg = prompt('Your shoutout (60s pinned):');
+        if (msg === null || !msg.trim()) { await addXP(it.cost, 'shoutout refund'); closeShop(); return; }
+        try {
+          const until = new Date(now + 60000).toISOString();
+          const { error } = await sb.from('messages').insert({
+            username: meName(), content: String(msg).slice(0, 200),
+            rank: myRank(), shoutout_until: until
+          });
+          if (error) throw error;
+          toast('Shouted!', 'ok');
+          logPurchase('shoutout', it.cost);
+        } catch (e) { console.error('shout failed:', e); toast('Shout failed', 'err'); }
+        closeShop();
+        return;
+      }
+      if (id === 'gold24') {
+        if (await saveCosmetics({ gold_until: new Date(now + 86400000).toISOString() })) {
+          toast('Gold for 24h!', 'ok'); logPurchase('gold24', it.cost);
+        }
+      } else if (id === 'sparkle') {
+        if (await saveCosmetics({ sparkle_until: new Date(now + 7 * 86400000).toISOString() })) {
+          toast('Sparkles for a week!', 'ok'); logPurchase('sparkle', it.cost);
+        }
+      } else if (id === 'hideonline') {
+        if (await saveCosmetics({ hide_online: true })) {
+          toast('You are now hidden', 'ok'); logPurchase('hideonline', it.cost);
+        }
+      } else if (id === 'glow') {
+        if (await saveCosmetics({ glow: true })) {
+          toast('Glowing!', 'ok'); logPurchase('glow', it.cost);
+        }
+      } else if (id === 'doubleday') {
+        if (await saveCosmetics({ dbl_until: new Date(now + 86400000).toISOString() })) {
+          toast('Double XP for 24h!', 'ok'); logPurchase('doubleday', it.cost);
+        }
+      } else if (id === 'vipweek') {
+        if (await saveCosmetics({ vip_until: new Date(now + 7 * 86400000).toISOString() })) {
+          toast('VIP week!', 'ok'); logPurchase('vipweek', it.cost);
+        }
+      } else if (id === 'mystery') {
+        const roll = Math.random();
+        if (roll < 0.6) {
+          await addXP(50, 'mystery box');
+        } else if (roll < 0.85) {
+          await addXP(150, 'mystery box');
+        } else if (roll < 0.95) {
+          await saveCosmetics({ gold_until: new Date(now + 86400000).toISOString() });
+          toast('Mystery: 24h GOLD!', 'ok');
+        } else {
+          await saveCosmetics({ dbl_until: new Date(now + 86400000).toISOString() });
+          toast('Mystery: DOUBLE XP DAY!', 'ok');
+        }
+        logPurchase('mystery', it.cost);
+      } else if (id === 'clearwarn') {
+        try {
+          const w = await sb.from('warnings').select('id').eq('username', meName()).order('created_at', { ascending: false }).limit(1).maybeSingle();
+          if (w.error) throw w.error;
+          if (!w.data) { toast('No warnings to clear', 'err'); await addXP(it.cost, 'warn-clear refund'); }
+          else {
+            const d = await sb.from('warnings').delete().eq('id', w.data.id);
+            if (d.error) throw d.error;
+            toast('Warning cleared!', 'ok');
+            logPurchase('clearwarn', it.cost);
+          }
+        } catch (e) { console.error('clear warn failed:', e); toast('Clear failed', 'err'); }
+      }
+      closeShop();
+    }
+
+    /* ---------- Daily quests (game-associated, auto-award) ---------- */
+
+    function dayStr(d) { return new Date(d || Date.now()).toISOString().slice(0, 10); }
+    function dayIndex(ds) { return Math.floor(Date.parse(ds + 'T00:00:00Z') / 86400000); }
+
+    function questsForDay(ds) {
+      const di = dayIndex(ds);
+      const god = GAMES[di % GAMES.length];
+      return [
+        { key: 'play3', text: 'Play 3 different games', xp: 30, goal: 3 },
+        { key: 'gotd', text: 'Play ' + prettyName(god), game: god, xp: 20, goal: 1 },
+        { key: 'time30', text: 'Play for 30 minutes', xp: 25, goal: 1800 },
+        { key: 'chat5', text: 'Send 5 chat messages', xp: 15, goal: 5 }
+      ];
+    }
+
+    async function questProgress() {
+      const me = meName();
+      const ds = dayStr();
+      const out = { play3: 0, gotd: 0, time30: 0, chat5: 0 };
+      if (!me || me === 'anon') return out;
+      try {
+        const g = await sb.from('daily_games').select('game').eq('username', me).eq('day', ds).limit(20);
+        if (!g.error) {
+          const set = {};
+          (g.data || []).forEach(r => { if (r.game) set[r.game] = true; });
+          const keys = Object.keys(set);
+          out.play3 = keys.length;
+          if (questsForDay(ds)[1].game && set[questsForDay(ds)[1].game]) out.gotd = 1;
+        }
+      } catch (e) { console.error('quest games failed:', e); }
+      try {
+        const p = await sb.from('daily_playtime').select('seconds').eq('username', me).eq('day', ds).maybeSingle();
+        if (!p.error && p.data) out.time30 = p.data.seconds || 0;
+      } catch (e) { console.error('quest time failed:', e); }
+      try {
+        const m = await sb.from('messages').select('id', { count: 'exact', head: true }).eq('username', me).gte('created_at', ds + 'T00:00:00Z');
+        if (!m.error) out.chat5 = m.count || 0;
+      } catch (e) { console.error('quest chat failed:', e); }
+      return out;
+    }
+
+    async function claimQuest(q) {
+      const me = meName();
+      const ds = dayStr();
+      if (!me || me === 'anon') return;
+      try {
+        const ins = await sb.from('quest_claims').insert({ username: me, quest_key: q.key, day: ds }).select('id');
+        if (ins.error) return; // already claimed (unique) — silent
+        if (!ins.data || !ins.data.length) return;
+        await addXP(q.xp, 'quest complete');
+        loadQuests();
+      } catch (e) { console.error('claim failed:', e); }
+    }
+
+    async function loadQuests() {
+      const box = document.getElementById('questList');
+      if (!box) return;
+      const ds = dayStr();
+      const defs = questsForDay(ds);
+      const prog = await questProgress();
+      const vals = [prog.play3, prog.gotd, prog.time30, prog.chat5];
+      let claimed = {};
+      try {
+        const me = meName();
+        if (me && me !== 'anon') {
+          const c = await sb.from('quest_claims').select('quest_key').eq('username', me).eq('day', ds);
+          if (!c.error) (c.data || []).forEach(r => { claimed[r.quest_key] = true; });
+        }
+      } catch (e) { console.error('quest claims failed:', e); }
+      box.innerHTML = '';
+      defs.forEach((q, i) => {
+        const v = Math.min(vals[i], q.goal);
+        const done = v >= q.goal;
+        const disp = q.goal >= 100
+          ? (Math.floor(v / 60) + '/' + Math.floor(q.goal / 60) + 'm')
+          : (v + '/' + q.goal);
+        const row = document.createElement('div');
+        row.className = 'quest-row';
+        const top = document.createElement('div');
+        top.className = 'qtop';
+        const tx = document.createElement('span');
+        tx.textContent = (done ? '✅ ' : '') + q.text + ' (' + disp + ')';
+        const xp = document.createElement('span');
+        xp.className = 'qxp';
+        xp.textContent = '+' + q.xp + ' XP';
+        top.appendChild(tx);
+        top.appendChild(xp);
+        row.appendChild(top);
+        if (!done) {
+          const bar = document.createElement('div');
+          bar.className = 'quest-bar';
+          const fill = document.createElement('i');
+          fill.style.width = Math.round((v / q.goal) * 100) + '%';
+          bar.appendChild(fill);
+          row.appendChild(bar);
+        } else {
+          const dn = document.createElement('div');
+          dn.className = 'quest-done';
+          dn.textContent = claimed[q.key] ? 'Claimed!' : 'Complete!';
+          row.appendChild(dn);
+          if (!claimed[q.key]) claimQuest(q);
+        }
+        box.appendChild(row);
+      });
+    }
+
+    async function trackDailyGame(path) {
+      const me = meName();
+      if (!me || me === 'anon') return;
+      try {
+        await sb.from('daily_games').insert({ username: me, game: path, day: dayStr() });
+      } catch (e) {} // duplicate day/game (unique) → ignore silently
+    }
+
+    /* ---------- Trivia bot (hourly, self-claim) ---------- */
+
+    const TRIVIA = [
+      { q: 'What year was Minecraft released?', a: '2011' },
+      { q: 'Which country has the Eiffel Tower?', a: 'france' },
+      { q: 'How many players in a soccer team on the field?', a: '11' },
+      { q: 'What does the creeper do?', a: 'explode' },
+      { q: 'Capital of Japan?', a: 'tokyo' },
+      { q: 'What color is a ripe banana?', a: 'yellow' },
+      { q: 'How many days in a leap year?', a: '366' },
+      { q: 'Which planet is known as the Red Planet?', a: 'mars' },
+      { q: 'What game has "Victory Royale"?', a: 'fortnite' },
+      { q: 'How many continents are there?', a: '7' },
+      { q: 'What is 9 x 8?', a: '72' },
+      { q: 'Which animal says moo?', a: 'cow' },
+      { q: 'What is the largest ocean?', a: 'pacific' },
+      { q: 'In Pac-Man, what do the ghosts do?', a: 'chase' },
+      { q: 'How many sides does a hexagon have?', a: '6' },
+      { q: 'What do you call a baby frog?', a: 'tadpole' },
+      { q: 'Which game has blocks called Tetrominoes?', a: 'tetris' },
+      { q: 'What is H2O?', a: 'water' },
+      { q: 'How many colors in a rainbow?', a: '7' },
+      { q: 'What country is the Great Wall in?', a: 'china' },
+      { q: 'What do pandas eat?', a: 'bamboo' },
+      { q: 'Which console is made by Nintendo? (one word)', a: 'switch' },
+      { q: 'How many minutes in an hour?', a: '60' },
+      { q: 'What falls in winter: snow or rain?', a: 'snow' }
+    ];
+    function triviaHourId() { return Math.floor(Date.now() / 3600000); }
+    function triviaNow() { return TRIVIA[triviaHourId() % TRIVIA.length]; }
+    function normAns(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim(); }
+
+    function renderTrivia() {
+      const box = document.getElementById('triviaBox');
+      if (!box) return;
+      const t = triviaNow();
+      box.style.display = 'block';
+      box.innerHTML = '';
+      const b = document.createElement('b');
+      b.textContent = '🧠 Trivia (25 XP): ' + t.q;
+      const sm = document.createElement('small');
+      sm.textContent = 'First correct answer this hour wins — just type it in chat!';
+      box.appendChild(b);
+      box.appendChild(sm);
+    }
+
+    async function claimTrivia(text) {
+      const me = meName();
+      if (!me || me === 'anon') return;
+      const t = triviaNow();
+      if (normAns(text) !== normAns(t.a)) return;
+      try {
+        const ins = await sb.from('quest_claims').insert({ username: me, quest_key: 'trivia-' + triviaHourId(), day: dayStr() }).select('id');
+        if (ins.error) return; // someone (you) already claimed — silent
+        if (!ins.data || !ins.data.length) return;
+        await addXP(25, 'trivia correct!');
+      } catch (e) { console.error('trivia claim failed:', e); }
+    }
+
+    /* ---------- Typing indicators ---------- */
+
+    let lastTypingSent = 0;
+    function dmPairKey(a, b) {
+      return 'dm:' + [String(a || ''), String(b || '')].sort().join('<>');
+    }
+    async function sendTyping(channel) {
+      const me = meName();
+      if (!me || me === 'anon') return;
+      const now = Date.now();
+      if (now - lastTypingSent < 2000) return;
+      lastTypingSent = now;
+      try {
+        await sb.from('typing').upsert({ username: me, channel: channel, updated_at: new Date().toISOString() });
+      } catch (e) {}
+    }
+    async function loadTyping() {
+      const me = meName();
+      try {
+        const cutoff = new Date(Date.now() - 5000).toISOString();
+        const r = await sb.from('typing').select('username, channel').gt('updated_at', cutoff).limit(20);
+        if (r.error) throw r.error;
+        const others = (r.data || []).filter(t => t.username && t.username !== me);
+        const g = others.filter(t => t.channel === 'global').map(t => t.username);
+        const gl = document.getElementById('typingLine');
+        if (gl) gl.textContent = g.length ? (g.slice(0, 3).join(', ') + (g.length === 1 ? ' is typing…' : ' are typing…')) : '';
+        const pk = dmPairKey(me, (typeof dmPeer !== 'undefined' ? dmPeer : 'admin'));
+        const d = others.filter(t => t.channel === pk).map(t => t.username);
+        const dl = document.getElementById('dmTypingLine');
+        if (dl) dl.textContent = d.length ? (d[0] + ' is typing…') : '';
+      } catch (e) { console.error('typing failed:', e); }
     }
 
     /* ---------- Troll events (transient admin effects) ---------- */
@@ -2010,10 +2750,18 @@
       const cutoff = new Date(Date.now() - 90000).toISOString();
       try {
         const [act, staff] = await Promise.all([
-          sb.from('active_sessions').select('username').gte('last_seen', cutoff).limit(100),
+          sb.from('active_sessions').select('username, current_game').gte('last_seen', cutoff).limit(200),
           sb.from('license_keys').select('used_by, rank').in('rank', ['owner', 'admin', 'mod']).limit(100)
         ]);
-        if (!act.error && !staff.error) renderStaffBar(act.data || [], staff.data || []);
+        if (!act.error && !staff.error) {
+          const hidden = {};
+          Object.keys(cosmeticsMap).forEach(u => { if (cosmeticsMap[u] && cosmeticsMap[u].hide_online) hidden[u] = true; });
+          const visSessions = (act.data || []).filter(s => !hidden[s.username]);
+          lastSessions = visSessions;
+          const visStaff = (staff.data || []).filter(k => !hidden[k.used_by]);
+          renderStaffBar(visSessions, visStaff);
+          updateSpectate();
+        }
       } catch (e) { console.error('staff bar failed:', e); }
       try {
         const day = new Date().toISOString().slice(0, 10);
@@ -2312,7 +3060,15 @@
           .eq('username', myName)
           .then(({ error }) => { if (error) console.error(error); });
         trackPlaytime();
+        earnTick();
       }, 30000);
+    }
+
+    // +2 XP per heartbeat tick (doubled while VIP/double-day is active).
+    async function earnTick() {
+      try {
+        await addXP(isDblActive(myCosmetics) ? 4 : 2);
+      } catch (e) { console.error('earn tick failed:', e); }
     }
 
     // Adds ~30s to today's playtime total (drives the daily leaderboard).
@@ -2381,6 +3137,7 @@
         return;
       }
       closeGame(); // teardown first: rapid switches never stack iframes
+      trackDailyGame(path);
       document.getElementById('gameModalTitle').textContent = name;
       const wrap = document.getElementById('gameFrameWrap');
       const frame = document.createElement('iframe');
@@ -2459,6 +3216,10 @@
 
     /* ---------- Direct messages (admin ↔ you) ---------- */
 
+    let dmPeer = 'admin';
+    let myBlocks = [];
+    let lastSessions = [];
+
     function toggleDm() {
       const panel = document.getElementById('dmPanel');
       panel.classList.toggle('open');
@@ -2468,7 +3229,26 @@
       }
     }
 
+    function openDmPeer(name) {
+      dmPeer = name || 'admin';
+      const title = document.getElementById('dmPeerName');
+      if (title) title.textContent = dmPeer === 'admin' ? 'Admin DMs' : ('Chat with ' + dmPeer);
+      const note = document.getElementById('dmNote');
+      if (note) note.textContent = dmPeer === 'admin'
+        ? 'Only you and the admin see this thread.'
+        : 'Player DMs are moderated — staff can read them.';
+      const input = document.getElementById('dmInput');
+      if (input) input.placeholder = 'Message ' + dmPeer + '…';
+      document.getElementById('dmPanel').classList.add('open');
+      document.getElementById('dmDot').classList.remove('show');
+      loadDms();
+      markDmsRead();
+    }
+
     function appendDm(msg) {
+      if (!msg) return;
+      const from = msg.from_username || 'admin';
+      if (from !== 'admin' && myBlocks.indexOf(from) !== -1) return; // blocked: never render
       const box = document.getElementById('dmMsgs');
       const empty = box.querySelector('.chat-empty');
       if (empty) empty.remove();
@@ -2490,6 +3270,7 @@
         const { error } = await sb
           .from('direct_messages')
           .update({ read: true })
+          .eq('from_username', dmPeer)
           .eq('to_username', myName)
           .eq('read', false);
         if (error) throw error;
@@ -2500,20 +3281,20 @@
 
     async function loadDms() {
       try {
-        // History in either direction between me and admin. Two exact-match
-        // queries merged client-side (avoids filter-escaping issues with
-        // freeform usernames).
+        // History in either direction between me and the current peer.
+        // Two exact-match queries merged client-side (avoids
+        // filter-escaping issues with freeform usernames).
         const [a, b] = await Promise.all([
           sb.from('direct_messages')
             .select('id, from_username, to_username, content, created_at, read')
-            .eq('from_username', 'admin')
+            .eq('from_username', dmPeer)
             .eq('to_username', myName)
             .order('created_at', { ascending: true })
             .limit(50),
           sb.from('direct_messages')
             .select('id, from_username, to_username, content, created_at, read')
             .eq('from_username', myName)
-            .eq('to_username', 'admin')
+            .eq('to_username', dmPeer)
             .order('created_at', { ascending: true })
             .limit(50)
         ]);
@@ -2542,10 +3323,17 @@
         .on('postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: 'to_username=eq.' + myName },
           payload => {
-            appendDm(payload.new);
-            // Popup: open the panel and flag the fab so it's noticed mid-game.
-            document.getElementById('dmPanel').classList.add('open');
-            document.getElementById('dmDot').classList.add('show');
+            const m = payload.new || {};
+            if (m.from_username !== 'admin' && myBlocks.indexOf(m.from_username) !== -1) return;
+            if (m.from_username === dmPeer && document.getElementById('dmPanel').classList.contains('open')) {
+              appendDm(m);
+              markDmsRead();
+            } else {
+              // Popup: open the panel and flag the fab so it's noticed mid-game.
+              dmPeer = m.from_username || dmPeer;
+              openDmPeer(dmPeer);
+              document.getElementById('dmDot').classList.add('show');
+            }
           })
         .subscribe();
     }
@@ -2559,15 +3347,177 @@
       try {
         const { error } = await sb
           .from('direct_messages')
-          .insert({ from_username: myName, to_username: 'admin', content: content.slice(0, 500) });
+          .insert({ from_username: myName, to_username: dmPeer, content: content.slice(0, 500) });
         if (error) throw error;
         // Echo optimistically (Realtime only fires for rows addressed to me).
-        appendDm({ from_username: myName, content, created_at: new Date().toISOString() });
+        appendDm({ from_username: myName, to_username: dmPeer, content, created_at: new Date().toISOString() });
       } catch (err) {
         console.error(err);
         input.value = content;
       }
       return false;
+    }
+
+    /* ---------- Friends + blocks ---------- */
+
+    function toggleFriends() {
+      const p = document.getElementById('friendsPanel');
+      p.classList.toggle('open');
+      if (p.classList.contains('open')) loadFriends();
+    }
+
+    async function loadBlocks() {
+      const me = meName();
+      if (!me || me === 'anon') return;
+      try {
+        const r = await sb.from('blocks').select('blocked').eq('username', me);
+        if (!r.error) myBlocks = (r.data || []).map(x => x.blocked);
+      } catch (e) { console.error('blocks failed:', e); }
+    }
+
+    async function loadFriends() {
+      const box = document.getElementById('friendsBody');
+      if (!box) return;
+      const me = meName();
+      let fr = [], bl = [];
+      try {
+        const [a, b] = await Promise.all([
+          sb.from('friends').select('friend').eq('username', me).limit(100),
+          sb.from('blocks').select('blocked').eq('username', me).limit(100)
+        ]);
+        if (!a.error) fr = (a.data || []).map(x => x.friend).filter(Boolean);
+        if (!b.error) {
+          bl = (b.data || []).map(x => x.blocked).filter(Boolean);
+          myBlocks = bl.slice();
+        }
+      } catch (e) { console.error('friends load failed:', e); }
+      const online = {};
+      lastSessions.forEach(s => { if (s.username) online[s.username] = s.current_game || 'Browsing'; });
+      box.innerHTML = '';
+      const mkSec = t => {
+        const d = document.createElement('div');
+        d.className = 'sec-label';
+        d.textContent = t;
+        box.appendChild(d);
+      };
+      const mkRow = (name, extra) => {
+        const div = document.createElement('div');
+        div.className = 'friend-row';
+        const dot = document.createElement('span');
+        dot.className = 'staff-dot';
+        if (!online[name]) dot.style.background = '#6b6b8a';
+        const nm = document.createElement('span');
+        nm.className = 'nm';
+        nm.textContent = name + (online[name] ? ' · ' + online[name] : '');
+        div.appendChild(dot);
+        div.appendChild(nm);
+        (extra || []).forEach(([label, fn]) => {
+          const btn = document.createElement('button');
+          btn.className = 'mini-act';
+          btn.textContent = label;
+          btn.onclick = fn;
+          div.appendChild(btn);
+        });
+        box.appendChild(div);
+      };
+      mkSec('Online now');
+      const others = Object.keys(online).filter(u => u !== me).sort().slice(0, 30);
+      if (others.length === 0) {
+        const d = document.createElement('div');
+        d.className = 'chat-empty';
+        d.textContent = 'Nobody else online.';
+        box.appendChild(d);
+      } else {
+        others.forEach(u => {
+          mkRow(u, fr.indexOf(u) === -1 ? [['Add', () => addFriend(u)], ['DM', () => openDmPeer(u)]] : [['DM', () => openDmPeer(u)]]);
+        });
+      }
+      mkSec('My friends');
+      if (fr.length === 0) {
+        const d = document.createElement('div');
+        d.className = 'chat-empty';
+        d.textContent = 'No friends yet — add people above.';
+        box.appendChild(d);
+      } else {
+        fr.forEach(u => {
+          mkRow(u, [['DM', () => openDmPeer(u)], ['Unfriend', () => unFriend(u)], ['Block', () => blockUser(u)]]);
+        });
+      }
+      if (bl.length > 0) {
+        mkSec('Blocked');
+        bl.forEach(u => { mkRow(u, [['Unblock', () => unblockUser(u)]]); });
+      }
+    }
+
+    async function addFriend(u) {
+      const me = meName();
+      if (!me || me === 'anon' || !u || u === me) return;
+      try {
+        const { error } = await sb.from('friends').insert({ username: me, friend: u });
+        if (error) throw error;
+        toast('Added ' + u, 'ok');
+        loadFriends();
+      } catch (e) { console.error('add friend failed:', e); toast('Already friends?', 'err'); }
+    }
+
+    async function unFriend(u) {
+      const me = meName();
+      try {
+        const { error } = await sb.from('friends').delete().eq('username', me).eq('friend', u);
+        if (error) throw error;
+        loadFriends();
+      } catch (e) { console.error('unfriend failed:', e); }
+    }
+
+    async function blockUser(u) {
+      const me = meName();
+      if (!me || me === 'anon' || !u || u === me) return;
+      if (!confirm('Block ' + u + '? You will no longer see their DMs.')) return;
+      try {
+        const { error } = await sb.from('blocks').insert({ username: me, blocked: u });
+        if (error) throw error;
+        try { await sb.from('friends').delete().eq('username', me).eq('friend', u); } catch (e) {}
+        toast('Blocked ' + u, 'ok');
+        loadBlocks();
+        loadFriends();
+      } catch (e) { console.error('block failed:', e); toast('Block failed', 'err'); }
+    }
+
+    async function unblockUser(u) {
+      const me = meName();
+      try {
+        const { error } = await sb.from('blocks').delete().eq('username', me).eq('blocked', u);
+        if (error) throw error;
+        toast('Unblocked ' + u, 'ok');
+        loadBlocks();
+        loadFriends();
+      } catch (e) { console.error('unblock failed:', e); }
+    }
+
+    /* ---------- Spectate badges (who is inside each game) ---------- */
+
+    function updateSpectate() {
+      const counts = {};
+      lastSessions.forEach(s => {
+        if (s.current_game && s.current_game !== 'Browsing') counts[s.current_game] = (counts[s.current_game] || 0) + 1;
+      });
+      document.querySelectorAll('#gamesGrid .game-card').forEach(card => {
+        const h = card.querySelector('h3');
+        const n = h ? (counts[h.textContent] || 0) : 0;
+        let badge = card.querySelector('.spec-badge');
+        if (n > 0) {
+          if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'spec-badge';
+            const info = card.querySelector('.game-info');
+            if (info) info.appendChild(badge);
+          }
+          badge.textContent = '● ' + n + ' in game';
+          badge.style.display = 'inline-block';
+        } else if (badge) {
+          badge.style.display = 'none';
+        }
+      });
     }
 
     // All games — paths are relative to games/play/ (this file lives there,
@@ -2675,6 +3625,63 @@
       "x3m"
     ];
 
+    const CATS = ['Action', 'Sports', 'Racing', 'Puzzle', 'Adventure', 'Shooter', 'Horror', 'Idle', 'Strategy', 'Casual'];
+    let activeCat = 'All';
+    const GAME_CAT = {
+      'baseball': 'Sports', 'battle-racing-stars': 'Racing', 'bitlife': 'Casual',
+      'block-blast': 'Puzzle', 'bowmasters': 'Shooter', 'bridge-race': 'Racing',
+      'btd5': 'Strategy', 'captcha-ware': 'Puzzle', 'car-drawing-game': 'Casual',
+      'ccl': 'Adventure', 'cookieclicker': 'Idle', 'crazy-candy-creator': 'Casual',
+      'cricket17': 'Sports', 'crossy-road': 'Action', 'ctr': 'Puzzle',
+      'dartspro': 'Sports', 'doge-miner-2': 'Idle', 'draw-climber': 'Action',
+      'draw-the-hill': 'Puzzle', 'drift-boss': 'Racing', 'drive-mad': 'Racing',
+      'drivenwild': 'Racing', 'duck-duck-clicker': 'Idle', 'eaglercraft': 'Adventure',
+      'fast-runner': 'Action', 'final-earth': 'Strategy', 'flappy-bird': 'Action',
+      'fnae': 'Horror', 'FNAW': 'Horror', 'fnaf/FNAF1': 'Horror', 'fnaf/FNAF2': 'Horror',
+      'fnaf/FNAF3': 'Horror', 'formula-rush': 'Racing', 'fruit-ninja': 'Action',
+      'gd-sub0': 'Casual', 'gd-wave': 'Casual', 'gdworld': 'Casual', 'gobble': 'Action',
+      'gunspin': 'Shooter', 'happyglass': 'Puzzle', 'holiday': 'Casual',
+      'hundred-percent-golf': 'Sports', 'idle-football': 'Idle', 'impossiblequiz': 'Puzzle',
+      'jellymario': 'Action', 'jetpack-joyride': 'Action', 'knifehit': 'Action',
+      'liquid-sort': 'Puzzle', 'monkey-mart': 'Idle', 'monster-tracks': 'Racing',
+      'more-sushi': 'Puzzle', 'moto-x3m': 'Racing', 'ninety-nine-balls': 'Puzzle',
+      'npng': 'Sports', 'nutsort': 'Puzzle', 'ovo': 'Action', 'ovo-dimensions': 'Action',
+      'ovo2': 'Action', 'papas-freezeria': 'Casual', 'papas-pizzeria': 'Casual',
+      'paperio2': 'Casual', 'penkick': 'Sports', 'pvz': 'Strategy',
+      'ragdoll-archers': 'Action', 'ragdoll-hit': 'Action',
+      'randoms/basket': 'Sports', 'randoms/boxing': 'Sports', 'randoms/soccer': 'Sports', 'randoms/volley': 'Sports',
+      'recoil': 'Shooter', 'rise-higher': 'Action', 'rocketgoal': 'Sports', 'roll': 'Casual',
+      'roper': 'Action', 'skyrace3d': 'Racing', 'slice-master': 'Action', 'slice-roll': 'Puzzle',
+      'small-world-cup': 'Sports', 'stack': 'Puzzle', 'stickman-hook': 'Action',
+      'stickmin/breakingthebank': 'Adventure', 'stickmin/escapingtheprison': 'Adventure',
+      'stickmin/fleeingthecomplex': 'Adventure', 'stickmin/infiltratingtheairship': 'Adventure',
+      'stickmin/stealingthediamond': 'Adventure', 'subway-surfers': 'Action', 'survival-race': 'Racing',
+      'swooop': 'Casual', 'tap-goal': 'Sports', 'there-is-no-game': 'Adventure',
+      'thorns-and-balloons': 'Puzzle', 'time-travel': 'Adventure', 'tiny-fishing': 'Casual',
+      'tiny-fishing-update': 'Casual', 'totm': 'Action', 'twelve-mini-battles': 'Sports',
+      'webgl': 'Casual', 'wheelie-bike': 'Racing', 'worldguessr': 'Adventure', 'x3m': 'Racing'
+    };
+    function gameCat(p) { return GAME_CAT[p] || 'Casual'; }
+    function renderCatChips() {
+      const row = document.getElementById('catRow');
+      if (!row) return;
+      const counts = {};
+      GAMES.forEach(p => { const c = gameCat(p); counts[c] = (counts[c] || 0) + 1; });
+      row.innerHTML = '';
+      const mk = (label, n) => {
+        const b = document.createElement('button');
+        b.className = 'fav-btn' + (activeCat === label ? ' active' : '');
+        b.textContent = n != null ? (label + ' (' + n + ')') : label;
+        b.onclick = () => {
+          activeCat = label;
+          renderCatChips();
+          renderGames(document.getElementById('search').value);
+        };
+        row.appendChild(b);
+      };
+      mk('All', GAMES.length);
+      CATS.forEach(c => mk(c, counts[c] || 0));
+    }
     const NAME_OVERRIDES = {
       "ctr": "Cut the Rope",
       "ccl": "Crazy Crash Landing",
@@ -2754,9 +3761,10 @@
       const list = GAMES
         .filter(p => prettyName(p).toLowerCase().includes(q) || p.toLowerCase().includes(q))
         .filter(p => !favOnly || favs.indexOf(p) !== -1)
+        .filter(p => activeCat === 'All' || gameCat(p) === activeCat)
         .sort((a, b) => prettyName(a).localeCompare(prettyName(b)));
       const rc = document.getElementById('resultCount');
-      if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ★' : '');
+      if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ★' : '') + (activeCat !== 'All' ? ' · ' + activeCat : '');
       if (list.length === 0) {
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#6b6b8a;font-size:14px">🎮 No games found — try a different search.</div>';
         return;
@@ -2778,7 +3786,7 @@
           h.textContent = name;
           const tag = document.createElement('span');
           tag.className = 'game-tag';
-          tag.textContent = 'Play';
+          tag.textContent = gameCat(path);
           info.appendChild(h);
           info.appendChild(tag);
           const thumb = document.createElement('div');
@@ -2796,6 +3804,7 @@
     }
 
     renderGames();
+    renderCatChips();
     (async () => {
       const me = await checkAuth();
       if (me) {
@@ -2816,6 +3825,23 @@
       startPoller('announce', loadAnnouncements, 3000);
       startPoller('online', loadOnlineCount, 3000);
       startPoller('session', refreshSession, 3000);
+      startPoller('quests', loadQuests, 10000);
+      startPoller('xpboard', loadXpBoard, 10000);
+      startPoller('typing', loadTyping, 3000);
+      startPoller('mycos', loadMyXp, 15000);
+      startPoller('cosmap', loadCosmeticsMap, 15000);
+      startPoller('trivia', renderTrivia, 60000);
+      loadMyXp();
+      loadXpBoard();
+      loadQuests();
+      loadBlocks();
+      renderTrivia();
+    })();
+    (function () {
+      const ci = document.getElementById('chatInput');
+      if (ci) ci.addEventListener('input', () => sendTyping('global'));
+      const di = document.getElementById('dmInput');
+      if (di) di.addEventListener('input', () => sendTyping(dmPairKey(meName(), (typeof dmPeer !== 'undefined' ? dmPeer : 'admin'))));
     })();
     registerTrollUnlock();
     subscribeTrolls();
