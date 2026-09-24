@@ -725,6 +725,13 @@
     }
     .trick-btn.on .tpill { background: #7c3aed; }
     .trick-btn.on .tpill::after { transform: translateX(18px); }
+    /* brief confirm pulse when an INSTANT card fires */
+    .trick-btn.flash { animation: trickFlash 0.35s ease-out; }
+    @keyframes trickFlash {
+      0% { transform: scale(1); border-color: #7c3aed; }
+      40% { transform: scale(1.06); border-color: #7c3aed; }
+      100% { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -894,8 +901,7 @@
           <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span><em class="tpill"></em><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
-        <p class="muted">TOGGLE tricks (incl. jumpscare) switch on/off the moment you tap them — tap again to stop. INSTANT tricks arm the Send button below. Jumpscare uses the image picker above when toggled ON.</p>
-        <button class="btn block" id="trickSendBtn" style="margin-top:16px" onclick="sendTrick()">Send trick</button>
+        <p class="muted">Tap a TOGGLE card to switch it on/off instantly. Tap an INSTANT card to fire it once. Jumpscare uses the image picker above when toggled ON.</p>
         <div class="error" id="trollErr"></div>
         <div class="ok" id="trollOk"></div>
       </div>
@@ -1266,7 +1272,6 @@
     /* ---------- troll control ---------- */
 
     let trollMode = 'everyone';
-    let selectedTrick = null;
 
     function setTrollTarget(mode) {
       trollMode = mode;
@@ -1366,12 +1371,49 @@
       const trick = btn.getAttribute('data-trick');
       document.getElementById('trollOk').textContent = '';
       document.getElementById('trollErr').textContent = '';
-      // Selection always sticks, so Send Trick can fire afterwards.
-      document.querySelectorAll('#trickGrid .trick-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedTrick = trick;
       if (INSTANT_TRICKS.indexOf(trick) === -1) {
-        toggleTrick(trick); // persistent tricks also toggle immediately on tap
+        toggleTrick(trick); // persistent tricks toggle immediately on tap
+        return;
+      }
+      fireInstant(trick, btn); // instant tricks fire immediately on tap
+    }
+
+    async function fireInstant(trick, btn) {
+      const errBox = document.getElementById('trollErr');
+      const okBox = document.getElementById('trollOk');
+      const scope = currentScope();
+      if (trollMode === 'user' && !scope.target) {
+        errBox.textContent = 'Pick a user first.';
+        return;
+      }
+      const payload = {};
+      if (trick === 'alert' || trick === 'popups') {
+        const msg = document.getElementById('trollMsg').value.trim();
+        if (msg) payload.message = msg.slice(0, 200);
+      }
+      if (btn) {
+        btn.classList.remove('flash');
+        void btn.offsetWidth; // restart the confirm pulse
+        btn.classList.add('flash');
+        setTimeout(() => btn.classList.remove('flash'), 350);
+      }
+      errBox.textContent = '';
+      try {
+        const { data, error } = await sb.from('troll_events').insert({
+          target_username: scope.target,
+          event_type: trick,
+          payload: payload
+        }).select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('Insert affected 0 rows — check the INSERT RLS policy on troll_events.');
+        }
+        okBox.textContent = 'Sent ' + trick + ' → ' + (scope.target || 'Everyone') + ' ✓';
+        toast('Trick sent', 'ok');
+      } catch (e) {
+        console.error('send trick failed:', e, { trick: trick, scope: scope.key });
+        errBox.textContent = 'Send failed. Try again.';
+        toast('Send failed', 'err');
       }
     }
 
@@ -1408,88 +1450,7 @@
       }
     }
 
-    // Send Trick always fires: persistent tricks go ON (tap the trick
-    // button again to stop), instant tricks fire once.
-    async function sendPersistentOn(trick) {
-      const errBox = document.getElementById('trollErr');
-      const okBox = document.getElementById('trollOk');
-      const scope = currentScope();
-      if (trollMode === 'user' && !scope.target) {
-        errBox.textContent = 'Pick a user first.';
-        return;
-      }
-      const btn = document.getElementById('trickSendBtn');
-      setBtnLoading(btn, true);
-      errBox.textContent = '';
-      try {
-        const payload = { state: 'on' };
-        if (trick === 'jumpscare') {
-          payload.image = document.getElementById('scareImg').value || 'scare1.jpg';
-        }
-        const { data, error } = await sb.from('troll_events').insert({
-          target_username: scope.target,
-          event_type: trick,
-          payload: payload
-        }).select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('Insert affected 0 rows — check the INSERT RLS policy on troll_events.');
-        }
-        trollStates[trick + '|' + scope.key] = 'on';
-        paintTrickButtons();
-        okBox.textContent = trick + ' → ' + (scope.target || 'Everyone') + ': ON ✓';
-        toast(trick + ' ON', 'ok');
-      } catch (e) {
-        console.error('send trick failed:', e, { trick: trick, scope: scope.key });
-        errBox.textContent = 'Send failed. Try again.';
-        toast('Send failed', 'err');
-      } finally {
-        setBtnLoading(btn, false, 'Send trick');
-      }
-    }
-
-    async function sendTrick() {
-      const okBox = document.getElementById('trollOk');
-      const errBox = document.getElementById('trollErr');
-      const btn = document.getElementById('trickSendBtn');
-      okBox.textContent = '';
-      errBox.textContent = '';
-      if (!selectedTrick) { errBox.textContent = 'Pick a trick first.'; return; }
-      if (INSTANT_TRICKS.indexOf(selectedTrick) === -1) {
-        sendPersistentOn(selectedTrick);
-        return;
-      }
-      let target = null;
-      if (trollMode === 'user') {
-        target = document.getElementById('trollTarget').value;
-        if (!target) { errBox.textContent = 'Pick a user first.'; return; }
-      }
-      const payload = {};
-      if (selectedTrick === 'alert' || selectedTrick === 'popups') {
-        const msg = document.getElementById('trollMsg').value.trim();
-        if (msg) payload.message = msg.slice(0, 200);
-      }
-      setBtnLoading(btn, true);
-      try {
-        const { data, error } = await sb.from('troll_events').insert({
-          target_username: target,
-          event_type: selectedTrick,
-          payload: payload
-        }).select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('Insert affected 0 rows — check the INSERT RLS policy on troll_events.');
-        }
-        okBox.textContent = 'Sent ' + selectedTrick + ' → ' + (target || 'Everyone') + ' ✓';
-        toast('Trick sent', 'ok');
-      } catch (e) {
-        console.error('send trick failed:', e, { trick: selectedTrick, scope: (target || '*') });
-        errBox.textContent = 'Send failed. Try again.';
-        toast('Send failed', 'err');
-      } finally {
-        setBtnLoading(btn, false, 'Send trick');
-      }
-    }
+    /* Send Trick button removed — cards fire directly via toggleTrick (toggles) and fireInstant (one-shots). */
 
     /* ---------- custom dropdowns (mirror hidden native selects) ---------- */
 

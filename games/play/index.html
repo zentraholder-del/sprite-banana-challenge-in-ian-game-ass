@@ -1238,69 +1238,53 @@
       setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, ms);
     }
 
-    // Persistent jumpscare: fade in (0.3s) → hold (1.5s) → fade out
-    // (0.5s) → wait random 8–15s → repeat, forever. The ONLY exit is
-    // jumpscareActive going false, which only stopJumpscare() does, which
-    // only the state:'off' dispatch path calls. No timers self-terminate.
     let jumpscareActive = false;
-    let jumpscareBox = null;
+    let jumpscareImg = null;
 
-    function trollSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    function removeJumpscareBox() {
-      if (jumpscareBox && jumpscareBox.parentNode) jumpscareBox.parentNode.removeChild(jumpscareBox);
-      jumpscareBox = null;
+    // Allow-listed scare filename → site-relative URL.
+    function jumpscareSrc(payload) {
+      const img = (payload && payload.image) || 'scare1.jpg';
+      const safe = /^scare[1-3]\.jpg$/.test(img) ? img : 'scare1.jpg';
+      return '../../admin/' + safe;
     }
 
     async function jumpscareLoop(imageSrc) {
       if (!jumpscareActive) return;
-      const layer = trollLayer();
-      const box = document.createElement('div');
-      box.className = 'troll-full';
-      box.style.transition = 'opacity 0.3s';
-      box.style.opacity = '0';
-      const pic = document.createElement('img');
-      pic.src = imageSrc;
-      pic.alt = '';
-      pic.onerror = () => {
-        console.error('jumpscare image failed to load:', pic.src);
-        pic.style.display = 'none';
-        const big = document.createElement('div');
-        big.style.fontSize = '96px';
-        big.textContent = '👹';
-        box.insertBefore(big, box.firstChild);
-      };
-      box.appendChild(pic);
-      layer.appendChild(box);
-      jumpscareBox = box;
+      jumpscareImg = document.createElement('img');
+      jumpscareImg.src = imageSrc;
+      jumpscareImg.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:99999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      jumpscareImg.onerror = () => console.error('jumpscare image failed to load:', imageSrc);
+      document.body.appendChild(jumpscareImg);
       scareSound();
-      await trollSleep(50);
-      if (!jumpscareActive) { removeJumpscareBox(); return; }
-      box.style.opacity = '1';
-      await trollSleep(1500);
-      if (!jumpscareActive) { removeJumpscareBox(); return; }
-      box.style.transition = 'opacity 0.5s';
-      box.style.opacity = '0';
-      await trollSleep(500);
-      removeJumpscareBox();
+      await sleep(50);
+      if (!jumpscareActive) { jumpscareImg?.remove(); jumpscareImg = null; return; }
+      jumpscareImg.style.opacity = '1';
+      await sleep(1500);
+      if (!jumpscareActive) { jumpscareImg?.remove(); jumpscareImg = null; return; }
+      jumpscareImg.style.opacity = '0';
+      await sleep(500);
+      jumpscareImg?.remove();
+      jumpscareImg = null;
       if (!jumpscareActive) return;
-      const wait = 8000 + Math.random() * 7000; // 8–15s randomised
-      await trollSleep(wait);
-      jumpscareLoop(imageSrc); // recurse — no exit except the flag
+      await sleep(8000 + Math.random() * 7000);
+      jumpscareLoop(imageSrc);
     }
 
-    function startJumpscare(payload) {
+    function startJumpscare(imageSrc) {
       console.log('[troll] startJumpscare called');
       jumpscareActive = true;
-      const img = (payload && payload.image) || 'scare1.jpg';
-      const safe = /^scare[1-3]\.jpg$/.test(img) ? img : 'scare1.jpg';
-      jumpscareLoop('../../admin/' + safe);
+      jumpscareLoop(imageSrc);
     }
 
     function stopJumpscare() {
       console.log('[troll] stopJumpscare called');
       jumpscareActive = false;
-      removeJumpscareBox();
+      if (jumpscareImg) {
+        jumpscareImg.style.opacity = '0';
+        setTimeout(() => { jumpscareImg?.remove(); jumpscareImg = null; }, 500);
+      }
     }
 
     // Persistent tricks below: each has a module-level *Active flag.
@@ -1496,7 +1480,7 @@
     // state:'off' dispatch path (via stopTrick) ever invokes these.
     function startPersistent(type, payload) {
       switch (type) {
-        case 'jumpscare': startJumpscare(payload || {}); return stopJumpscare;
+        case 'jumpscare': startJumpscare(jumpscareSrc(payload || {})); return stopJumpscare;
         case 'shake': startShake(); return stopShake;
         case 'disconnect': startDisconnect(); return stopDisconnect;
         case 'flip': startFlip(); return stopFlip;
@@ -1507,10 +1491,11 @@
       }
     }
 
-    function dispatchTroll(row) {
+    function dispatchTroll(row, fromInit) {
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
-      if (row.target_username && row.target_username !== me) return; // not for me
+      if (row.target_username && row.target_username !== me) return; // not for me: ignore entirely
+      if (row.id !== undefined && row.id !== null) seenTrollIds.add(row.id);
       const scope = row.target_username || '*';
       const key = row.event_type + '|' + scope;
       const state = row.payload && row.payload.state;
@@ -1542,35 +1527,32 @@
       }
     }
 
-    // On page load, fetch the latest row per event_type for both scopes
-    // (global '*' and this user). Newest 'on' wins: the effect starts and
-    // runs forever until an 'off' arrives. All fetched ids are marked seen
-    // so the 3s poll never re-fires old one-shot effects.
-    async function resumeActiveTricks() {
+    // Initial sync: seed seenTrollIds with ALL historical ids first,
+    // then start effects where the latest row per event_type|scope is on.
+    // Out-of-scope rows are ignored entirely (never added, never run).
+    async function initTrollState() {
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
         const { data, error } = await sb
           .from('troll_events')
-          .select('id, event_type, target_username, payload, created_at')
-          .order('created_at', { ascending: false })
-          .limit(200);
+          .select('*')
+          .order('created_at', { ascending: false });
         if (error) throw error;
-        const decided = {};
-        (data || []).forEach(r => {
-          if (r.target_username && r.target_username !== me) return;
-          markTrollSeen(r);
-          const scope = r.target_username || '*';
-          const k = r.event_type + '|' + scope;
-          if (k in decided) return;
-          decided[k] = true;
-          const st = r.payload && r.payload.state;
-          if (PERSISTENT_TRICKS.indexOf(r.event_type) !== -1 && st === 'on') {
-            try { dispatchTroll(r); } catch (e) { console.error('resume trick failed:', e); }
+        const latest = {};
+        for (const row of (data || [])) {
+          if (row.target_username && row.target_username !== me) continue;
+          seenTrollIds.add(row.id);
+          const key = row.event_type + '|' + (row.target_username != null ? row.target_username : '*');
+          if (!latest[key]) latest[key] = row;
+        }
+        for (const row of Object.values(latest)) {
+          if (row.payload && row.payload.state === 'on') {
+            try { dispatchTroll(row, true); } catch (e) { console.error('resume trick failed:', e); }
           }
-        });
+        }
       } catch (e) {
-        console.error('resume tricks failed:', e);
+        console.error('init troll state failed:', e);
       }
     }
 
@@ -1666,13 +1648,11 @@
       setTimeout(() => { overlay.classList.remove('show', 'closing'); }, 200);
     }
 
-    // Seen event ids — realtime marks them on arrival, the initial sync
-    // seeds them, and the 3s poll only dispatches ids never seen before.
-    // This keeps effects running forever without restart flicker.
-    const trollSeen = new Set();
-    function markTrollSeen(row) {
-      if (row && row.id !== undefined && row.id !== null) trollSeen.add('t' + row.id);
-    }
+    // Single module-level set of processed troll event ids. Seeded with
+    // ALL historical ids on load, added to as new rows arrive. Never
+    // reset, never cleared. Out-of-scope rows are ignored entirely and
+    // never added.
+    const seenTrollIds = new Set();
 
     let trollChannel = null;
     function subscribeTrolls() {
@@ -1682,7 +1662,7 @@
           .on('postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'troll_events' },
             payload => {
-              try { markTrollSeen(payload.new); dispatchTroll(payload.new); }
+              try { dispatchTroll(payload.new); }
               catch (e) { console.error('trick failed:', e); }
             })
           .subscribe();
@@ -1712,10 +1692,9 @@
           .limit(20);
         if (error) throw error;
         (data || []).slice().reverse().forEach(r => {
-          if (r.target_username && r.target_username !== me) return;
-          const k = 't' + r.id;
-          if (trollSeen.has(k)) return;
-          trollSeen.add(k);
+          if (r.target_username && r.target_username !== me) return; // not mine: ignore entirely
+          if (seenTrollIds.has(r.id)) return; // already processed: do NOTHING
+          seenTrollIds.add(r.id);
           try { dispatchTroll(r); } catch (e) { console.error('trick failed:', e); }
         });
       } catch (e) {
@@ -2167,7 +2146,7 @@
       }
       loadChat();
       subscribeChat();
-      resumeActiveTricks();
+      initTrollState();
       checkPlayRequestStatus();
       loadAnnouncements();
       subscribeAnnouncements();
