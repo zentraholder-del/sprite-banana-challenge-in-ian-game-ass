@@ -453,7 +453,8 @@
       document.getElementById('keyInput').classList.remove('error-input');
     }
 
-    // Auto-redirect if a valid session token is already stored
+    // Auto-redirect if a valid session token is already stored.
+    // Admins go to the admin panel, everyone else to the games page.
     async function checkExistingSession() {
       const token = localStorage.getItem(LS_TOKEN);
       if (!token) return;
@@ -461,12 +462,12 @@
       try {
         const { data, error } = await sb
           .from('license_keys')
-          .select('id, is_active')
+          .select('id, is_active, is_admin')
           .eq('session_token', token)
           .maybeSingle();
         if (error) throw error;
         if (data && data.is_active) {
-          window.location.href = 'main.html';
+          window.location.href = data.is_admin ? '../admin/index.html' : 'play/';
         } else {
           localStorage.removeItem(LS_TOKEN);
           localStorage.removeItem(LS_USER);
@@ -513,7 +514,7 @@
         const keyHash = await sha256hex(rawKey.toUpperCase());
         const { data: row, error: keyErr } = await sb
           .from('license_keys')
-          .select('id, is_active, session_token')
+          .select('id, is_active, is_admin, session_token')
           .eq('key', keyHash)
           .maybeSingle();
         if (keyErr) throw keyErr;
@@ -550,7 +551,9 @@
         localStorage.setItem(LS_USER, username);
         // Drop legacy stub flag if present
         try { sessionStorage.removeItem('ls_auth'); } catch (e) {}
-        window.location.href = 'main.html';
+        // Admins land on the admin panel, everyone else on the games page.
+        // The session token is created the same way for both.
+        window.location.href = row.is_admin ? '../admin/index.html' : 'play/';
       } catch (e) {
         console.error(e);
         showError('Login failed. Check your connection and try again.');

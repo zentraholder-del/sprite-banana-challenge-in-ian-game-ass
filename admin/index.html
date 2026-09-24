@@ -230,6 +230,30 @@
       outline: none;
     }
 
+    /* DM THREAD */
+    .dm-hist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+    .dm-line { font-size: 13px; line-height: 1.45; }
+    .dm-line .who { font-size: 11px; color: #a78bfa; font-weight: 600; }
+    .dm-line.me .who { color: #f472b6; }
+    .dm-line .when { font-size: 10.5px; color: #4b5563; margin-left: 6px; }
+    .dm-line .text {
+      display: inline-block;
+      margin-top: 2px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 7px 10px;
+      color: #e5e7eb;
+      word-break: break-word;
+    }
+
     footer {
       position: relative;
       z-index: 1;
@@ -281,16 +305,10 @@
 
   <div class="wrap">
 
-    <!-- GATE -->
+    <!-- GATE (replaced by shared-login check; shown only while verifying) -->
     <div class="card center" id="gate">
       <h1>Admin</h1>
-      <p class="sub">Enter an admin key to continue.</p>
-      <div class="field">
-        <label>Admin Key</label>
-        <input type="password" id="adminKey" class="mono" placeholder="Enter admin key" autocomplete="off" />
-      </div>
-      <button class="btn block" id="gateBtn" onclick="adminLogin()">Unlock</button>
-      <div class="error" id="gateError"></div>
+      <p class="sub" id="gateStatus">Checking admin session…</p>
     </div>
 
     <!-- DASHBOARD -->
@@ -300,6 +318,7 @@
         <button onclick="showTab('keys', this)">Manage keys</button>
         <button onclick="showTab('blacklist', this)">Blacklist</button>
         <button onclick="showTab('messages', this)">Messaging</button>
+        <button onclick="showTab('users', this)">Users</button>
       </div>
 
       <div class="card section active" id="sec-requests">
@@ -329,7 +348,7 @@
 
       <div class="card section" id="sec-messages">
         <h2>Post as admin</h2>
-        <p class="sub">Shows in the live chat on main.html as <b>admin</b>.</p>
+        <p class="sub">Shows in the live chat on the play page as <b>admin</b>.</p>
         <div class="inline-form">
           <input id="adminMsg" placeholder="Announcement or troll…" maxlength="500" />
           <button class="btn small" onclick="postAdminMessage()">Post</button>
@@ -338,6 +357,20 @@
         <div class="ok" id="msgOk"></div>
         <h2 style="margin-top:24px">Recent messages</h2>
         <div id="recentMsgs"><p class="muted">Loading…</p></div>
+      </div>
+
+      <div class="card section" id="sec-users">
+        <h2>Active users</h2>
+        <p class="sub">Live from active_sessions, most recent first. "Stale" means no heartbeat for 90+ seconds.</p>
+        <div id="userList"><p class="muted">Loading…</p></div>
+        <div id="dmThread" style="display:none; margin-top:20px; border-top:1px solid rgba(255,255,255,0.07); padding-top:20px;">
+          <h2>DM with <span id="dmUser"></span></h2>
+          <div class="dm-hist" id="dmHistory"></div>
+          <div class="inline-form" style="margin-top:12px">
+            <input id="dmInput" placeholder="Message as admin…" maxlength="500" />
+            <button class="btn small" onclick="sendDm()">Send</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -364,6 +397,9 @@
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const LS_TOKEN = 'ls_session_token';
+    const LS_USER = 'ls_username';
+
     async function sha256hex(str) {
       const data = new TextEncoder().encode(str);
       const hash = await crypto.subtle.digest('SHA-256', data);
@@ -387,40 +423,41 @@
       if (name === 'messages') loadRecent();
     }
 
-    /* ---------- gate ---------- */
+    /* ---------- gate: shared login, admin check on load ----------
+       No login form here anymore. Access comes from games/index.html,
+       which routes is_admin keys here with a normal session token.
+       This page only verifies that token is still active AND admin. */
 
-    async function adminLogin() {
-      const err = document.getElementById('gateError');
-      const btn = document.getElementById('gateBtn');
-      err.textContent = '';
-      const raw = document.getElementById('adminKey').value.trim();
-      if (!raw) { err.textContent = 'Enter your admin key.'; return; }
-      btn.disabled = true;
+    async function validateAdmin() {
+      const token = localStorage.getItem(LS_TOKEN);
+      if (!token) {
+        window.location.href = '../games/index.html';
+        return;
+      }
       try {
-        const hash = await sha256hex(raw.toUpperCase());
         const { data, error } = await sb
           .from('license_keys')
           .select('id, is_active, is_admin')
-          .eq('key', hash)
+          .eq('session_token', token)
           .maybeSingle();
         if (error) throw error;
-        if (!data || !data.is_admin || !data.is_active) {
-          err.textContent = 'Not an active admin key.';
-          btn.disabled = false;
+        if (!data || !data.is_active || !data.is_admin) {
+          window.location.href = '../games/index.html';
           return;
         }
-        sessionStorage.setItem('ls_admin_ok', '1');
         openDash();
       } catch (e) {
         console.error(e);
-        err.textContent = 'Login failed. Check connection and try again.';
-        btn.disabled = false;
+        document.getElementById('gateStatus').textContent =
+          'Could not verify admin session. Check your connection and reload.';
       }
     }
 
     function adminLogout() {
-      sessionStorage.removeItem('ls_admin_ok');
-      location.reload();
+      localStorage.removeItem(LS_TOKEN);
+      localStorage.removeItem(LS_USER);
+      try { sessionStorage.removeItem('ls_admin_ok'); } catch (e) {}
+      window.location.href = '../games/index.html';
     }
 
     function openDash() {
@@ -428,13 +465,23 @@
       document.getElementById('dash').style.display = 'block';
       document.getElementById('adminLogout').style.display = 'inline-block';
       loadRequests();
+      subscribeUsers();
+      subscribeAdminDm();
     }
 
-    document.getElementById('adminKey').addEventListener('keydown', e => {
-      if (e.key === 'Enter') adminLogin();
-    });
+    function showTab(name, btn) {
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('sec-' + name).classList.add('active');
+      if (name === 'requests') loadRequests();
+      if (name === 'keys') loadKeys();
+      if (name === 'blacklist') loadBlacklist();
+      if (name === 'messages') loadRecent();
+      if (name === 'users') loadUsers();
+    }
 
-    if (sessionStorage.getItem('ls_admin_ok') === '1') openDash();
+    validateAdmin();
 
     /* ---------- key requests ---------- */
 
@@ -783,6 +830,152 @@
         alert('Delete failed.');
       }
     }
+
+    /* ---------- users + DMs ---------- */
+
+    let dmTarget = null;
+
+    function presencePill(lastSeen) {
+      const ageMs = Date.now() - new Date(lastSeen).getTime();
+      const stale = isNaN(ageMs) || ageMs > 90000;
+      return '<span class="pill ' + (stale ? 'off' : 'on') + '">' +
+        (stale ? 'stale' : 'active') + '</span>';
+    }
+
+    async function loadUsers() {
+      const box = document.getElementById('userList');
+      try {
+        const { data, error } = await sb
+          .from('active_sessions')
+          .select('username, current_game, last_seen')
+          .order('last_seen', { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          box.innerHTML = '<p class="muted">No active sessions.</p>';
+          return;
+        }
+        let html = '<table><tr><th>User</th><th>Playing</th><th>Last seen</th><th></th></tr>';
+        data.forEach(u => {
+          html += '<tr><td>' + esc(u.username) + ' ' + presencePill(u.last_seen) +
+            '</td><td>' + esc(u.current_game || 'Browsing') +
+            '</td><td class="muted">' + esc(new Date(u.last_seen).toLocaleString()) +
+            '</td><td><button class="btn small" data-user="' + esc(u.username) +
+            '" onclick="openDm(this)">Message</button></td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p class="muted">Failed to load users.</p>';
+      }
+    }
+
+    function subscribeUsers() {
+      sb.channel('ls-users')
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'active_sessions' },
+          () => {
+            if (document.getElementById('sec-users').classList.contains('active')) loadUsers();
+          })
+        .subscribe();
+    }
+
+    function openDm(btn) {
+      dmTarget = btn.getAttribute('data-user');
+      document.getElementById('dmUser').textContent = dmTarget;
+      document.getElementById('dmThread').style.display = 'block';
+      document.getElementById('dmHistory').innerHTML = '<p class="muted">Loading…</p>';
+      loadDmHistory();
+    }
+
+    async function loadDmHistory() {
+      if (!dmTarget) return;
+      const box = document.getElementById('dmHistory');
+      try {
+        // Two exact-match queries merged client-side (avoids filter-escaping
+        // issues with freeform usernames).
+        const [a, b] = await Promise.all([
+          sb.from('direct_messages')
+            .select('id, from_username, content, created_at')
+            .eq('from_username', 'admin')
+            .eq('to_username', dmTarget)
+            .order('created_at', { ascending: true })
+            .limit(100),
+          sb.from('direct_messages')
+            .select('id, from_username, content, created_at')
+            .eq('from_username', dmTarget)
+            .eq('to_username', 'admin')
+            .order('created_at', { ascending: true })
+            .limit(100)
+        ]);
+        if (a.error) throw a.error;
+        if (b.error) throw b.error;
+        const rows = (a.data || []).concat(b.data || [])
+          .sort((x, y) => new Date(x.created_at) - new Date(y.created_at));
+        if (rows.length === 0) {
+          box.innerHTML = '<p class="muted">No messages with this user yet.</p>';
+        } else {
+          box.innerHTML = '';
+          rows.forEach(m => {
+            const mine = m.from_username === 'admin';
+            const div = document.createElement('div');
+            div.className = 'dm-line' + (mine ? ' me' : '');
+            div.innerHTML = '<span class="who"></span><span class="when"></span><br><span class="text"></span>';
+            div.querySelector('.who').textContent = m.from_username;
+            div.querySelector('.when').textContent = new Date(m.created_at).toLocaleString();
+            div.querySelector('.text').textContent = m.content;
+            box.appendChild(div);
+          });
+          box.scrollTop = box.scrollHeight;
+        }
+        // Their messages to me are now seen.
+        await sb.from('direct_messages')
+          .update({ read: true })
+          .eq('from_username', dmTarget)
+          .eq('to_username', 'admin')
+          .eq('read', false);
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p class="muted">Failed to load thread.</p>';
+      }
+    }
+
+    function subscribeAdminDm() {
+      sb.channel('ls-admin-dm')
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'direct_messages' },
+          payload => {
+            const m = payload.new;
+            if (!dmTarget) return;
+            const relevant =
+              (m.from_username === dmTarget && m.to_username === 'admin') ||
+              (m.from_username === 'admin' && m.to_username === dmTarget);
+            if (relevant) loadDmHistory();
+          })
+        .subscribe();
+    }
+
+    async function sendDm() {
+      const input = document.getElementById('dmInput');
+      const content = input.value.trim();
+      if (!content || !dmTarget) return;
+      input.value = '';
+      try {
+        const { error } = await sb
+          .from('direct_messages')
+          .insert({ from_username: 'admin', to_username: dmTarget, content: content.slice(0, 500) });
+        if (error) throw error;
+        loadDmHistory();
+      } catch (e) {
+        console.error(e);
+        input.value = content;
+        alert('Send failed.');
+      }
+    }
+
+    document.getElementById('dmInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendDm();
+    });
   </script>
 
 </body>

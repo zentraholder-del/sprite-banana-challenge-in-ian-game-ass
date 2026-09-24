@@ -314,6 +314,85 @@
       font-weight: 600;
       cursor: pointer;
     }
+
+    /* ADMIN FAB (visible to admins only) */
+    .admin-fab {
+      position: fixed;
+      top: 76px;
+      right: 22px;
+      z-index: 50;
+      display: none;
+      padding: 8px 14px;
+      border-radius: 20px;
+      background: rgba(17,17,24,0.85);
+      border: 1px solid rgba(124,58,237,0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #c4b5fd;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .admin-fab:hover { border-color: rgba(124,58,237,0.8); color: #fff; }
+    .admin-fab.show { display: inline-block; }
+
+    /* DM WIDGET (bottom-left, separate from global chat) */
+    .dm-fab {
+      position: fixed;
+      left: 22px;
+      bottom: 22px;
+      z-index: 50;
+      width: 52px;
+      height: 52px;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 8px 28px rgba(124,58,237,0.45);
+      transition: transform 0.15s;
+    }
+    .dm-fab:hover { transform: scale(1.06); }
+    .dm-dot {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #f472b6;
+      border: 2px solid #080810;
+      display: none;
+    }
+    .dm-dot.show { display: block; }
+
+    .dm-panel {
+      position: fixed;
+      left: 22px;
+      bottom: 86px;
+      z-index: 50;
+      width: 320px;
+      max-height: 440px;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(17,17,24,0.92);
+      border: 1px solid rgba(244,114,182,0.25);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    }
+    .dm-panel.open { display: flex; }
+    .dm-note {
+      padding: 8px 14px;
+      font-size: 11px;
+      color: #6b7280;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
   </style>
 </head>
 <body>
@@ -346,6 +425,9 @@
 
   <footer>LIGHTSPEED &copy; 2026</footer>
 
+  <!-- ADMIN (shown only when the logged-in user is_admin) -->
+  <a class="admin-fab" id="adminFab" href="../../admin/index.html">⚙ Admin Panel</a>
+
   <!-- GLOBAL CHAT -->
   <button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Global chat">💬</button>
   <div class="chat-panel" id="chatPanel">
@@ -358,6 +440,23 @@
     </div>
     <form class="chat-form" onsubmit="return sendChat(event)">
       <input id="chatInput" type="text" placeholder="Say something…" maxlength="500" autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- DIRECT MESSAGES (admin ↔ you, separate from global chat) -->
+  <button class="dm-fab" id="dmFab" onclick="toggleDm()" title="Messages from admin">✉️<span class="dm-dot" id="dmDot"></span></button>
+  <div class="chat-panel dm-panel" id="dmPanel">
+    <div class="chat-head">
+      <span>Admin DMs</span>
+      <small id="dmStatus">live</small>
+    </div>
+    <div class="dm-note">Only you and the admin see this thread.</div>
+    <div class="chat-msgs" id="dmMsgs">
+      <div class="chat-empty">No messages yet.</div>
+    </div>
+    <form class="chat-form" onsubmit="return sendDmReply(event)">
+      <input id="dmInput" type="text" placeholder="Reply to admin…" maxlength="500" autocomplete="off" />
       <button type="submit">Send</button>
     </form>
   </div>
@@ -377,7 +476,7 @@
       localStorage.removeItem(LS_TOKEN);
       localStorage.removeItem(LS_USER);
       try { sessionStorage.removeItem('ls_auth'); } catch (e) {}
-      window.location.href = 'index.html';
+      window.location.href = '../index.html';
     }
 
     // Validate the stored session token against Supabase.
@@ -385,13 +484,13 @@
     async function checkAuth() {
       const token = localStorage.getItem(LS_TOKEN);
       if (!token) {
-        window.location.href = 'index.html';
+        window.location.href = '../index.html';
         return null;
       }
       try {
         const { data, error } = await sb
           .from('license_keys')
-          .select('id, is_active, username, used_by')
+          .select('id, is_active, is_admin, username, used_by')
           .eq('session_token', token)
           .maybeSingle();
         if (error) throw error;
@@ -403,6 +502,9 @@
         document.getElementById('navUser').innerHTML =
           'Signed in as <strong></strong>';
         document.getElementById('navUser').querySelector('strong').textContent = name;
+        if (data.is_admin) {
+          document.getElementById('adminFab').classList.add('show');
+        }
         return data;
       } catch (e) {
         console.error(e);
@@ -521,7 +623,158 @@
       return false;
     }
 
-    // All games — path is relative to games/ folder (main.html lives in games/)
+    /* ---------- Presence (active_sessions) ---------- */
+
+    let myName = 'anon';
+    let heartbeatTimer = null;
+
+    async function trackPresence(game) {
+      try {
+        const { error } = await sb
+          .from('active_sessions')
+          .upsert(
+            { username: myName, current_game: game, last_seen: new Date().toISOString() },
+            { onConflict: 'username' }
+          );
+        if (error) throw error;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function startHeartbeat() {
+      // Refresh last_seen every 30s so admin can tell active vs stale.
+      // Only the timestamp is rewritten; current_game is left as-is.
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      heartbeatTimer = setInterval(() => {
+        sb.from('active_sessions')
+          .update({ last_seen: new Date().toISOString() })
+          .eq('username', myName)
+          .then(({ error }) => { if (error) console.error(error); });
+      }, 30000);
+    }
+
+    // Cards route through here so the open is recorded before navigating.
+    async function openGame(path, name) {
+      await trackPresence(name);
+      window.location.href = '../' + path + '/index.html';
+    }
+
+    /* ---------- Direct messages (admin ↔ you) ---------- */
+
+    function toggleDm() {
+      const panel = document.getElementById('dmPanel');
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) {
+        document.getElementById('dmDot').classList.remove('show');
+        markDmsRead();
+      }
+    }
+
+    function appendDm(msg) {
+      const box = document.getElementById('dmMsgs');
+      const empty = box.querySelector('.chat-empty');
+      if (empty) empty.remove();
+      const div = document.createElement('div');
+      const isAdmin = (msg.from_username || '').toLowerCase() === 'admin';
+      div.className = 'chat-msg' + (isAdmin ? ' admin' : '');
+      div.innerHTML =
+        '<div class="meta"><strong></strong> · <span></span></div>' +
+        '<div class="bubble"></div>';
+      div.querySelector('strong').textContent = msg.from_username || 'admin';
+      div.querySelector('.meta span').textContent = msg.created_at ? formatTime(msg.created_at) : '';
+      div.querySelector('.bubble').textContent = msg.content || '';
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function markDmsRead() {
+      try {
+        const { error } = await sb
+          .from('direct_messages')
+          .update({ read: true })
+          .eq('to_username', myName)
+          .eq('read', false);
+        if (error) throw error;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadDms() {
+      try {
+        // History in either direction between me and admin. Two exact-match
+        // queries merged client-side (avoids filter-escaping issues with
+        // freeform usernames).
+        const [a, b] = await Promise.all([
+          sb.from('direct_messages')
+            .select('id, from_username, to_username, content, created_at, read')
+            .eq('from_username', 'admin')
+            .eq('to_username', myName)
+            .order('created_at', { ascending: true })
+            .limit(50),
+          sb.from('direct_messages')
+            .select('id, from_username, to_username, content, created_at, read')
+            .eq('from_username', myName)
+            .eq('to_username', 'admin')
+            .order('created_at', { ascending: true })
+            .limit(50)
+        ]);
+        if (a.error) throw a.error;
+        if (b.error) throw b.error;
+        const data = (a.data || []).concat(b.data || [])
+          .sort((x, y) => new Date(x.created_at) - new Date(y.created_at))
+          .slice(0, 50);
+        const box = document.getElementById('dmMsgs');
+        box.innerHTML = '';
+        if (!data || data.length === 0) {
+          box.innerHTML = '<div class="chat-empty">No messages yet.</div>';
+        } else {
+          data.forEach(appendDm);
+          if (data.some(m => m.to_username === myName && !m.read)) {
+            document.getElementById('dmDot').classList.add('show');
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function subscribeDms() {
+      sb.channel('ls-dm-' + myName)
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: 'to_username=eq.' + myName },
+          payload => {
+            appendDm(payload.new);
+            // Popup: open the panel and flag the fab so it's noticed mid-game.
+            document.getElementById('dmPanel').classList.add('open');
+            document.getElementById('dmDot').classList.add('show');
+          })
+        .subscribe();
+    }
+
+    async function sendDmReply(e) {
+      e.preventDefault();
+      const input = document.getElementById('dmInput');
+      const content = input.value.trim();
+      if (!content) return false;
+      input.value = '';
+      try {
+        const { error } = await sb
+          .from('direct_messages')
+          .insert({ from_username: myName, to_username: 'admin', content: content.slice(0, 500) });
+        if (error) throw error;
+        // Echo optimistically (Realtime only fires for rows addressed to me).
+        appendDm({ from_username: myName, content, created_at: new Date().toISOString() });
+      } catch (err) {
+        console.error(err);
+        input.value = content;
+      }
+      return false;
+    }
+
+    // All games — paths are relative to games/play/ (this file lives there,
+    // the game folders live in games/)
     const GAMES = [
       "baseball",
       "battle-racing-stars",
@@ -685,7 +938,7 @@
           const name = prettyName(path);
           const card = document.createElement('div');
           card.className = 'game-card';
-          card.onclick = () => { window.location.href = './' + path + '/index.html'; };
+          card.onclick = () => { openGame(path, name); };
           card.innerHTML =
             '<div class="game-thumb">' + emojiFor(path, GAMES.indexOf(path)) + '</div>' +
             '<div class="game-info"><h3>' + name + '</h3>' +
@@ -700,9 +953,18 @@
     }
 
     renderGames();
-    checkAuth();
-    loadChat();
-    subscribeChat();
+    (async () => {
+      const me = await checkAuth();
+      if (me) {
+        myName = (localStorage.getItem(LS_USER) || me.used_by || me.username || 'anon').slice(0, 32);
+        await trackPresence('Browsing');
+        startHeartbeat();
+        await loadDms();
+        subscribeDms();
+      }
+      loadChat();
+      subscribeChat();
+    })();
   </script>
 
 </body>
