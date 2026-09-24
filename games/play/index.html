@@ -112,9 +112,11 @@
 
     .page-header p {
       font-size: 13px;
-      color: #4b5563;
+      color: #6b6b8a;
       margin-top: 4px;
     }
+    .online-line { display: flex; align-items: center; font-size: 12px; color: #6b6b8a; margin-top: 8px; }
+    .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 8px; }
 
     .search-wrap {
       margin-top: 16px;
@@ -788,6 +790,26 @@
     @keyframes itemIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .chat-msg { animation: itemIn 0.3s ease-out backwards; }
     .chat-fab, .dm-fab, .reply-btn, .chat-form button { touch-action: manipulation; }
+    /* PINNED ANNOUNCEMENTS (separate from chat, above the games) */
+    #announceBar {
+      position: relative; z-index: 1; max-width: 1100px;
+      margin: 16px auto 0; padding: 0 24px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .announce {
+      background: #1a1a2e; border: 1px solid #1e1e2e; border-left: 4px solid #7c3aed;
+      border-radius: 16px; padding: 12px 16px; font-size: 13px; color: #e2e2f0; line-height: 1.5;
+      animation: pageIn 0.2s ease-out;
+    }
+    .announce .ahead {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+      font-size: 11px; color: #6b6b8a;
+    }
+    .announce .ahead button {
+      margin-left: auto; background: none; border: none; color: #6b6b8a;
+      font-size: 14px; cursor: pointer; min-width: 44px; min-height: 44px;
+    }
+    .announce .ahead button:hover { color: #e2e2f0; }
   </style>
 </head>
 <body>
@@ -805,11 +827,14 @@
     </div>
   </nav>
 
+  <div id="announceBar" style="display:none" aria-live="polite"></div>
+
   <div class="main">
     <div id="reqBanner" aria-live="polite"></div>
     <div class="page-header">
       <h1>Games</h1>
       <p>Pick a game and get playing.</p>
+      <p class="online-line"><span class="online-dot"></span><span id="onlineCount">…</span>&nbsp;online</p>
       <div class="search-wrap">
         <input id="search" type="text" placeholder="Search games..." oninput="filterGames()" />
       </div>
@@ -1296,13 +1321,14 @@
       const layer = trollLayer();
       const hues = [265, 210, 320, 180, 0, 45];
       let n = 0;
+      // Runs forever until stop() — spawned nodes self-remove, so only a
+      // handful are ever alive at once.
       const timer = setInterval(() => {
-        if (n++ >= 500) { clearInterval(timer); return; } // runaway cap
         const r = document.createElement('div');
         r.className = 'troll-ripple';
         r.style.left = (Math.random() * 100) + 'vw';
         r.style.top = (Math.random() * 100) + 'vh';
-        r.style.background = 'hsla(' + hues[n % hues.length] + ', 90%, 65%, 0.8)';
+        r.style.background = 'hsla(' + hues[n++ % hues.length] + ', 90%, 65%, 0.8)';
         layer.appendChild(r);
         clearAfter(r, 1100);
       }, 320);
@@ -1397,8 +1423,6 @@
     // Instant tricks (confetti, popups, alert) always fire once.
     const PERSISTENT_TRICKS = ['jumpscare', 'shake', 'disconnect', 'flip', 'ripples', 'invert', 'loading'];
     const activeTricks = {}; // "type|scope" -> { stop }
-    // Original one-shot timings, used only for legacy rows with no state.
-    const LEGACY_MS = { shake: 2800, disconnect: 4200, flip: 5000, ripples: 10500, invert: 5000, loading: 8200 };
 
     function stopTrick(key) {
       const t = activeTricks[key];
@@ -1433,13 +1457,7 @@
         const stop = startPersistent(row.event_type, row.payload || {});
         if (!stop) return;
         activeTricks[key] = { stop: stop };
-        if (!state || state === 'on') {
-          if (state === 'on') return; // stays on until "off" (or reload)
-          // Legacy row with no state: one-shot with the original timing.
-          // Jumpscare has no legacy timing — leave its loop running briefly.
-          const ms = LEGACY_MS[row.event_type] || 6000;
-          setTimeout(() => stopTrick(key), ms);
-        }
+        // Runs forever until an "off" event (or page reload). No timers.
         return;
       }
       const payload = row.payload || {};
@@ -1451,25 +1469,28 @@
       }
     }
 
-    // On page load, resume any persistent trick (incl. jumpscare) whose
-    // most-recent event for my scope is still 'on'.
+    // On page load, fetch the latest row per event_type for both scopes
+    // (global '*' and this user). Newest 'on' wins: the effect starts and
+    // runs forever until an 'off' arrives. All fetched ids are marked seen
+    // so the 3s poll never re-fires old one-shot effects.
     async function resumeActiveTricks() {
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
         const { data, error } = await sb
           .from('troll_events')
-          .select('event_type, target_username, payload, created_at')
+          .select('id, event_type, target_username, payload, created_at')
           .order('created_at', { ascending: false })
           .limit(200);
         if (error) throw error;
-        const seen = {};
+        const decided = {};
         (data || []).forEach(r => {
           if (r.target_username && r.target_username !== me) return;
+          markTrollSeen(r);
           const scope = r.target_username || '*';
           const k = r.event_type + '|' + scope;
-          if (k in seen) return;
-          seen[k] = true;
+          if (k in decided) return;
+          decided[k] = true;
           const st = r.payload && r.payload.state;
           if (PERSISTENT_TRICKS.indexOf(r.event_type) !== -1 && st === 'on') {
             try { dispatchTroll(r); } catch (e) { console.error('resume trick failed:', e); }
@@ -1572,15 +1593,158 @@
       setTimeout(() => { overlay.classList.remove('show', 'closing'); }, 200);
     }
 
+    // Seen event ids — realtime marks them on arrival, the initial sync
+    // seeds them, and the 3s poll only dispatches ids never seen before.
+    // This keeps effects running forever without restart flicker.
+    const trollSeen = new Set();
+    function markTrollSeen(row) {
+      if (row && row.id !== undefined && row.id !== null) trollSeen.add('t' + row.id);
+    }
+
+    let trollChannel = null;
     function subscribeTrolls() {
       try {
-        sb.channel('ls-trolls')
+        if (trollChannel) { try { sb.removeChannel(trollChannel); } catch (e) {} }
+        trollChannel = sb.channel('ls-trolls')
           .on('postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'troll_events' },
-            payload => { try { dispatchTroll(payload.new); } catch (e) { console.error('trick failed:', e); } })
+            payload => {
+              try { markTrollSeen(payload.new); dispatchTroll(payload.new); }
+              catch (e) { console.error('trick failed:', e); }
+            })
           .subscribe();
       } catch (e) {
         console.error('troll realtime subscribe failed:', e);
+      }
+    }
+
+    // Re-subscribe when the tab becomes visible again (mobile browsers
+    // and flaky networks can silently drop realtime channels).
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        try { subscribeTrolls(); } catch (e) { console.error('troll resubscribe failed:', e); }
+      }
+    });
+
+    // 3s fallback poll — catches events realtime missed. Only unseen ids
+    // dispatch, so running effects are never restarted by the poll.
+    async function pollTrolls() {
+      let me = 'anon';
+      try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
+      try {
+        const { data, error } = await sb
+          .from('troll_events')
+          .select('id, event_type, target_username, payload, created_at')
+          .order('id', { ascending: false })
+          .limit(20);
+        if (error) throw error;
+        (data || []).slice().reverse().forEach(r => {
+          if (r.target_username && r.target_username !== me) return;
+          const k = 't' + r.id;
+          if (trollSeen.has(k)) return;
+          trollSeen.add(k);
+          try { dispatchTroll(r); } catch (e) { console.error('trick failed:', e); }
+        });
+      } catch (e) {
+        console.error('troll poll failed:', e);
+      }
+    }
+
+    /* ---------- Announcements (pinned banner, separate from chat) ---------- */
+
+    let announceSeenMax = 0;
+    let announceHidden = false;
+
+    function dismissAnnouncements() {
+      announceHidden = true;
+      const bar = document.getElementById('announceBar');
+      if (bar) bar.style.display = 'none';
+    }
+
+    async function loadAnnouncements() {
+      const bar = document.getElementById('announceBar');
+      if (!bar) return;
+      try {
+        const { data, error } = await sb
+          .from('announcements')
+          .select('id, content, posted_by, rank, created_at')
+          .order('created_at', { ascending: false })
+          .limit(3);
+        if (error) throw error;
+        const rows = data || [];
+        if (rows.length === 0) { bar.style.display = 'none'; return; }
+        const maxId = Math.max.apply(null, rows.map(r => r.id));
+        if (announceHidden && maxId <= announceSeenMax) return; // stays dismissed
+        announceHidden = false;
+        announceSeenMax = Math.max(announceSeenMax, maxId);
+        bar.innerHTML = '';
+        rows.forEach(a => {
+          const card = document.createElement('div');
+          card.className = 'announce';
+          const head = document.createElement('div');
+          head.className = 'ahead';
+          const who = document.createElement('strong');
+          who.textContent = '📢 ' + (a.posted_by || 'admin');
+          head.appendChild(who);
+          const badge = document.createElement('span');
+          badge.innerHTML = rankBadgeHtml(a.rank);
+          head.appendChild(badge);
+          const when = document.createElement('span');
+          when.textContent = a.created_at ? formatTime(a.created_at) : '';
+          head.appendChild(when);
+          const x = document.createElement('button');
+          x.textContent = '✕';
+          x.setAttribute('aria-label', 'Dismiss announcements');
+          x.onclick = dismissAnnouncements;
+          head.appendChild(x);
+          const body = document.createElement('div');
+          body.textContent = a.content || '';
+          card.appendChild(head);
+          card.appendChild(body);
+          bar.appendChild(card);
+        });
+        bar.style.display = 'flex';
+      } catch (e) {
+        console.error('announcements failed:', e);
+      }
+    }
+
+    function subscribeAnnouncements() {
+      try {
+        sb.channel('ls-announce')
+          .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'announcements' },
+            () => { try { loadAnnouncements(); } catch (e) { console.error(e); } })
+          .subscribe();
+      } catch (e) {
+        console.error('announce realtime subscribe failed:', e);
+      }
+    }
+
+    /* ---------- Heartbeat pollers (realtime + 3s fallback) ---------- */
+
+    const pollers = {};
+    function startPoller(name, fn, ms) {
+      stopPoller(name);
+      try { fn(); } catch (e) { console.error('poller ' + name + ' failed:', e); }
+      pollers[name] = setInterval(fn, ms);
+    }
+    function stopPoller(name) {
+      if (pollers[name]) { clearInterval(pollers[name]); delete pollers[name]; }
+    }
+
+    async function loadOnlineCount() {
+      try {
+        const cutoff = new Date(Date.now() - 90000).toISOString();
+        const { count, error } = await sb
+          .from('active_sessions')
+          .select('username', { count: 'exact', head: true })
+          .gte('last_seen', cutoff);
+        if (error) throw error;
+        const el = document.getElementById('onlineCount');
+        if (el) el.textContent = String(count != null ? count : '—');
+      } catch (e) {
+        console.error('online count failed:', e);
       }
     }
 
@@ -1932,6 +2096,11 @@
       subscribeChat();
       resumeActiveTricks();
       checkPlayRequestStatus();
+      loadAnnouncements();
+      subscribeAnnouncements();
+      startPoller('trolls', pollTrolls, 3000);
+      startPoller('announce', loadAnnouncements, 3000);
+      startPoller('online', loadOnlineCount, 3000);
     })();
     registerTrollUnlock();
     subscribeTrolls();

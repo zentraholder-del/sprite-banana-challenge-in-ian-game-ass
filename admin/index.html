@@ -819,16 +819,19 @@
       </div>
 
       <div class="card section" id="sec-messages">
-        <h2>Post as admin</h2>
-        <p class="sub">Shows in the live chat on the play page as <b>admin</b>.</p>
+        <h2>Post announcement</h2>
+        <p class="sub">Pinned banner on the play page for everyone — separate from global chat.</p>
         <div class="inline-form">
           <input id="adminMsg" placeholder="Announcement or troll…" maxlength="500" />
           <button class="btn small" onclick="postAdminMessage()">Post</button>
         </div>
         <div class="error" id="msgError"></div>
         <div class="ok" id="msgOk"></div>
-        <h2 style="margin-top:24px">Recent messages</h2>
+        <h2 style="margin-top:24px">Recent announcements</h2>
         <div id="recentMsgs"><p class="muted">Loading…</p></div>
+        <h2 style="margin-top:24px">Recent chat (moderation)</h2>
+        <p class="sub">Global chat messages live on the play page. Delete removes them for everyone.</p>
+        <div id="chatModList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-users">
@@ -987,6 +990,23 @@
       }
     }
 
+    /* ---------- heartbeat pollers (one interval per feed) ----------
+       Switching tabs stops the old tab's pollers and starts the new
+       tab's, with an immediate fetch before the first interval fires. */
+    const pollers = {};
+    function startPoller(name, fn, ms) {
+      stopPoller(name);
+      try { fn(); } catch (e) { console.error('poller ' + name + ' failed:', e); }
+      pollers[name] = setInterval(fn, ms);
+    }
+    function stopPoller(name) {
+      if (pollers[name]) { clearInterval(pollers[name]); delete pollers[name]; }
+    }
+    function stopAllPollers() {
+      Object.keys(pollers).forEach(stopPoller);
+    }
+    function pollDms() { if (dmTarget) loadDmHistory(true); }
+
     function rankOf(row) {
       return row.rank || (row.is_admin ? 'admin' : 'user');
     }
@@ -1079,12 +1099,12 @@
       document.getElementById('adminLogout').style.display = 'inline-block';
       applyRankGating();
       initDropdowns();
-      // Mods land on a tab they can actually use.
+      // Mods land on a tab they can actually use. showTab starts that
+      // tab's heartbeat pollers.
       if (myRank === 'mod') {
-        const btn = document.querySelector('.tabs button[data-tab="blacklist"]');
-        showTab('blacklist', btn);
+        showTab('blacklist', document.querySelector('.tabs button[data-tab="blacklist"]'));
       } else {
-        loadDashboard();
+        showTab('dashboard', document.querySelector('.tabs button[data-tab="dashboard"]'));
       }
       // Realtime setup must never abort dashboard init — guard each one.
       try {
@@ -1105,6 +1125,7 @@
         toast('Insufficient rank', 'err');
         return;
       }
+      stopAllPollers();
       document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
       const nextSec = document.getElementById('sec-' + name);
@@ -1119,14 +1140,14 @@
       } else {
         nextSec.classList.add('active');
       }
-      if (name === 'dashboard') loadDashboard();
-      if (name === 'requests') loadRequests();
-      if (name === 'keys') loadKeys();
-      if (name === 'blacklist') loadBlacklist();
-      if (name === 'messages') loadRecent();
-      if (name === 'users') loadUsers();
-      if (name === 'troll') loadTrollTargets();
-      if (name === 'activity') loadActivity();
+      if (name === 'dashboard') startPoller('stats', loadDashboard, 3000);
+      if (name === 'requests') startPoller('requests', loadRequests, 3000);
+      if (name === 'keys') startPoller('keys', loadKeys, 10000);
+      if (name === 'blacklist') startPoller('blacklist', loadBlacklist, 10000);
+      if (name === 'messages') { startPoller('announce', loadAnnouncements, 3000); startPoller('chatmod', loadChatMod, 3000); }
+      if (name === 'users') { startPoller('users', loadUsers, 3000); startPoller('dms', pollDms, 3000); }
+      if (name === 'troll') { loadTrollTargets(); startPoller('trollstates', refreshTrollStates, 10000); }
+      if (name === 'activity') startPoller('activity', loadActivity, 5000);
     }
 
     // Client-side text filter for rendered admin tables (header row kept).
@@ -1148,6 +1169,8 @@
 
     /* ---------- dashboard ---------- */
 
+    let dashLoaded = false;
+
     async function loadDashboard() {
       const grid = document.getElementById('statGrid');
       if (!grid) return;
@@ -1167,6 +1190,7 @@
           sb.from('key_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
         ]);
         [keys, used, online, pending].forEach(r => { if (r.error) throw r.error; });
+        dashLoaded = true;
         setAll([
           String(keys.count != null ? keys.count : '—'),
           String(used.count != null ? used.count : '—'),
@@ -1176,7 +1200,7 @@
         ]);
       } catch (e) {
         console.error('dashboard stats failed:', e);
-        setAll(['!', '!', '!', '!', '100']);
+        if (!dashLoaded) setAll(['!', '!', '!', '!', '100']);
       }
     }
 
@@ -1196,7 +1220,8 @@
 
     async function loadActivity() {
       const box = document.getElementById('activityList');
-      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      const firstAct = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (firstAct) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const [acts, bans, trolls] = await Promise.all([
           sb.from('license_keys').select('used_by, activated_at').not('used_by', 'is', null)
@@ -1234,7 +1259,7 @@
         box.innerHTML = html + '</table>';
       } catch (e) {
         console.error('activity log failed:', e);
-        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load activity.</div>';
+        if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load activity.</div>';
       }
     }
 
@@ -1341,16 +1366,13 @@
       const trick = btn.getAttribute('data-trick');
       document.getElementById('trollOk').textContent = '';
       document.getElementById('trollErr').textContent = '';
-      if (INSTANT_TRICKS.indexOf(trick) === -1) {
-        // Persistent tricks toggle immediately — clear any armed instant.
-        document.querySelectorAll('#trickGrid .trick-btn').forEach(b => b.classList.remove('selected'));
-        selectedTrick = null;
-        toggleTrick(trick);
-        return;
-      }
+      // Selection always sticks, so Send Trick can fire afterwards.
       document.querySelectorAll('#trickGrid .trick-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       selectedTrick = trick;
+      if (INSTANT_TRICKS.indexOf(trick) === -1) {
+        toggleTrick(trick); // persistent tricks also toggle immediately on tap
+      }
     }
 
     async function toggleTrick(trick) {
@@ -1386,6 +1408,46 @@
       }
     }
 
+    // Send Trick always fires: persistent tricks go ON (tap the trick
+    // button again to stop), instant tricks fire once.
+    async function sendPersistentOn(trick) {
+      const errBox = document.getElementById('trollErr');
+      const okBox = document.getElementById('trollOk');
+      const scope = currentScope();
+      if (trollMode === 'user' && !scope.target) {
+        errBox.textContent = 'Pick a user first.';
+        return;
+      }
+      const btn = document.getElementById('trickSendBtn');
+      setBtnLoading(btn, true);
+      errBox.textContent = '';
+      try {
+        const payload = { state: 'on' };
+        if (trick === 'jumpscare') {
+          payload.image = document.getElementById('scareImg').value || 'scare1.jpg';
+        }
+        const { data, error } = await sb.from('troll_events').insert({
+          target_username: scope.target,
+          event_type: trick,
+          payload: payload
+        }).select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('Insert affected 0 rows — check the INSERT RLS policy on troll_events.');
+        }
+        trollStates[trick + '|' + scope.key] = 'on';
+        paintTrickButtons();
+        okBox.textContent = trick + ' → ' + (scope.target || 'Everyone') + ': ON ✓';
+        toast(trick + ' ON', 'ok');
+      } catch (e) {
+        console.error('send trick failed:', e, { trick: trick, scope: scope.key });
+        errBox.textContent = 'Send failed. Try again.';
+        toast('Send failed', 'err');
+      } finally {
+        setBtnLoading(btn, false, 'Send trick');
+      }
+    }
+
     async function sendTrick() {
       const okBox = document.getElementById('trollOk');
       const errBox = document.getElementById('trollErr');
@@ -1394,7 +1456,7 @@
       errBox.textContent = '';
       if (!selectedTrick) { errBox.textContent = 'Pick a trick first.'; return; }
       if (INSTANT_TRICKS.indexOf(selectedTrick) === -1) {
-        toggleTrick(selectedTrick); // persistent: Send toggles too
+        sendPersistentOn(selectedTrick);
         return;
       }
       let target = null;
@@ -1409,16 +1471,19 @@
       }
       setBtnLoading(btn, true);
       try {
-        const { error } = await sb.from('troll_events').insert({
+        const { data, error } = await sb.from('troll_events').insert({
           target_username: target,
           event_type: selectedTrick,
           payload: payload
-        });
+        }).select('id');
         if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('Insert affected 0 rows — check the INSERT RLS policy on troll_events.');
+        }
         okBox.textContent = 'Sent ' + selectedTrick + ' → ' + (target || 'Everyone') + ' ✓';
         toast('Trick sent', 'ok');
       } catch (e) {
-        console.error('send trick failed:', e);
+        console.error('send trick failed:', e, { trick: selectedTrick, scope: (target || '*') });
         errBox.textContent = 'Send failed. Try again.';
         toast('Send failed', 'err');
       } finally {
@@ -1581,7 +1646,8 @@
 
     async function loadRequests() {
       const box = document.getElementById('reqList');
-      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      const firstReq = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (firstReq) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
           .from('key_requests')
@@ -1605,7 +1671,7 @@
         box.innerHTML = html + '</table>';
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
+        if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
       }
     }
 
@@ -1811,7 +1877,8 @@
 
     async function loadKeys() {
       const box = document.getElementById('keyList');
-      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      const firstKeys = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (firstKeys) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
           .from('license_keys')
@@ -1847,7 +1914,7 @@
         reapplyFilter('keySearch', 'keyList');
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load keys.</div>';
+        if (firstKeys) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load keys.</div>';
       }
     }
 
@@ -1926,7 +1993,8 @@
 
     async function loadBlacklist() {
       const box = document.getElementById('blList');
-      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      const firstBl = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (firstBl) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
           .from('blacklist')
@@ -1946,7 +2014,7 @@
         box.innerHTML = html + '</table>';
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load blacklist.</div>';
+        if (firstBl) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load blacklist.</div>';
       }
     }
 
@@ -1989,48 +2057,102 @@
       document.getElementById('msgError').textContent = '';
       document.getElementById('msgOk').textContent = '';
       if (!content) { document.getElementById('msgError').textContent = 'Type a message first.'; return; }
+      let postedBy = 'admin';
+      try { postedBy = localStorage.getItem(LS_USER) || 'admin'; } catch (e) {}
       try {
-        let { error } = await sb
-          .from('messages')
-          .insert({ username: 'admin', content: content.slice(0, 500), rank: myRank });
-        if (error && /column/i.test(error.message || '')) {
-          const r2 = await sb
-            .from('messages')
-            .insert({ username: 'admin', content: content.slice(0, 500) });
-          error = r2.error;
-        }
+        const { data, error } = await sb
+          .from('announcements')
+          .insert({ content: content.slice(0, 500), posted_by: postedBy, rank: myRank })
+          .select('id');
         if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('Insert affected 0 rows — check the INSERT RLS policy on announcements.');
+        }
         input.value = '';
-        document.getElementById('msgOk').textContent = 'Posted to global chat.';
-        toast('Message posted', 'ok');
-        loadRecent();
+        document.getElementById('msgOk').textContent = 'Announcement posted.';
+        toast('Announcement posted', 'ok');
+        loadAnnouncements();
       } catch (e) {
-        console.error(e);
+        console.error('post announcement failed:', e);
         document.getElementById('msgError').textContent = 'Post failed.';
         toast('Post failed', 'err');
       }
     }
 
-    async function loadRecent() {
+    async function loadAnnouncements() {
       const box = document.getElementById('recentMsgs');
-      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      const first = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (first) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      try {
+        const { data, error } = await sb
+          .from('announcements')
+          .select('id, content, posted_by, rank, created_at')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          box.innerHTML = '<div class="empty-state"><div class="big">📢</div>No announcements yet.</div>';
+          return;
+        }
+        let html = '<table><tr><th>Announcement</th><th>By</th><th>When</th><th></th></tr>';
+        data.forEach((a, ai) => {
+          html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td>' + esc(a.content) +
+            '</td><td>' + esc(a.posted_by) + ' ' + rankPill(a.rank || 'user') +
+            '</td><td class="muted">' + esc(new Date(a.created_at).toLocaleString()) +
+            '</td><td><button class="btn small danger" onclick="deleteAnnouncement(' +
+            a.id + ', this)">Delete</button></td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error('load announcements failed:', e);
+        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load announcements.</div>';
+      }
+    }
+
+    async function deleteAnnouncement(id, btn) {
+      setBtnLoading(btn, true);
+      try {
+        const { data, error } = await sb
+          .from('announcements')
+          .delete()
+          .eq('id', id)
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('Delete affected 0 rows — check the DELETE RLS policy on announcements.');
+        }
+        toast('Announcement deleted', 'ok');
+        loadAnnouncements();
+      } catch (e) {
+        console.error('delete announcement failed:', e, { id: id });
+        setBtnLoading(btn, false, 'Delete');
+        toast('Delete failed.', 'err');
+      }
+    }
+
+    // Chat moderation list (mods and up can delete global chat messages).
+    async function loadChatMod() {
+      const box = document.getElementById('chatModList');
+      if (!box) return;
+      const first = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (first) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         let res = await sb
           .from('messages')
           .select('id, username, content, created_at, rank')
           .order('created_at', { ascending: false })
-          .limit(20);
+          .limit(10);
         if (res.error && /column/i.test(res.error.message || '')) {
           res = await sb
             .from('messages')
             .select('id, username, content, created_at')
             .order('created_at', { ascending: false })
-            .limit(20);
+            .limit(10);
         }
         const { data, error } = res;
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No messages yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No chat messages yet.</div>';
           return;
         }
         let html = '<table><tr><th>User</th><th>Message</th><th>When</th><th></th></tr>';
@@ -2038,28 +2160,32 @@
           html += '<tr class="arow" style="animation-delay:' + (mi * 40) + 'ms"><td>' + esc(m.username) + (m.rank && m.rank !== 'user' ? ' ' + rankPill(m.rank) : '') +
             '</td><td>' + esc(m.content) +
             '</td><td class="muted">' + esc(new Date(m.created_at).toLocaleString()) +
-            '</td><td><button class="btn small danger" onclick="deleteMessage(' +
+            '</td><td><button class="btn small danger" onclick="deleteChatMessage(' +
             m.id + ', this)">Delete</button></td></tr>';
         });
         box.innerHTML = html + '</table>';
       } catch (e) {
-        console.error(e);
-        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load messages.</div>';
+        console.error('load chat mod failed:', e);
+        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load chat.</div>';
       }
     }
 
-    async function deleteMessage(id, btn) {
+    async function deleteChatMessage(id, btn) {
       setBtnLoading(btn, true);
       try {
-        const { error } = await sb
+        const { data, error } = await sb
           .from('messages')
           .delete()
-          .eq('id', id);
+          .eq('id', id)
+          .select('id');
         if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('Delete affected 0 rows — check the DELETE RLS policy on messages.');
+        }
         toast('Message deleted', 'ok');
-        loadRecent();
+        loadChatMod();
       } catch (e) {
-        console.error(e);
+        console.error('delete chat message failed:', e, { id: id });
         setBtnLoading(btn, false, 'Delete');
         toast('Delete failed.', 'err');
       }
@@ -2078,7 +2204,8 @@
 
     async function loadUsers() {
       const box = document.getElementById('userList');
-      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      const firstUsers = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (firstUsers) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
           .from('active_sessions')
@@ -2102,7 +2229,7 @@
         reapplyFilter('userSearch', 'userList');
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load users.</div>';
+        if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load users.</div>';
       }
     }
 
@@ -2124,9 +2251,13 @@
       loadDmHistory();
     }
 
-    async function loadDmHistory() {
+    async function loadDmHistory(background) {
       if (!dmTarget) return;
       const box = document.getElementById('dmHistory');
+      if (!background && !box.querySelector('.dm-line')) box.innerHTML = '<p class="muted">Loading…</p>';
+      // Don't yank the scroll position on background refreshes unless the
+      // admin is already at the bottom reading the latest messages.
+      const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
       try {
         // Two exact-match queries merged client-side (avoids filter-escaping
         // issues with freeform usernames).
@@ -2162,7 +2293,7 @@
             div.querySelector('.text').textContent = m.content;
             box.appendChild(div);
           });
-          box.scrollTop = box.scrollHeight;
+          if (!background || atBottom) box.scrollTop = box.scrollHeight;
         }
         // Their messages to me are now seen.
         await sb.from('direct_messages')
@@ -2186,7 +2317,7 @@
             const relevant =
               (m.from_username === dmTarget && m.to_username === 'admin') ||
               (m.from_username === 'admin' && m.to_username === dmTarget);
-            if (relevant) loadDmHistory();
+            if (relevant) loadDmHistory(true);
           })
         .subscribe();
     }
