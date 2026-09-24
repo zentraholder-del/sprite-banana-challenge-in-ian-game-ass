@@ -117,6 +117,7 @@
     }
     .online-line { display: flex; align-items: center; font-size: 12px; color: #6b6b8a; margin-top: 8px; }
     .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 8px; }
+    .reqadmin-note { font-size: 12px; color: #6b6b8a; }
 
     .search-wrap {
       margin-top: 16px;
@@ -906,6 +907,7 @@
     <div class="nav-logo">⚡ Lightspeed</div>
     <div class="nav-right">
       <span class="nav-user" id="navUser"></span>
+      <span id="adminReqWrap"></span>
       <button class="logout-btn" onclick="logout()">Sign out</button>
     </div>
   </nav>
@@ -1895,6 +1897,119 @@
       }
     }
 
+    /* ---------- Request admin access (once per account, ever) ---------- */
+
+    let adminReqState = 'unknown'; // null | pending | approved | denied
+
+    async function loadAdminRequestState() {
+      const wrap = document.getElementById('adminReqWrap');
+      if (!wrap) return;
+      if (myRank() !== 'user') { wrap.innerHTML = ''; return; }
+      let token = null;
+      try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
+      if (!token) { wrap.innerHTML = ''; return; }
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .select('admin_request_status')
+          .eq('session_token', token)
+          .maybeSingle();
+        if (error) throw error;
+        const st = (data && data.admin_request_status) || null;
+        adminReqState = st;
+        wrap.innerHTML = '';
+        if (st) {
+          const note = document.createElement('span');
+          note.className = 'reqadmin-note';
+          note.textContent = "You've already used your one admin request.";
+          wrap.appendChild(note);
+        } else {
+          const b = document.createElement('button');
+          b.className = 'logout-btn';
+          b.textContent = 'Request Admin Access';
+          b.onclick = requestAdmin;
+          wrap.appendChild(b);
+        }
+      } catch (e) {
+        console.error('admin request state failed:', e);
+      }
+    }
+
+    async function requestAdmin() {
+      if (myRank() !== 'user') return;
+      if (!confirm('Request admin access? You can only do this once, ever.')) return;
+      let token = null;
+      try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
+      if (!token) { toast('No session. Log in again.', 'err'); return; }
+      try {
+        // Server-side once-ever guard: the update only touches rows whose
+        // status is still NULL, so a repeat click affects 0 rows.
+        const { data, error } = await sb
+          .from('license_keys')
+          .update({ admin_request_status: 'pending' })
+          .eq('session_token', token)
+          .is('admin_request_status', null)
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          toast("You've already used your one admin request.", 'err');
+          loadAdminRequestState();
+          return;
+        }
+        toast('Admin request sent for review', 'ok');
+        loadAdminRequestState();
+      } catch (e) {
+        console.error('request admin failed:', e);
+        toast('Request failed. Try again.', 'err');
+      }
+    }
+
+    /* ---------- Session refresh (rank changes apply live, no relogin) ---------- */
+
+    function updateSessionNav(rank) {
+      let name = 'player';
+      try { name = localStorage.getItem(LS_USER) || 'player'; } catch (e) {}
+      const nav = document.getElementById('navUser');
+      if (nav) {
+        nav.innerHTML = 'Signed in as <strong></strong>';
+        nav.querySelector('strong').textContent = name;
+        const badge = document.createElement('span');
+        badge.innerHTML = rankBadgeHtml(rank);
+        nav.appendChild(badge);
+      }
+      const elevated = rank === 'owner' || rank === 'admin' || rank === 'mod';
+      const fab = document.getElementById('adminFab');
+      if (fab) fab.classList.toggle('show', elevated);
+      loadAdminRequestState();
+    }
+
+    async function refreshSession() {
+      let token = null;
+      try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
+      if (!token) return;
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .select('is_active, is_admin, rank, admin_request_status')
+          .eq('session_token', token)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data || !data.is_active) { logout(); return; }
+        const rank = data.rank || (data.is_admin ? 'admin' : 'user');
+        let cur = 'user';
+        try { cur = localStorage.getItem(LS_RANK) || 'user'; } catch (e) {}
+        if (rank !== cur) {
+          try { localStorage.setItem(LS_RANK, rank); } catch (e) {}
+          updateSessionNav(rank);
+          toast('Your rank is now ' + rank.toUpperCase(), 'ok');
+        }
+        const st = data.admin_request_status || null;
+        if (st !== adminReqState) loadAdminRequestState();
+      } catch (e) {
+        console.error('session refresh failed:', e);
+      }
+    }
+
     /* ---------- Presence (active_sessions) ---------- */
 
     let myName = 'anon';
@@ -2349,9 +2464,11 @@
       checkPlayRequestStatus();
       loadAnnouncements();
       subscribeAnnouncements();
+      loadAdminRequestState();
       startPoller('trolls', pollTrolls, 3000);
       startPoller('announce', loadAnnouncements, 3000);
       startPoller('online', loadOnlineCount, 3000);
+      startPoller('session', refreshSession, 3000);
     })();
     registerTrollUnlock();
     subscribeTrolls();

@@ -651,6 +651,7 @@
     }
     .dd-trigger:hover { border-color: #7c3aed; }
     .dd.open .dd-trigger { border-color: #7c3aed; }
+    .dd-trigger.sm { min-height: 44px; font-size: 13px; padding: 8px 12px; min-width: 120px; }
     .dd-trigger .chev { font-style: normal; color: #6b6b8a; transition: transform 0.2s ease-out, color 0.2s ease-out; }
     .dd.open .chev { transform: rotate(180deg); color: #e2e2f0; }
     .dd-panel {
@@ -759,6 +760,7 @@
       <div class="tabs">
         <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">Dashboard</button>
         <button data-tab="requests" onclick="showTab('requests', this)">Key requests</button>
+        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">Admin requests</button>
         <button data-tab="keys" onclick="showTab('keys', this)">Manage keys</button>
         <button data-tab="blacklist" onclick="showTab('blacklist', this)">Blacklist</button>
         <button data-tab="messages" onclick="showTab('messages', this)">Messaging</button>
@@ -784,6 +786,12 @@
       <div class="card section" id="sec-requests">
         <h2>Pending key requests</h2>
         <div id="reqList"><p class="muted">Loading…</p></div>
+      </div>
+
+      <div class="card section" id="sec-adminreqs">
+        <h2>Admin requests</h2>
+        <p class="sub">Rank-upgrade requests on existing keys — one per account, ever. Owner and admin only.</p>
+        <div id="adminReqList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-keys">
@@ -1032,7 +1040,7 @@
     // Hide tabs the current rank may not use; note restrictions.
     function applyRankGating() {
       const note = document.getElementById('rankNote');
-      const hideForMod = ['requests', 'keys', 'troll', 'activity'];
+      const hideForMod = ['requests', 'adminreqs', 'keys', 'troll', 'activity'];
       document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
         const tab = b.getAttribute('data-tab');
         if (myRank === 'mod' && hideForMod.indexOf(tab) !== -1) {
@@ -1126,7 +1134,7 @@
     }
 
     function showTab(name, btn) {
-      const modBlocked = ['requests', 'keys', 'troll', 'activity'];
+      const modBlocked = ['requests', 'adminreqs', 'keys', 'troll', 'activity'];
       if (myRank === 'mod' && modBlocked.indexOf(name) !== -1) {
         toast('Insufficient rank', 'err');
         return;
@@ -1148,6 +1156,7 @@
       }
       if (name === 'dashboard') startPoller('stats', loadDashboard, 3000);
       if (name === 'requests') startPoller('requests', loadRequests, 3000);
+      if (name === 'adminreqs') startPoller('adminreqs', loadAdminRequests, 3000);
       if (name === 'keys') startPoller('keys', loadKeys, 10000);
       if (name === 'blacklist') startPoller('blacklist', loadBlacklist, 10000);
       if (name === 'messages') { startPoller('announce', loadAnnouncements, 3000); startPoller('chatmod', loadChatMod, 3000); }
@@ -1610,19 +1619,28 @@
       const firstReq = !box.querySelector('table') && !box.querySelector('.empty-state');
       if (firstReq) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
-        const { data, error } = await sb
+        let res = await sb
           .from('key_requests')
-          .select('id, name, reason, status, created_at')
+          .select('id, name, reason, school, status, created_at')
           .eq('status', 'pending')
           .order('created_at', { ascending: false });
+        if (res.error && /column/i.test(res.error.message || '')) {
+          // School column not migrated yet — fall back without it.
+          res = await sb
+            .from('key_requests')
+            .select('id, name, reason, status, created_at')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false });
+        }
+        const { data, error } = res;
         if (error) throw error;
         if (!data || data.length === 0) {
           box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending requests.</div>';
           return;
         }
-        let html = '<table><tr><th>Name</th><th>Reason</th><th>Requested</th><th></th></tr>';
+        let html = '<table><tr><th>Name</th><th>School</th><th>Reason</th><th>Requested</th><th></th></tr>';
         data.forEach((r, ri) => {
-          html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.name) + '</td><td>' + esc(r.reason) +
+          html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.name) + '</td><td>' + esc(r.school || '—') + '</td><td>' + esc(r.reason) +
             '</td><td class="muted">' + esc(new Date(r.created_at).toLocaleString()) +
             '</td><td><div class="row-actions">' +
             '<button class="btn small" onclick="approveRequest(' + r.id + ', this)">Approve</button>' +
@@ -1633,6 +1651,99 @@
       } catch (e) {
         console.error(e);
         if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
+      }
+    }
+
+    /* ---------- admin rank-upgrade requests (owner + admin review) ---------- */
+
+    async function loadAdminRequests() {
+      const box = document.getElementById('adminReqList');
+      if (!box) return;
+      const first = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (first) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .select('id, key, used_by, rank, admin_request_status, activated_at')
+          .eq('admin_request_status', 'pending')
+          .order('id', { ascending: true })
+          .limit(100);
+        if (error) throw error;
+        let html = '';
+        if (!data || data.length === 0) {
+          html += '<div class="empty-state"><div class="big">📭</div>No pending admin requests.</div>';
+        } else {
+          html += '<table><tr><th>User</th><th>Key</th><th>Rank</th><th></th></tr>';
+          data.forEach((r, ri) => {
+            html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.used_by || '—') +
+              '</td><td class="mono">' + maskKey(r.key) +
+              '</td><td>' + rankPill(r.rank || 'user') +
+              '</td><td><div class="row-actions">' +
+              '<button class="btn small" onclick="approveAdminRequest(' + r.id + ', this)">Approve</button>' +
+              '<button class="btn small ghost" onclick="denyAdminRequest(' + r.id + ', this)">Deny</button>' +
+              '</div></td></tr>';
+          });
+          html += '</table>';
+        }
+        const dec = await sb
+          .from('license_keys')
+          .select('id, used_by, admin_request_status')
+          .in('admin_request_status', ['approved', 'denied'])
+          .order('id', { ascending: false })
+          .limit(10);
+        if (!dec.error && dec.data && dec.data.length > 0) {
+          html += '<h2 style="margin-top:24px">Recently decided</h2><table><tr><th>User</th><th>Outcome</th></tr>';
+          dec.data.forEach(d => {
+            html += '<tr><td>' + esc(d.used_by || '—') +
+              '</td><td><span class="pill ' + (d.admin_request_status === 'approved' ? 'on' : 'off') + '">' +
+              esc(d.admin_request_status) + '</span></td></tr>';
+          });
+          html += '</table>';
+        }
+        box.innerHTML = html;
+      } catch (e) {
+        console.error('load admin requests failed:', e);
+        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load admin requests.</div>';
+      }
+    }
+
+    async function approveAdminRequest(id, btn) {
+      if (myRank !== 'owner' && myRank !== 'admin') { toast('Insufficient rank', 'err'); return; }
+      setBtnLoading(btn, true);
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .update({ rank: 'admin', is_admin: true, admin_request_status: 'approved' })
+          .eq('id', id)
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Update affected 0 rows.');
+        toast('User promoted to admin', 'ok');
+        loadAdminRequests();
+      } catch (e) {
+        console.error('approve admin request failed:', e, { id: id });
+        setBtnLoading(btn, false, 'Approve');
+        toast('Approve failed.', 'err');
+      }
+    }
+
+    async function denyAdminRequest(id, btn) {
+      if (myRank !== 'owner' && myRank !== 'admin') { toast('Insufficient rank', 'err'); return; }
+      setBtnLoading(btn, true);
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .update({ admin_request_status: 'denied' })
+          .eq('id', id)
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Update affected 0 rows.');
+        toast('Admin request denied', 'ok');
+        loadAdminRequests();
+      } catch (e) {
+        console.error('deny admin request failed:', e, { id: id });
+        setBtnLoading(btn, false, 'Deny');
+        toast('Deny failed.', 'err');
       }
     }
 
@@ -2165,6 +2276,7 @@
 
     async function loadUsers() {
       const box = document.getElementById('userList');
+      if (document.querySelector('.urank.open')) return; // poll: don't nuke an open rank picker
       const firstUsers = !box.querySelector('table') && !box.querySelector('.empty-state');
       if (firstUsers) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
@@ -2178,9 +2290,29 @@
           box.innerHTML = '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>';
           return;
         }
-        let html = '<table><tr><th>User</th><th>Playing</th><th>Last seen</th><th></th></tr>';
+        // Owner-only: map active usernames back to license_keys ranks.
+        let rankMap = {};
+        if (myRank === 'owner') {
+          try {
+            const r = await sb.from('license_keys').select('used_by, rank');
+            if (r.error) throw r.error;
+            (r.data || []).forEach(k => { if (k.used_by) rankMap[k.used_by] = k.rank || 'user'; });
+          } catch (e) { console.error('rank map failed:', e); }
+        }
+        let myName = '';
+        try { myName = localStorage.getItem(LS_USER) || ''; } catch (e) {}
+        let html = '<table><tr><th>User</th><th>Rank</th><th>Playing</th><th>Last seen</th><th></th></tr>';
         data.forEach((u, ui) => {
+          const urank = rankMap[u.username] || 'user';
+          const isMe = u.username !== '' && u.username === myName;
+          let rankCell;
+          if (myRank === 'owner' && !isMe && urank !== 'owner') {
+            rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>';
+          } else {
+            rankCell = rankPill(urank) + (isMe ? ' <span class="muted">you</span>' : '');
+          }
           html += '<tr class="arow" style="animation-delay:' + (ui * 40) + 'ms"><td>' + esc(u.username) + ' ' + presencePill(u.last_seen) +
+            '</td><td>' + rankCell +
             '</td><td>' + esc(u.current_game || 'Browsing') +
             '</td><td class="muted">' + esc(new Date(u.last_seen).toLocaleString()) +
             '</td><td><button class="btn small" data-user="' + esc(u.username) +
@@ -2191,6 +2323,65 @@
       } catch (e) {
         console.error(e);
         if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load users.</div>';
+      }
+    }
+
+    /* ---------- per-user rank editing (owner only) ----------
+       Compact custom dropdowns reusing the .dd component styling. The
+       document-level .dd closer already handles outside-click; selection
+       updates license_keys.rank (matched by username) immediately. */
+
+    const URANK_OPTS = ['user', 'mod', 'admin']; // owner never assignable via UI
+
+    document.addEventListener('click', e => {
+      const trg = e.target && e.target.closest ? e.target.closest('.urank .dd-trigger') : null;
+      if (!trg) return;
+      const dd = trg.closest('.urank');
+      const wasOpen = dd.classList.contains('open');
+      document.querySelectorAll('.urank.open').forEach(d => d.classList.remove('open'));
+      if (wasOpen) return;
+      const cur = trg.querySelector('.dd-label').textContent;
+      const panel = dd.querySelector('.dd-panel');
+      panel.innerHTML = '';
+      URANK_OPTS.forEach(r => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dd-opt' + (r === cur ? ' sel' : '');
+        const s = document.createElement('span');
+        s.textContent = r;
+        const tick = document.createElement('span');
+        tick.className = 'tick';
+        tick.textContent = '✓';
+        b.appendChild(s);
+        b.appendChild(tick);
+        b.onclick = (function (val) {
+          return function (ev) {
+            ev.stopPropagation();
+            setUserRank(dd.getAttribute('data-user'), val, dd);
+          };
+        })(r);
+        panel.appendChild(b);
+      });
+      dd.classList.add('open');
+    });
+
+    async function setUserRank(username, rank, dd) {
+      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return; }
+      if (!username || URANK_OPTS.indexOf(rank) === -1) return;
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .update({ rank: rank, is_admin: (rank === 'admin') })
+          .eq('used_by', username)
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('No key row matched that user.');
+        if (dd) dd.classList.remove('open');
+        toast(username + ' is now ' + rank, 'ok');
+        loadUsers();
+      } catch (e) {
+        console.error('set rank failed:', e, { username: username, rank: rank });
+        toast('Rank change failed.', 'err');
       }
     }
 

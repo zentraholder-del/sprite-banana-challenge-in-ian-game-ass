@@ -441,6 +441,41 @@
     .toast.ok { border-left: 4px solid #10b981; }
     .toast.out { opacity: 0; transform: translateX(110%); }
     @keyframes toastIn { from { opacity: 0; transform: translateX(110%); } to { opacity: 1; transform: translateX(0); } }
+    /* custom dropdown (same component language as the admin panel) */
+    .dd { position: relative; }
+    .dd-trigger {
+      width: 100%; min-height: 48px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px;
+      padding: 12px 14px; font-size: 16px; color: #e2e2f0; cursor: pointer; font-family: inherit;
+      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+      touch-action: manipulation;
+    }
+    .dd-trigger:hover { border-color: #7c3aed; }
+    .dd.open .dd-trigger { border-color: #7c3aed; }
+    .dd-trigger .chev { font-style: normal; color: #6b6b8a; transition: transform 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1); }
+    .dd.open .chev { transform: rotate(180deg); color: #e2e2f0; }
+    .dd-panel {
+      position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60;
+      background: #13131a; border: 1px solid #2a2a3d; border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: none; max-height: 240px; overflow-y: auto;
+      transform-origin: top;
+    }
+    .dd.open .dd-panel { display: block; animation: ddOpen 0.15s ease-out; }
+    @keyframes ddOpen { from { opacity: 0; transform: scaleY(0); } to { opacity: 1; transform: scaleY(1); } }
+    .dd-opt {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      width: 100%; padding: 10px 14px; background: none; border: none;
+      font-size: 14px; color: #e2e2f0; cursor: pointer; min-height: 44px; text-align: left;
+      font-family: inherit;
+      transition: background 0.15s ease-out;
+      touch-action: manipulation;
+    }
+    .dd-opt:hover { background: #1e1e2e; }
+    .dd-opt.sel { color: #7c3aed; font-weight: 600; }
+    .dd-opt .tick { visibility: hidden; }
+    .dd-opt.sel .tick { visibility: visible; }
   </style>
 </head>
 <body>
@@ -500,6 +535,18 @@
         <div class="field">
           <label>Your Name</label>
           <input type="text" id="reqName" placeholder="Enter your name" maxlength="64" />
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>School</label>
+          <div class="dd" id="dd-school" data-select="reqSchool">
+            <button type="button" class="dd-trigger" onclick="toggleSchoolDD(event)" aria-label="School"><span class="dd-label">Select school…</span><em class="chev">▾</em></button>
+            <div class="dd-panel"></div>
+          </div>
+          <select id="reqSchool" style="display:none" aria-label="School">
+            <option value="">Select school…</option>
+            <option value="SST">SST</option>
+            <option value="Lenham">Lenham</option>
+          </select>
         </div>
         <div class="field" style="margin-top:10px">
           <label>Reason</label>
@@ -720,6 +767,8 @@
         document.getElementById('successState').style.display = 'none';
         document.getElementById('reqName').value = '';
         document.getElementById('reqMsg').value = '';
+        document.getElementById('reqSchool').value = '';
+        syncSchoolDD();
         document.getElementById('reqError').textContent = '';
         document.getElementById('reqBtn').disabled = false;
       }, 250);
@@ -729,19 +778,70 @@
       if (e.target === document.getElementById('overlay')) closeModal();
     }
 
+    /* ---------- school dropdown (mirrors hidden native select) ---------- */
+
+    function toggleSchoolDD(e) {
+      if (e) e.stopPropagation();
+      const dd = document.getElementById('dd-school');
+      if (!dd) return;
+      dd.classList.toggle('open');
+    }
+
+    function syncSchoolDD() {
+      const sel = document.getElementById('reqSchool');
+      const dd = document.getElementById('dd-school');
+      if (!sel || !dd) return;
+      const label = dd.querySelector('.dd-label');
+      const cur = sel.options[sel.selectedIndex];
+      if (label) label.textContent = cur ? cur.textContent : 'Select school…';
+      const panel = dd.querySelector('.dd-panel');
+      panel.innerHTML = '';
+      Array.from(sel.options).forEach(o => {
+        if (!o.value) return; // placeholder isn't selectable
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dd-opt' + (o.value === sel.value ? ' sel' : '');
+        const s = document.createElement('span');
+        s.textContent = o.textContent;
+        const tick = document.createElement('span');
+        tick.className = 'tick';
+        tick.textContent = '✓';
+        b.appendChild(s);
+        b.appendChild(tick);
+        b.onclick = (function (val) {
+          return function (ev) {
+            ev.stopPropagation();
+            sel.value = val;
+            syncSchoolDD();
+            dd.classList.remove('open');
+          };
+        })(o.value);
+        panel.appendChild(b);
+      });
+    }
+
+    document.addEventListener('click', e => {
+      const dd = document.getElementById('dd-school');
+      if (dd && dd.classList.contains('open') && (!e.target.closest || !e.target.closest('#dd-school'))) {
+        dd.classList.remove('open');
+      }
+    });
+
     async function submitRequest() {
       const name = document.getElementById('reqName').value.trim();
       const reason = document.getElementById('reqMsg').value.trim();
+      const school = document.getElementById('reqSchool').value;
       const errBox = document.getElementById('reqError');
       const btn = document.getElementById('reqBtn');
       errBox.textContent = '';
       if (!name) { errBox.textContent = 'Enter your name.'; return; }
+      if (!school) { errBox.textContent = 'Select your school.'; return; }
       btn.disabled = true;
       btn.textContent = 'Sending…';
       try {
         const { error } = await sb
           .from('key_requests')
-          .insert({ name, reason, status: 'pending' });
+          .insert({ name, reason, school, status: 'pending' });
         if (error) throw error;
         try { localStorage.setItem('pending_request_name', name); } catch (e) {}
         document.getElementById('formState').style.display = 'none';
@@ -904,6 +1004,8 @@
 
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
+        const sdd = document.getElementById('dd-school');
+        if (sdd) sdd.classList.remove('open');
         const overlay = document.getElementById('overlay');
         if (overlay && overlay.classList.contains('visible')) closeModal();
         const approved = document.getElementById('approvedOverlay');
@@ -914,6 +1016,7 @@
     checkExistingSession();
     checkRequestStatus();
     subscribeRequestStatus();
+    syncSchoolDD();
   </script>
 
 </body>
