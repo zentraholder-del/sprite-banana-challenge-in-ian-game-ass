@@ -352,9 +352,93 @@
       z-index: 1;
       margin-top: 28px;
       font-size: 11px;
-      color: #1f2937;
+      color: #6b6b8a;
       letter-spacing: 0.5px;
     }
+
+    /* ===== FLAT DESIGN OVERRIDE (no glow, no blur, no shadow) ===== */
+    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1); }
+    @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+    .bg, .blob { display: none !important; }
+    * { text-shadow: none !important; }
+    .card, .modal {
+      background: #13131a !important;
+      border: 1px solid #1e1e2e !important;
+      border-radius: 16px !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    .overlay { background: rgba(0,0,0,0.7) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+    .modal { animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1) !important; }
+    @keyframes modalUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .logo h1 { background: none !important; -webkit-text-fill-color: #e2e2f0 !important; color: #e2e2f0 !important; }
+    .logo-icon { background: #7c3aed !important; border: none !important; box-shadow: none !important; }
+    .logo p { color: #6b6b8a !important; }
+    .field label { color: #6b6b8a !important; }
+    .input-wrap input, .modal .field input, .modal .field textarea {
+      background: #1a1a24 !important;
+      border: 1.5px solid #2a2a3d !important;
+      border-radius: 10px !important;
+      box-shadow: none !important;
+      color: #e2e2f0 !important;
+      min-height: 44px;
+      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+    }
+    .input-wrap input:focus, .modal .field input:focus, .modal .field textarea:focus {
+      border-color: #7c3aed !important;
+      box-shadow: none !important;
+    }
+    .btn {
+      background: #7c3aed !important;
+      border: none !important;
+      border-radius: 10px !important;
+      box-shadow: none !important;
+      min-height: 44px;
+      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+    }
+    .btn:hover { background: #6d28d9 !important; transform: none !important; box-shadow: none !important; }
+    .btn:active { transform: scale(0.97) !important; }
+    .btn:disabled { opacity: 0.55; cursor: wait; }
+    .modal-close { min-width: 44px; min-height: 44px; }
+    .request-link button { min-height: 44px; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #2a2a3d; }
+    ::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 8px; }
+    /* request status banners */
+    #reqStatusWrap { position: relative; z-index: 1; width: 100%; max-width: 400px; margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .req-banner {
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 14px 16px; font-size: 13px; color: #e2e2f0; line-height: 1.5;
+      animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .req-banner.muted-note { color: #6b6b8a; text-align: center; }
+    .req-banner.denied { border-left: 4px solid #ef4444; }
+    .req-banner.approved { border-left: 4px solid #10b981; }
+    .req-banner .keyline {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      margin-top: 10px; background: #1a1a24; border: 1px solid #2a2a3d;
+      border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px;
+    }
+    .req-banner button { min-height: 44px; }
+    .mini-btn {
+      background: #7c3aed; border: none; border-radius: 10px; color: #fff;
+      font-size: 13px; font-weight: 600; padding: 10px 14px; cursor: pointer; min-height: 44px;
+      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .mini-btn:hover { background: #6d28d9; }
+    .mini-btn:active { transform: scale(0.97); }
+    .mini-btn.ghost { background: #1a1a24; border: 1.5px solid #2a2a3d; }
+    /* toasts */
+    #toastWrap { position: fixed; top: 16px; right: 16px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 12px 16px; font-size: 13px; color: #e2e2f0; max-width: 300px;
+      animation: toastIn 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .toast.err { border-left: 4px solid #ef4444; }
+    .toast.ok { border-left: 4px solid #10b981; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
   </style>
 </head>
 <body>
@@ -397,7 +481,10 @@
     </div>
   </div>
 
+  <div id="reqStatusWrap" aria-live="polite"></div>
+
   <footer>LIGHTSPEED &copy; 2026</footer>
+  <div id="toastWrap" aria-live="polite"></div>
 
   <!-- REQUEST MODAL -->
   <div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
@@ -444,6 +531,17 @@
 
     const LS_TOKEN = 'ls_session_token';
     const LS_USER = 'ls_username';
+    const LS_RANK = 'user_rank';
+
+    function toast(msg, kind) {
+      const wrap = document.getElementById('toastWrap');
+      if (!wrap) return;
+      const t = document.createElement('div');
+      t.className = 'toast' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
+      t.textContent = msg;
+      wrap.appendChild(t);
+      setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+    }
 
     // SHA-256 hex of a string via Web Crypto
     async function sha256hex(str) {
@@ -473,7 +571,7 @@
     }
 
     // Auto-redirect if a valid session token is already stored.
-    // Admins go to the admin panel, everyone else to the games page.
+    // Owner/admin/mod go to the admin panel, everyone else to games.
     async function checkExistingSession() {
       const token = localStorage.getItem(LS_TOKEN);
       if (!token) return;
@@ -481,15 +579,19 @@
       try {
         const { data, error } = await sb
           .from('license_keys')
-          .select('id, is_active, is_admin')
+          .select('id, is_active, is_admin, rank')
           .eq('session_token', token)
           .maybeSingle();
         if (error) throw error;
         if (data && data.is_active) {
-          window.location.href = data.is_admin ? '../admin/index.html' : 'play/';
+          const rank = data.rank || (data.is_admin ? 'admin' : 'user');
+          try { localStorage.setItem(LS_RANK, rank); } catch (e) {}
+          const elevated = rank === 'owner' || rank === 'admin' || rank === 'mod' || data.is_admin;
+          window.location.href = elevated ? '../admin/index.html' : 'play/';
         } else {
           localStorage.removeItem(LS_TOKEN);
           localStorage.removeItem(LS_USER);
+          try { localStorage.removeItem(LS_RANK); } catch (e) {}
           document.getElementById('status').textContent = '';
         }
       } catch (e) {
@@ -533,7 +635,7 @@
         const keyHash = await sha256hex(rawKey.toUpperCase());
         const { data: row, error: keyErr } = await sb
           .from('license_keys')
-          .select('id, is_active, is_admin, session_token')
+          .select('id, is_active, is_admin, rank, session_token')
           .eq('key', keyHash)
           .maybeSingle();
         if (keyErr) throw keyErr;
@@ -568,11 +670,13 @@
 
         localStorage.setItem(LS_TOKEN, token);
         localStorage.setItem(LS_USER, username);
+        const myRank = row.rank || (row.is_admin ? 'admin' : 'user');
+        try { localStorage.setItem(LS_RANK, myRank); } catch (e) {}
         // Drop legacy stub flag if present
         try { sessionStorage.removeItem('ls_auth'); } catch (e) {}
-        // Admins land on the admin panel, everyone else on the games page.
-        // The session token is created the same way for both.
-        window.location.href = row.is_admin ? '../admin/index.html' : 'play/';
+        // Owner/admin/mod land on the admin panel, everyone else on games.
+        const elevated = myRank === 'owner' || myRank === 'admin' || myRank === 'mod' || row.is_admin;
+        window.location.href = elevated ? '../admin/index.html' : 'play/';
       } catch (e) {
         console.error(e);
         showError('Login failed. Check your connection and try again.');
@@ -628,21 +732,131 @@
       errBox.textContent = '';
       if (!name) { errBox.textContent = 'Enter your name.'; return; }
       btn.disabled = true;
+      btn.textContent = 'Sending…';
       try {
         const { error } = await sb
           .from('key_requests')
           .insert({ name, reason, status: 'pending' });
         if (error) throw error;
+        try { localStorage.setItem('pending_request_name', name); } catch (e) {}
         document.getElementById('formState').style.display = 'none';
         document.getElementById('successState').style.display = 'block';
+        toast('Request sent', 'ok');
+        checkRequestStatus();
       } catch (e) {
         console.error(e);
         errBox.textContent = 'Could not send request. Try again later.';
+        toast('Request failed', 'err');
+      } finally {
         btn.disabled = false;
+        btn.textContent = 'Send Request';
       }
     }
 
+    /* ---------- key request status (realtime, shown to requester) ---------- */
+
+    function escReq(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    async function checkRequestStatus() {
+      const wrap = document.getElementById('reqStatusWrap');
+      if (!wrap) return;
+      let name = null;
+      try { name = localStorage.getItem('pending_request_name'); } catch (e) {}
+      if (!name) { wrap.innerHTML = ''; return; }
+      // A dismissed denial stays dismissed.
+      let dismissed = null;
+      try { dismissed = localStorage.getItem('request_dismissed_' + name); } catch (e) {}
+      try {
+        const { data, error } = await sb
+          .from('key_requests')
+          .select('id, name, status')
+          .eq('name', name)
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) { wrap.innerHTML = ''; return; }
+        if (data.status === 'pending') {
+          wrap.innerHTML = '<div class="req-banner muted-note">Your request is pending review…</div>';
+        } else if (data.status === 'denied') {
+          if (dismissed) { wrap.innerHTML = ''; return; }
+          wrap.innerHTML = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
+            '<div style="margin-top:10px"><button class="mini-btn ghost" onclick="dismissRequestBanner()">Dismiss</button></div></div>';
+        } else if (data.status === 'approved') {
+          let keyText = '';
+          try {
+            const { data: krow, error: kerr } = await sb
+              .from('license_keys')
+              .select('plaintext_reveal')
+              .eq('request_id', data.id)
+              .order('id', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (!kerr && krow && krow.plaintext_reveal) keyText = krow.plaintext_reveal;
+          } catch (e) {}
+          wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong><br>Use this key to log in:' +
+            (keyText
+              ? '<div class="keyline"><span id="approvedKeyText">' + escReq(keyText) + '</span><button class="mini-btn" onclick="copyApprovedKey()">Copy</button></div>'
+              : '<div class="muted-note" style="margin-top:8px">Key is being prepared — check back shortly.</div>') +
+            '</div>';
+        } else {
+          wrap.innerHTML = '';
+        }
+      } catch (e) {
+        console.error('request status failed:', e);
+      }
+    }
+
+    function dismissRequestBanner() {
+      try {
+        const name = localStorage.getItem('pending_request_name');
+        if (name) localStorage.setItem('request_dismissed_' + name, '1');
+      } catch (e) {}
+      const wrap = document.getElementById('reqStatusWrap');
+      if (wrap) wrap.innerHTML = '';
+    }
+
+    function copyApprovedKey() {
+      const el = document.getElementById('approvedKeyText');
+      if (!el) return;
+      const text = el.textContent;
+      const done = () => toast('Copied!', 'ok');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => toast('Copy failed', 'err'));
+      } else {
+        toast('Copy not supported', 'err');
+      }
+    }
+
+    function subscribeRequestStatus() {
+      try {
+        let name = null;
+        try { name = localStorage.getItem('pending_request_name'); } catch (e) {}
+        if (!name) return;
+        sb.channel('ls-req-' + name)
+          .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'key_requests', filter: 'name=eq.' + name },
+            () => checkRequestStatus())
+          .subscribe();
+      } catch (e) {
+        console.error('request status realtime failed:', e);
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        const overlay = document.getElementById('overlay');
+        if (overlay && overlay.classList.contains('visible')) closeModal();
+      }
+    });
+
     checkExistingSession();
+    checkRequestStatus();
+    subscribeRequestStatus();
   </script>
 
 </body>

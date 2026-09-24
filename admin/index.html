@@ -497,14 +497,132 @@
       gap: 10px;
       padding: 10px 12px;
       margin-top: 8px;
-      background: rgba(124,58,237,0.1);
-      border: 1px solid rgba(124,58,237,0.3);
-      border-radius: 14px;
+      background: #1a1a24;
+      border: 1px solid #2a2a3d;
+      border-radius: 10px;
       font-family: monospace;
       font-size: 14px;
       letter-spacing: 1px;
       word-break: break-all;
     }
+
+    /* ===== FLAT DESIGN OVERRIDE (no glow, no blur, no shadow) ===== */
+    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1); }
+    @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+    .bg, .blob { display: none !important; }
+    * { text-shadow: none !important; }
+    nav {
+      background: #13131a !important; border-bottom: 1px solid #1e1e2e !important;
+      box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    }
+    .nav-logo { background: none !important; -webkit-text-fill-color: #e2e2f0 !important; color: #e2e2f0 !important; }
+    .logout-btn {
+      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important;
+      min-height: 44px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+    }
+    .logout-btn:hover { background: #2a2a3d !important; color: #fff !important; transform: none !important; box-shadow: none !important; }
+    .logout-btn:active { transform: scale(0.97) !important; }
+    .card {
+      background: #13131a !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important;
+      box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    }
+    .card h1, .card h2 { color: #e2e2f0 !important; }
+    .card p.sub { color: #6b6b8a !important; }
+    .field label { color: #6b6b8a !important; }
+    .field input, .field textarea, .field select, .inline-form input {
+      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important;
+      min-height: 44px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus, .inline-form input:focus {
+      border-color: #7c3aed !important; box-shadow: none !important;
+    }
+    .btn {
+      background: #7c3aed !important; border: none !important; border-radius: 10px !important;
+      box-shadow: none !important; min-height: 44px;
+      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+    }
+    .btn:hover { background: #6d28d9 !important; transform: none !important; box-shadow: none !important; }
+    .btn:active { transform: scale(0.97) !important; }
+    .btn.ghost { background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important; box-shadow: none !important; }
+    .btn.ghost:hover { background: #2a2a3d !important; box-shadow: none !important; }
+    .btn.danger { background: #ef4444 !important; box-shadow: none !important; }
+    .btn.danger:hover { background: #dc2626 !important; }
+    .btn:disabled { opacity: 0.55; cursor: wait; transform: none !important; }
+    .tabs button, .tabs a.tablink {
+      background: #1a1a24 !important; border: 1px solid #2a2a3d !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #6b6b8a !important;
+      min-height: 44px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+    }
+    .tabs button:hover, .tabs a.tablink:hover { color: #e2e2f0 !important; border-color: #7c3aed !important; transform: none !important; }
+    .tabs button.active { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; box-shadow: none !important; }
+    .tabs a.tablink { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; box-shadow: none !important; }
+    .tabs a.tablink:hover { background: #6d28d9 !important; box-shadow: none !important; }
+    .section.active { animation: secFade 0.2s cubic-bezier(0.22,1,0.36,1) !important; }
+    @keyframes secFade { from { opacity: 0; } to { opacity: 1; } }
+    th { color: #6b6b8a !important; }
+    td { color: #e2e2f0 !important; }
+    th, td { border-bottom: 1px solid #1e1e2e !important; }
+    .pill { border-radius: 20px; }
+    .pill.on { background: #10b981 !important; color: #000 !important; }
+    .pill.off { background: #1a1a24 !important; color: #6b6b8a !important; border: 1px solid #2a2a3d; }
+    .pill.rank-owner { background: #f59e0b !important; color: #000 !important; }
+    .pill.rank-admin { background: #7c3aed !important; color: #fff !important; }
+    .pill.rank-mod { background: #10b981 !important; color: #000 !important; }
+    .pill.rank-user { background: #1a1a24 !important; color: #6b6b8a !important; border: 1px solid #2a2a3d; }
+    .newkey { background: #1a1a24 !important; border: 1px solid #2a2a3d !important; border-radius: 10px !important; box-shadow: none !important; }
+    .muted { color: #6b6b8a !important; }
+    .check { color: #6b6b8a !important; min-height: 44px; }
+    .dm-line .text { background: #1a1a24 !important; border: 1px solid #2a2a3d !important; border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important; }
+    footer { color: #6b6b8a !important; }
+    .overlay { background: rgba(0,0,0,0.7) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+    .overlay.show { display: flex; }
+    .modal {
+      background: #13131a !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important;
+      box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+      animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+    }
+    @keyframes modalUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .stat-card { background: #1a1a24 !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important; box-shadow: none !important; }
+    .stat-num { background: none !important; -webkit-text-fill-color: #e2e2f0 !important; color: #e2e2f0 !important; }
+    .stat-label { color: #6b6b8a !important; }
+    .seg-btn {
+      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #6b6b8a !important;
+      min-height: 48px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+    }
+    .seg-btn.active { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; box-shadow: none !important; }
+    .field select option { background: #13131a !important; color: #e2e2f0 !important; }
+    .trick-btn {
+      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
+      border-radius: 16px !important; box-shadow: none !important;
+      min-height: 88px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      touch-action: manipulation;
+    }
+    .trick-btn span { color: #6b6b8a !important; }
+    .trick-btn:active { transform: scale(0.97) !important; }
+    .trick-btn.selected { background: #1a1a24 !important; border-color: #7c3aed !important; box-shadow: none !important; }
+    .trick-btn.selected span { color: #e2e2f0 !important; }
+    .trick-btn.on { background: #7c3aed !important; border-color: #7c3aed !important; box-shadow: none !important; }
+    .trick-btn.on span, .trick-btn.on .tstate { color: #fff !important; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #2a2a3d; }
+    ::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 8px; }
+    #toastWrap { position: fixed; top: 16px; right: 16px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 12px 16px; font-size: 13px; color: #e2e2f0; max-width: 300px;
+      animation: toastIn 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .toast.err { border-left: 4px solid #ef4444; }
+    .toast.ok { border-left: 4px solid #10b981; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+    .skel { background: #1a1a24; border-radius: 10px; min-height: 44px; animation: skelPulse 1.2s ease-in-out infinite; }
+    @keyframes skelPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .btn.restricted { opacity: 0.45; cursor: not-allowed; }
+    .empty-state { text-align: center; padding: 32px 16px; color: #6b6b8a; font-size: 13px; }
+    .empty-state .big { font-size: 32px; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -530,16 +648,17 @@
     <!-- DASHBOARD -->
     <div id="dash" style="display:none">
       <div class="tabs">
-        <button class="active" onclick="showTab('dashboard', this)">Dashboard</button>
-        <button onclick="showTab('requests', this)">Key requests</button>
-        <button onclick="showTab('keys', this)">Manage keys</button>
-        <button onclick="showTab('blacklist', this)">Blacklist</button>
-        <button onclick="showTab('messages', this)">Messaging</button>
-        <button onclick="showTab('users', this)">Users</button>
-        <button onclick="showTab('troll', this)">Troll</button>
-        <button onclick="showTab('activity', this)">Activity</button>
+        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">Dashboard</button>
+        <button data-tab="requests" onclick="showTab('requests', this)">Key requests</button>
+        <button data-tab="keys" onclick="showTab('keys', this)">Manage keys</button>
+        <button data-tab="blacklist" onclick="showTab('blacklist', this)">Blacklist</button>
+        <button data-tab="messages" onclick="showTab('messages', this)">Messaging</button>
+        <button data-tab="users" onclick="showTab('users', this)">Users</button>
+        <button data-tab="troll" onclick="showTab('troll', this)">Troll</button>
+        <button data-tab="activity" onclick="showTab('activity', this)">Activity</button>
         <a class="tablink" href="../games/play/">▶ Play Games</a>
       </div>
+      <p class="muted" id="rankNote" style="margin-bottom:12px"></p>
 
       <div class="card section active" id="sec-dashboard">
         <h2>Overview</h2>
@@ -560,8 +679,15 @@
 
       <div class="card section" id="sec-keys">
         <h2>License keys</h2>
-        <p class="sub">Hashes only — plaintext is shown once at creation time. Reset clears activation so a key can be redeemed again.</p>
+        <p class="sub">Hashes only — plaintext is shown once at creation time then cleared. Reset clears activation so a key can be redeemed again.</p>
         <div class="inline-form" style="align-items:center">
+          <input id="customKey" placeholder="Custom Key (leave blank to auto-generate)" maxlength="64" style="flex:1; min-width:180px" aria-label="Custom key" />
+          <select id="genRank" aria-label="Rank for new key" style="flex:0 0 130px; min-width:130px">
+            <option value="user">user</option>
+            <option value="mod">mod</option>
+            <option value="admin">admin</option>
+            <option value="owner">owner</option>
+          </select>
           <button class="btn small" id="genKeyBtn" onclick="generateStandaloneKey()">Generate Key</button>
           <label class="check"><input type="checkbox" id="genAdmin" /> make this an admin key</label>
         </div>
@@ -640,7 +766,7 @@
           <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing 🎉" maxlength="200" />
         </div>
         <div class="trick-grid" id="trickGrid">
-          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span><em class="tstate">OFF</em></button>
@@ -651,7 +777,7 @@
           <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
-        <p class="muted">TOGGLE tricks switch on/off the moment you tap them (tap again to stop). INSTANT tricks arm the Send button below.</p>
+        <p class="muted">TOGGLE tricks (incl. jumpscare) switch on/off the moment you tap them — tap again to stop. INSTANT tricks arm the Send button below. Jumpscare uses the image picker above when toggled ON.</p>
         <button class="btn block" id="trickSendBtn" style="margin-top:16px" onclick="sendTrick()">Send trick</button>
         <div class="error" id="trollErr"></div>
         <div class="ok" id="trollOk"></div>
@@ -679,6 +805,23 @@
     </div>
   </div>
 
+  <!-- APPROVE REQUEST (custom key option) -->
+  <div class="overlay" id="approveOverlay" onclick="if(event.target===this)closeApproveModal()">
+    <div class="modal">
+      <h2>Approve request</h2>
+      <p class="sub" id="approveSub">Create a key for this requester.</p>
+      <div class="field">
+        <label>Custom Key (leave blank to auto-generate)</label>
+        <input id="approveCustomKey" placeholder="e.g. LIGHT-ABC123" maxlength="64" />
+      </div>
+      <div class="error" id="approveErr"></div>
+      <button class="btn block" id="approveConfirmBtn" style="margin-top:8px" onclick="confirmApprove()">Confirm</button>
+      <button class="btn block ghost" style="margin-top:8px" onclick="closeApproveModal()">Cancel</button>
+    </div>
+  </div>
+
+  <div id="toastWrap" aria-live="polite"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // ── Fill these in (same values as games/*.html) ────────────────
@@ -690,6 +833,72 @@
 
     const LS_TOKEN = 'ls_session_token';
     const LS_USER = 'ls_username';
+    const LS_RANK = 'user_rank';
+
+    // My rank for this session (owner > admin > mod > user).
+    let myRank = 'user';
+    try { myRank = localStorage.getItem(LS_RANK) || 'user'; } catch (e) {}
+    // IDs of keys created this session whose plaintext_reveal must be cleared on modal dismiss.
+    let lastCreatedIds = [];
+
+    function toast(msg, kind) {
+      const wrap = document.getElementById('toastWrap');
+      if (!wrap) return;
+      const t = document.createElement('div');
+      t.className = 'toast' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
+      t.textContent = msg;
+      wrap.appendChild(t);
+      setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+    }
+
+    function setBtnLoading(btn, loading, label) {
+      if (!btn) return;
+      if (loading) {
+        btn.disabled = true;
+        btn.setAttribute('data-label', btn.textContent);
+        btn.textContent = '…';
+      } else {
+        btn.disabled = false;
+        const orig = btn.getAttribute('data-label');
+        btn.textContent = label || orig || btn.textContent;
+      }
+    }
+
+    function rankOf(row) {
+      return row.rank || (row.is_admin ? 'admin' : 'user');
+    }
+
+    // Only user-rank keys can be touched by admin/mod. Owner can touch all.
+    function canModify(targetRank) {
+      if (myRank === 'owner') return true;
+      if (myRank === 'admin' || myRank === 'mod') return targetRank === 'user';
+      return false;
+    }
+
+    function rankPill(rank) {
+      const r = rank || 'user';
+      return '<span class="pill rank-' + esc(r) + '">' + esc(r) + '</span>';
+    }
+
+    // Hide tabs the current rank may not use; note restrictions.
+    function applyRankGating() {
+      const note = document.getElementById('rankNote');
+      const hideForMod = ['requests', 'keys', 'troll', 'activity'];
+      document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
+        const tab = b.getAttribute('data-tab');
+        if (myRank === 'mod' && hideForMod.indexOf(tab) !== -1) {
+          b.style.display = 'none';
+        } else {
+          b.style.display = '';
+        }
+      });
+      if (note) {
+        if (myRank === 'owner') note.textContent = 'Signed in as OWNER — full access.';
+        else if (myRank === 'admin') note.textContent = 'Signed in as ADMIN — you can only modify user keys.';
+        else if (myRank === 'mod') note.textContent = 'Signed in as MOD — blacklist, messages and users only.';
+        else note.textContent = '';
+      }
+    }
 
     async function sha256hex(str) {
       const data = new TextEncoder().encode(str);
@@ -717,14 +926,18 @@
       try {
         const { data, error } = await sb
           .from('license_keys')
-          .select('id, is_active, is_admin')
+          .select('id, is_active, is_admin, rank')
           .eq('session_token', token)
           .maybeSingle();
         if (error) throw error;
-        if (!data || !data.is_active || !data.is_admin) {
+        const rank = data ? rankOf(data) : 'user';
+        const elevated = rank === 'owner' || rank === 'admin' || rank === 'mod';
+        if (!data || !data.is_active || (!data.is_admin && !elevated)) {
           window.location.href = '../games/index.html';
           return;
         }
+        myRank = rank;
+        try { localStorage.setItem(LS_RANK, rank); } catch (e) {}
         openDash();
       } catch (e) {
         console.error(e);
@@ -736,6 +949,7 @@
     function adminLogout() {
       localStorage.removeItem(LS_TOKEN);
       localStorage.removeItem(LS_USER);
+      try { localStorage.removeItem(LS_RANK); } catch (e) {}
       try { sessionStorage.removeItem('ls_admin_ok'); } catch (e) {}
       window.location.href = '../games/index.html';
     }
@@ -744,7 +958,14 @@
       document.getElementById('gate').style.display = 'none';
       document.getElementById('dash').style.display = 'block';
       document.getElementById('adminLogout').style.display = 'inline-block';
-      loadDashboard();
+      applyRankGating();
+      // Mods land on a tab they can actually use.
+      if (myRank === 'mod') {
+        const btn = document.querySelector('.tabs button[data-tab="blacklist"]');
+        showTab('blacklist', btn);
+      } else {
+        loadDashboard();
+      }
       // Realtime setup must never abort dashboard init — guard each one.
       try {
         subscribeUsers();
@@ -759,6 +980,11 @@
     }
 
     function showTab(name, btn) {
+      const modBlocked = ['requests', 'keys', 'troll', 'activity'];
+      if (myRank === 'mod' && modBlocked.indexOf(name) !== -1) {
+        toast('Insufficient rank', 'err');
+        return;
+      }
       document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -823,6 +1049,7 @@
 
     async function loadActivity() {
       const box = document.getElementById('activityList');
+      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const [acts, bans, trolls] = await Promise.all([
           sb.from('license_keys').select('used_by, activated_at').not('used_by', 'is', null)
@@ -849,7 +1076,7 @@
         rows.sort((a, b) => new Date(b.when) - new Date(a.when));
         const top = rows.slice(0, 50);
         if (top.length === 0) {
-          box.innerHTML = '<p class="muted">No activity yet.</p>';
+          box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
           return;
         }
         let html = '<table><tr><th>When</th><th>Type</th><th>Detail</th></tr>';
@@ -860,7 +1087,7 @@
         box.innerHTML = html + '</table>';
       } catch (e) {
         console.error('activity log failed:', e);
-        box.innerHTML = '<p class="muted">Failed to load activity.</p>';
+        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load activity.</div>';
       }
     }
 
@@ -912,8 +1139,8 @@
     }
 
     // Instant tricks fire once via the Send button. Persistent tricks
-    // toggle on/off the moment their button is tapped.
-    const INSTANT_TRICKS = ['jumpscare', 'confetti', 'popups', 'alert'];
+    // (including jumpscare) toggle on/off the moment their button is tapped.
+    const INSTANT_TRICKS = ['confetti', 'popups', 'alert'];
     let trollStates = {}; // "type|scope" -> 'on' / 'off' / null (scope '*' = Everyone)
 
     function currentScope() {
@@ -990,18 +1217,24 @@
       const next = trollStates[trick + '|' + scope.key] === 'on' ? 'off' : 'on';
       errBox.textContent = '';
       try {
+        const payload = { state: next };
+        if (trick === 'jumpscare' && next === 'on') {
+          payload.image = document.getElementById('scareImg').value || 'scare1.jpg';
+        }
         const { error } = await sb.from('troll_events').insert({
           target_username: scope.target,
           event_type: trick,
-          payload: { state: next }
+          payload: payload
         });
         if (error) throw error;
         trollStates[trick + '|' + scope.key] = next;
         paintTrickButtons();
         okBox.textContent = trick + ' → ' + (scope.target || 'Everyone') + ': ' + next.toUpperCase() + ' ✓';
+        toast(trick + ' ' + next.toUpperCase(), next === 'on' ? 'ok' : undefined);
       } catch (e) {
         console.error('toggle trick failed:', e);
         errBox.textContent = 'Send failed. Try again.';
+        toast('Send failed', 'err');
       }
     }
 
@@ -1022,14 +1255,11 @@
         if (!target) { errBox.textContent = 'Pick a user first.'; return; }
       }
       const payload = {};
-      if (selectedTrick === 'jumpscare') {
-        payload.image = document.getElementById('scareImg').value || 'scare1.jpg';
-      }
       if (selectedTrick === 'alert' || selectedTrick === 'popups') {
         const msg = document.getElementById('trollMsg').value.trim();
         if (msg) payload.message = msg.slice(0, 200);
       }
-      btn.disabled = true;
+      setBtnLoading(btn, true);
       try {
         const { error } = await sb.from('troll_events').insert({
           target_username: target,
@@ -1038,11 +1268,13 @@
         });
         if (error) throw error;
         okBox.textContent = 'Sent ' + selectedTrick + ' → ' + (target || 'Everyone') + ' ✓';
+        toast('Trick sent', 'ok');
       } catch (e) {
         console.error('send trick failed:', e);
         errBox.textContent = 'Send failed. Try again.';
+        toast('Send failed', 'err');
       } finally {
-        btn.disabled = false;
+        setBtnLoading(btn, false, 'Send trick');
       }
     }
 
@@ -1050,31 +1282,39 @@
 
     async function generateBulkKeys() {
       const btn = document.getElementById('bulkGenBtn');
+      if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
       const countInput = document.getElementById('bulkCount');
       const isAdmin = document.getElementById('bulkAdmin').checked;
+      const rank = isAdmin ? 'admin' : 'user';
       let n = parseInt(countInput.value, 10);
       if (isNaN(n) || n < 1) n = 1;
       if (n > 20) n = 20;
       countInput.value = n;
-      btn.disabled = true;
+      setBtnLoading(btn, true);
       try {
         const made = [];
+        const ids = [];
         for (let i = 0; i < n; i++) {
           const plaintext = randomKey();
           const hash = await sha256hex(plaintext);
-          const { error } = await sb
+          const { data: created, error } = await sb
             .from('license_keys')
-            .insert({ key: hash, is_active: true, is_admin: isAdmin });
+            .insert({ key: hash, is_active: true, is_admin: isAdmin, rank: rank, plaintext_reveal: plaintext })
+            .select('id')
+            .maybeSingle();
           if (error) throw error;
+          if (created && created.id) ids.push(created.id);
           made.push(plaintext);
         }
+        lastCreatedIds = ids;
         showKeysModal(made);
+        toast(made.length + ' keys created', 'ok');
         loadKeys();
       } catch (e) {
         console.error('bulk generate failed:', e);
-        alert('Bulk generate failed partway — some keys may have been created.');
+        toast('Bulk generate failed partway — some keys may have been created.', 'err');
       } finally {
-        btn.disabled = false;
+        setBtnLoading(btn, false, 'Generate keys');
       }
     }
 
@@ -1139,6 +1379,7 @@
 
     async function loadRequests() {
       const box = document.getElementById('reqList');
+      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
           .from('key_requests')
@@ -1147,7 +1388,7 @@
           .order('created_at', { ascending: false });
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<p class="muted">No pending requests.</p>';
+          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending requests.</div>';
           return;
         }
         let html = '<table><tr><th>Name</th><th>Reason</th><th>Requested</th><th></th></tr>';
@@ -1162,7 +1403,7 @@
         box.innerHTML = html + '</table>';
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<p class="muted">Failed to load requests.</p>';
+        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
       }
     }
 
@@ -1174,26 +1415,69 @@
       return 'LIGHT-' + s.slice(0, 6) + '-' + s.slice(6);
     }
 
+    // Custom key resolution: blank = auto-generate, filled = uppercase + use.
+    function resolvePlaintext(customValue) {
+      const v = (customValue || '').trim().toUpperCase();
+      return v || randomKey();
+    }
+
+    let pendingApproveId = null;
+
+    function openApproveModal(id, btn) {
+      const row = btn && btn.closest ? btn.closest('tr') : null;
+      const name = row ? row.cells[0].textContent : 'this requester';
+      pendingApproveId = id;
+      document.getElementById('approveSub').textContent = 'Create a key for ' + name + '.';
+      document.getElementById('approveCustomKey').value = '';
+      document.getElementById('approveErr').textContent = '';
+      document.getElementById('approveOverlay').classList.add('show');
+    }
+
+    function closeApproveModal() {
+      document.getElementById('approveOverlay').classList.remove('show');
+      pendingApproveId = null;
+    }
+
     async function approveRequest(id, btn) {
-      btn.disabled = true;
+      openApproveModal(id, btn);
+    }
+
+    async function confirmApprove() {
+      const errBox = document.getElementById('approveErr');
+      const btn = document.getElementById('approveConfirmBtn');
+      errBox.textContent = '';
+      if (!pendingApproveId) { errBox.textContent = 'No request selected.'; return; }
+      const custom = document.getElementById('approveCustomKey').value;
+      if (custom.trim() && !/^[A-Za-z0-9-]{4,64}$/.test(custom.trim())) {
+        errBox.textContent = 'Custom key: letters, numbers and dashes only (4–64 chars).';
+        return;
+      }
+      setBtnLoading(btn, true);
       try {
-        const plaintext = randomKey();
+        const plaintext = resolvePlaintext(custom);
         const hash = await sha256hex(plaintext);
-        const { error: insErr } = await sb
+        const { data: created, error: insErr } = await sb
           .from('license_keys')
-          .insert({ key: hash, is_active: true, is_admin: false });
+          .insert({ key: hash, is_active: true, is_admin: false, rank: 'user', plaintext_reveal: plaintext, request_id: pendingApproveId })
+          .select('id')
+          .maybeSingle();
         if (insErr) throw insErr;
+        lastCreatedIds = created && created.id ? [created.id] : [];
         const { error: updErr } = await sb
           .from('key_requests')
-          .update({ status: 'approved' })
-          .eq('id', id);
+          .update({ status: 'approved', status_updated_at: new Date().toISOString() })
+          .eq('id', pendingApproveId);
         if (updErr) throw updErr;
+        closeApproveModal();
         showKeyModal(plaintext);
+        toast('Request approved', 'ok');
         loadRequests();
       } catch (e) {
         console.error(e);
-        btn.disabled = false;
-        alert('Approve failed.');
+        errBox.textContent = 'Approve failed. Try again.';
+        toast('Approve failed', 'err');
+      } finally {
+        setBtnLoading(btn, false, 'Confirm');
       }
     }
 
@@ -1209,6 +1493,15 @@
       document.getElementById('keyOverlay').classList.remove('show');
       document.getElementById('keyModalText').textContent = '';
       document.getElementById('keyModalList').innerHTML = '';
+      // One-time reveal: clear stored plaintext once dismissed.
+      const ids = lastCreatedIds.slice();
+      lastCreatedIds = [];
+      if (ids.length > 0) {
+        sb.from('license_keys')
+          .update({ plaintext_reveal: null })
+          .in('id', ids)
+          .then(({ error }) => { if (error) console.error('clear plaintext failed:', error); });
+      }
     }
 
     function copyRevealedKey() {
@@ -1233,42 +1526,75 @@
       document.getElementById('keyCopyBtn').textContent = 'Copied!';
     }
 
-    // Standalone key creation (no prior request). Same hash + one-time
-    // reveal flow as the approve action.
+    // Standalone key creation (no prior request). Blank custom = auto.
     async function generateStandaloneKey() {
       const btn = document.getElementById('genKeyBtn');
-      const isAdmin = document.getElementById('genAdmin').checked;
-      btn.disabled = true;
+      if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
+      const isAdminBox = document.getElementById('genAdmin').checked;
+      const rankSel = document.getElementById('genRank');
+      let rank = rankSel ? rankSel.value : 'user';
+      if (isAdminBox && rank === 'user') rank = 'admin';
+      const custom = document.getElementById('customKey').value;
+      if (custom.trim() && !/^[A-Za-z0-9-]{4,64}$/.test(custom.trim())) {
+        toast('Custom key: letters, numbers and dashes only (4–64 chars).', 'err');
+        return;
+      }
+      // Only one owner key may exist at any time.
+      if (rank === 'owner') {
+        try {
+          const { data: existing, error: ownErr } = await sb
+            .from('license_keys')
+            .select('id')
+            .eq('rank', 'owner')
+            .limit(1);
+          if (ownErr) throw ownErr;
+          if (existing && existing.length > 0) {
+            toast('An owner key already exists.', 'err');
+            return;
+          }
+        } catch (e) {
+          console.error('owner check failed:', e);
+          toast('Could not verify owner uniqueness.', 'err');
+          return;
+        }
+      }
+      setBtnLoading(btn, true);
       try {
-        const plaintext = randomKey();
+        const plaintext = resolvePlaintext(custom);
         const hash = await sha256hex(plaintext);
-        const { error } = await sb
+        const { data: created, error } = await sb
           .from('license_keys')
-          .insert({ key: hash, is_active: true, is_admin: isAdmin });
+          .insert({ key: hash, is_active: true, is_admin: (rank === 'admin' || rank === 'owner'), rank: rank, plaintext_reveal: plaintext })
+          .select('id')
+          .maybeSingle();
         if (error) throw error;
+        lastCreatedIds = created && created.id ? [created.id] : [];
+        document.getElementById('customKey').value = '';
         showKeyModal(plaintext);
+        toast('Key created', 'ok');
         loadKeys();
       } catch (e) {
         console.error(e);
-        alert('Generate failed.');
+        toast('Generate failed.', 'err');
       } finally {
-        btn.disabled = false;
+        setBtnLoading(btn, false, 'Generate Key');
       }
     }
 
     async function denyRequest(id, btn) {
-      btn.disabled = true;
+      setBtnLoading(btn, true);
       try {
         const { error } = await sb
           .from('key_requests')
-          .update({ status: 'denied' })
+          .update({ status: 'denied', status_updated_at: new Date().toISOString() })
           .eq('id', id);
         if (error) throw error;
+        toast('Request denied', 'ok');
         loadRequests();
       } catch (e) {
         console.error(e);
-        btn.disabled = false;
-        alert('Deny failed.');
+        setBtnLoading(btn, false, 'Deny');
+        toast('Deny failed.', 'err');
       }
     }
 
@@ -1281,87 +1607,101 @@
 
     async function loadKeys() {
       const box = document.getElementById('keyList');
+      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
           .from('license_keys')
-          .select('id, key, used_by, is_active, is_admin, activated_at, created_at')
+          .select('id, key, used_by, is_active, is_admin, rank, activated_at, created_at')
           .order('created_at', { ascending: false })
           .limit(200);
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<p class="muted">No keys yet.</p>';
+          box.innerHTML = '<div class="empty-state"><div class="big">🔑</div>No keys yet — generate one above.</div>';
           return;
         }
-        let html = '<table><tr><th>Key (hash)</th><th>Used by</th><th>Status</th><th>Activated</th><th></th></tr>';
+        let html = '<table><tr><th>Key (hash)</th><th>Used by</th><th>Rank</th><th>Status</th><th>Activated</th><th></th></tr>';
         data.forEach(k => {
+          const trank = rankOf(k);
+          const editable = canModify(trank);
+          const isOwner = trank === 'owner';
           html += '<tr><td class="mono">' + maskKey(k.key) +
-            (k.is_admin ? ' <span class="pill on">admin</span>' : '') +
-            '</td><td>' + esc(k.used_by) + '</td>' +
+            '</td><td>' + esc(k.used_by) + '</td><td>' + rankPill(trank) + '</td>' +
             '<td><span class="pill ' + (k.is_active ? 'on' : 'off') + '">' +
             (k.is_active ? 'active' : 'off') + '</span></td>' +
             '<td class="muted">' + (k.activated_at ? esc(new Date(k.activated_at).toLocaleString()) : '—') + '</td>' +
             '<td><div class="row-actions">' +
-            '<button class="btn small ghost" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this)">' +
-            (k.is_active ? 'Disable' : 'Enable') + '</button>' +
-            '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this)">Reset</button>' +
-            '<button class="btn small danger" onclick="deleteKey(' + k.id + ', this)">Delete</button>' +
+            (editable
+              ? '<button class="btn small ghost" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')">' +
+                (k.is_active ? 'Disable' : 'Enable') + '</button>' +
+                '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this, \'' + esc(trank) + '\')">Reset</button>'
+              : '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Locked</button>') +
+            (!isOwner && editable
+              ? '<button class="btn small danger" onclick="deleteKey(' + k.id + ', this, \'' + esc(trank) + '\')">Delete</button>'
+              : '') +
             '</div></td></tr>';
         });
         box.innerHTML = html + '</table>';
         reapplyFilter('keySearch', 'keyList');
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<p class="muted">Failed to load keys.</p>';
+        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load keys.</div>';
       }
     }
 
-    async function toggleKey(id, next, btn) {
-      btn.disabled = true;
+    async function toggleKey(id, next, btn, targetRank) {
+      if (!canModify(targetRank || 'user')) { toast('Insufficient rank', 'err'); return; }
+      setBtnLoading(btn, true);
       try {
         const { error } = await sb
           .from('license_keys')
           .update({ is_active: next })
           .eq('id', id);
         if (error) throw error;
+        toast(next ? 'Key enabled' : 'Key disabled', 'ok');
         loadKeys();
       } catch (e) {
         console.error(e);
-        btn.disabled = false;
-        alert('Toggle failed.');
+        setBtnLoading(btn, false, next ? 'Enable' : 'Disable');
+        toast('Toggle failed.', 'err');
       }
     }
 
-    async function resetKey(id, btn) {
+    async function resetKey(id, btn, targetRank) {
+      if (!canModify(targetRank || 'user')) { toast('Insufficient rank', 'err'); return; }
       if (!confirm('Reset this key so it can be redeemed again?')) return;
-      btn.disabled = true;
+      setBtnLoading(btn, true);
       try {
         const { error } = await sb
           .from('license_keys')
           .update({ used_by: null, session_token: null, activated_at: null })
           .eq('id', id);
         if (error) throw error;
+        toast('Key reset', 'ok');
         loadKeys();
       } catch (e) {
         console.error(e);
-        btn.disabled = false;
-        alert('Reset failed.');
+        setBtnLoading(btn, false, 'Reset');
+        toast('Reset failed.', 'err');
       }
     }
 
-    async function deleteKey(id, btn) {
+    async function deleteKey(id, btn, targetRank) {
+      if ((targetRank || '') === 'owner') { toast('Owner key cannot be deleted from the UI.', 'err'); return; }
+      if (!canModify(targetRank || 'user')) { toast('Insufficient rank', 'err'); return; }
       if (!confirm('Permanently delete this key? This cannot be undone.')) return;
-      btn.disabled = true;
+      setBtnLoading(btn, true);
       try {
         const { error } = await sb
           .from('license_keys')
           .delete()
           .eq('id', id);
         if (error) throw error;
+        toast('Key deleted', 'ok');
         loadKeys();
       } catch (e) {
         console.error(e);
-        btn.disabled = false;
-        alert('Delete failed.');
+        setBtnLoading(btn, false, 'Delete');
+        toast('Delete failed.', 'err');
       }
     }
 
@@ -1369,6 +1709,7 @@
 
     async function loadBlacklist() {
       const box = document.getElementById('blList');
+      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
           .from('blacklist')
@@ -1376,7 +1717,7 @@
           .order('created_at', { ascending: false });
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<p class="muted">Blacklist is empty.</p>';
+          box.innerHTML = '<div class="empty-state"><div class="big">🚫</div>Blacklist is empty.</div>';
           return;
         }
         let html = '<table><tr><th>Username</th><th>Reason</th><th></th></tr>';
@@ -1388,36 +1729,38 @@
         box.innerHTML = html + '</table>';
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<p class="muted">Failed to load blacklist.</p>';
+        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load blacklist.</div>';
       }
     }
 
     async function addBlacklist() {
       const username = document.getElementById('blUser').value.trim();
       const reason = document.getElementById('blReason').value.trim();
-      if (!username) return;
+      if (!username) { toast('Enter a username first.', 'err'); return; }
       try {
         const { error } = await sb.from('blacklist').insert({ username, reason });
         if (error) throw error;
         document.getElementById('blUser').value = '';
         document.getElementById('blReason').value = '';
+        toast('Added to blacklist', 'ok');
         loadBlacklist();
       } catch (e) {
         console.error(e);
-        alert('Add failed.');
+        toast('Add failed.', 'err');
       }
     }
 
     async function removeBlacklist(id, btn) {
-      btn.disabled = true;
+      setBtnLoading(btn, true);
       try {
         const { error } = await sb.from('blacklist').delete().eq('id', id);
         if (error) throw error;
+        toast('Removed from blacklist', 'ok');
         loadBlacklist();
       } catch (e) {
         console.error(e);
-        btn.disabled = false;
-        alert('Remove failed.');
+        setBtnLoading(btn, false, 'Remove');
+        toast('Remove failed.', 'err');
       }
     }
 
@@ -1428,37 +1771,55 @@
       const content = input.value.trim();
       document.getElementById('msgError').textContent = '';
       document.getElementById('msgOk').textContent = '';
-      if (!content) return;
+      if (!content) { document.getElementById('msgError').textContent = 'Type a message first.'; return; }
       try {
-        const { error } = await sb
+        let { error } = await sb
           .from('messages')
-          .insert({ username: 'admin', content: content.slice(0, 500) });
+          .insert({ username: 'admin', content: content.slice(0, 500), rank: myRank });
+        if (error && /column/i.test(error.message || '')) {
+          const r2 = await sb
+            .from('messages')
+            .insert({ username: 'admin', content: content.slice(0, 500) });
+          error = r2.error;
+        }
         if (error) throw error;
         input.value = '';
         document.getElementById('msgOk').textContent = 'Posted to global chat.';
+        toast('Message posted', 'ok');
         loadRecent();
       } catch (e) {
         console.error(e);
         document.getElementById('msgError').textContent = 'Post failed.';
+        toast('Post failed', 'err');
       }
     }
 
     async function loadRecent() {
       const box = document.getElementById('recentMsgs');
+      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
-        const { data, error } = await sb
+        let res = await sb
           .from('messages')
-          .select('id, username, content, created_at')
+          .select('id, username, content, created_at, rank')
           .order('created_at', { ascending: false })
           .limit(20);
+        if (res.error && /column/i.test(res.error.message || '')) {
+          res = await sb
+            .from('messages')
+            .select('id, username, content, created_at')
+            .order('created_at', { ascending: false })
+            .limit(20);
+        }
+        const { data, error } = res;
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<p class="muted">No messages yet.</p>';
+          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No messages yet.</div>';
           return;
         }
         let html = '<table><tr><th>User</th><th>Message</th><th>When</th><th></th></tr>';
         data.forEach(m => {
-          html += '<tr><td>' + esc(m.username) + '</td><td>' + esc(m.content) +
+          html += '<tr><td>' + esc(m.username) + (m.rank && m.rank !== 'user' ? ' ' + rankPill(m.rank) : '') +
+            '</td><td>' + esc(m.content) +
             '</td><td class="muted">' + esc(new Date(m.created_at).toLocaleString()) +
             '</td><td><button class="btn small danger" onclick="deleteMessage(' +
             m.id + ', this)">Delete</button></td></tr>';
@@ -1466,23 +1827,24 @@
         box.innerHTML = html + '</table>';
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<p class="muted">Failed to load messages.</p>';
+        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load messages.</div>';
       }
     }
 
     async function deleteMessage(id, btn) {
-      btn.disabled = true;
+      setBtnLoading(btn, true);
       try {
         const { error } = await sb
           .from('messages')
           .delete()
           .eq('id', id);
         if (error) throw error;
+        toast('Message deleted', 'ok');
         loadRecent();
       } catch (e) {
         console.error(e);
-        btn.disabled = false;
-        alert('Delete failed.');
+        setBtnLoading(btn, false, 'Delete');
+        toast('Delete failed.', 'err');
       }
     }
 
@@ -1499,6 +1861,7 @@
 
     async function loadUsers() {
       const box = document.getElementById('userList');
+      box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
           .from('active_sessions')
@@ -1507,7 +1870,7 @@
           .limit(100);
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<p class="muted">No active sessions.</p>';
+          box.innerHTML = '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>';
           return;
         }
         let html = '<table><tr><th>User</th><th>Playing</th><th>Last seen</th><th></th></tr>';
@@ -1522,7 +1885,7 @@
         reapplyFilter('userSearch', 'userList');
       } catch (e) {
         console.error(e);
-        box.innerHTML = '<p class="muted">Failed to load users.</p>';
+        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load users.</div>';
       }
     }
 
@@ -1614,7 +1977,7 @@
     async function sendDm() {
       const input = document.getElementById('dmInput');
       const content = input.value.trim();
-      if (!content || !dmTarget) return;
+      if (!content || !dmTarget) { if (!content) toast('Type a message first.', 'err'); return; }
       input.value = '';
       try {
         const { error } = await sb
@@ -1625,9 +1988,16 @@
       } catch (e) {
         console.error(e);
         input.value = content;
-        alert('Send failed.');
+        toast('Send failed.', 'err');
       }
     }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeKeyModal();
+        closeApproveModal();
+      }
+    });
 
     document.getElementById('dmInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') sendDm();
