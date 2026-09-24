@@ -507,8 +507,8 @@
     }
 
     /* ===== FLAT DESIGN OVERRIDE (no glow, no blur, no shadow) ===== */
-    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1); }
-    @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.3s ease-out; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .bg, .blob { display: none !important; }
     * { text-shadow: none !important; }
     nav {
@@ -559,8 +559,14 @@
     .tabs button.active { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; box-shadow: none !important; }
     .tabs a.tablink { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; box-shadow: none !important; }
     .tabs a.tablink:hover { background: #6d28d9 !important; box-shadow: none !important; }
-    .section.active { animation: secFade 0.2s cubic-bezier(0.22,1,0.36,1) !important; }
-    @keyframes secFade { from { opacity: 0; } to { opacity: 1; } }
+    .section.active { animation: tabIn 0.3s ease-out !important; }
+    @keyframes tabIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+    .section.tab-exit {
+      display: block !important;
+      opacity: 0;
+      transform: translateX(-16px);
+      transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    }
     th { color: #6b6b8a !important; }
     td { color: #e2e2f0 !important; }
     th, td { border-bottom: 1px solid #1e1e2e !important; }
@@ -583,7 +589,7 @@
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
       animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    @keyframes modalUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes modalUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .stat-card { background: #1a1a24 !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important; box-shadow: none !important; }
     .stat-num { background: none !important; -webkit-text-fill-color: #e2e2f0 !important; color: #e2e2f0 !important; }
     .stat-label { color: #6b6b8a !important; }
@@ -613,16 +619,112 @@
     .toast {
       background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
       padding: 12px 16px; font-size: 13px; color: #e2e2f0; max-width: 300px;
-      animation: toastIn 0.2s cubic-bezier(0.22,1,0.36,1);
+      animation: toastIn 0.25s ease-out;
+      transition: opacity 0.2s ease-out, transform 0.2s ease-out;
     }
     .toast.err { border-left: 4px solid #ef4444; }
     .toast.ok { border-left: 4px solid #10b981; }
-    @keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
-    .skel { background: #1a1a24; border-radius: 10px; min-height: 44px; animation: skelPulse 1.2s ease-in-out infinite; }
-    @keyframes skelPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .toast.out { opacity: 0; transform: translateX(110%); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(110%); } to { opacity: 1; transform: translateX(0); } }
+    .skel {
+      background: linear-gradient(90deg, #1a1a24 25%, #23232f 50%, #1a1a24 75%);
+      background-size: 200% 100%;
+      border-radius: 10px; min-height: 44px;
+      animation: skelShimmer 1.2s linear infinite;
+    }
+    @keyframes skelShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    .arow { animation: itemIn 0.3s ease-out backwards; }
+    @keyframes itemIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .btn.restricted { opacity: 0.45; cursor: not-allowed; }
     .empty-state { text-align: center; padding: 32px 16px; color: #6b6b8a; font-size: 13px; }
     .empty-state .big { font-size: 32px; margin-bottom: 8px; }
+    /* CUSTOM DROPDOWN (replaces native selects; mirrors a hidden select) */
+    .dd { position: relative; }
+    .inline-form .dd { flex: 0 0 150px; min-width: 150px; }
+    .dd-trigger {
+      width: 100%; min-height: 48px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px;
+      padding: 12px 14px; font-size: 16px; color: #e2e2f0; cursor: pointer; font-family: inherit;
+      transition: border-color 0.2s ease-out;
+      touch-action: manipulation;
+    }
+    .dd-trigger:hover { border-color: #7c3aed; }
+    .dd.open .dd-trigger { border-color: #7c3aed; }
+    .dd-trigger .chev { font-style: normal; color: #6b6b8a; transition: transform 0.2s ease-out, color 0.2s ease-out; }
+    .dd.open .chev { transform: rotate(180deg); color: #e2e2f0; }
+    .dd-panel {
+      position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60;
+      background: #13131a; border: 1px solid #2a2a3d; border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: none; max-height: 240px; overflow-y: auto;
+      transform-origin: top;
+    }
+    .dd.open .dd-panel { display: block; animation: ddOpen 0.15s ease-out; }
+    @keyframes ddOpen { from { opacity: 0; transform: scaleY(0); } to { opacity: 1; transform: scaleY(1); } }
+    .dd-opt {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      width: 100%; padding: 10px 14px; background: none; border: none;
+      font-size: 14px; color: #e2e2f0; cursor: pointer; min-height: 44px; text-align: left;
+      font-family: inherit;
+      transition: background 0.15s ease-out;
+      touch-action: manipulation;
+    }
+    .dd-opt:hover { background: #1e1e2e; }
+    .dd-opt.sel { color: #7c3aed; font-weight: 600; }
+    .dd-opt .tick { visibility: hidden; }
+    .dd-opt.sel .tick { visibility: visible; }
+    /* CUSTOM CHECKBOX (hides native input, keeps it functional) */
+    .check.cx { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-height: 44px; }
+    .cx-input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .check.cx .cx-input { width: 1px; height: 1px; margin: 0; }
+    .cx-box {
+      flex: 0 0 auto; width: 18px; height: 18px;
+      border: 1.5px solid #2a2a3d; border-radius: 5px; background: #1a1a24;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background 0.2s ease-out, border-color 0.2s ease-out;
+    }
+    .cx-box svg { width: 12px; height: 10px; }
+    .cx-box path {
+      fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 20; stroke-dashoffset: 20;
+    }
+    .cx-input:checked + .cx-box { background: #7c3aed; border-color: #7c3aed; }
+    .cx-input:checked + .cx-box path { animation: cxDraw 0.2s ease-out forwards; }
+    @keyframes cxDraw { to { stroke-dashoffset: 0; } }
+    .cx-input:focus-visible + .cx-box { border-color: #7c3aed; }
+    /* TOGGLE SWITCH (troll on/off indicator + key active/inactive) */
+    .tswitch {
+      position: relative; width: 40px; height: 22px; min-height: 44px; min-width: 52px;
+      background: none; border: none; cursor: pointer; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      touch-action: manipulation;
+    }
+    .tswitch .track {
+      position: relative; width: 40px; height: 22px; border-radius: 20px;
+      background: #2a2a3d;
+      transition: background 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .tswitch .thumb {
+      position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+      background: #e2e2f0;
+      transition: transform 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .tswitch.on .track { background: #7c3aed; }
+    .tswitch.on .thumb { transform: translateX(18px); }
+    .tswitch:disabled { opacity: 0.55; cursor: wait; }
+    /* mini pill toggle inside trick buttons mirrors ON/OFF */
+    .trick-btn .tpill {
+      width: 40px; height: 22px; border-radius: 20px; background: #2a2a3d; position: relative;
+      transition: background 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .trick-btn .tpill::after {
+      content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+      border-radius: 50%; background: #e2e2f0;
+      transition: transform 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .trick-btn.on .tpill { background: #7c3aed; }
+    .trick-btn.on .tpill::after { transform: translateX(18px); }
   </style>
 </head>
 <body>
@@ -679,22 +781,26 @@
 
       <div class="card section" id="sec-keys">
         <h2>License keys</h2>
-        <p class="sub">Hashes only — plaintext is shown once at creation time then cleared. Reset clears activation so a key can be redeemed again.</p>
+        <p class="sub">Keys are stored as plaintext (uppercase). New keys are revealed once, then cleared.</p>
         <div class="inline-form" style="align-items:center">
           <input id="customKey" placeholder="Custom Key (leave blank to auto-generate)" maxlength="64" style="flex:1; min-width:180px" aria-label="Custom key" />
-          <select id="genRank" aria-label="Rank for new key" style="flex:0 0 130px; min-width:130px">
+          <div class="dd" id="dd-genrank" data-select="genRank">
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-genrank')" aria-label="Rank for new key"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <div class="dd-panel"></div>
+          </div>
+          <select id="genRank" aria-label="Rank for new key" style="display:none">
             <option value="user">user</option>
             <option value="mod">mod</option>
             <option value="admin">admin</option>
             <option value="owner">owner</option>
           </select>
           <button class="btn small" id="genKeyBtn" onclick="generateStandaloneKey()">Generate Key</button>
-          <label class="check"><input type="checkbox" id="genAdmin" /> make this an admin key</label>
+          <label class="check cx"><input type="checkbox" id="genAdmin" class="cx-input" /><span class="cx-box"><svg viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1"/></svg></span> make this an admin key</label>
         </div>
         <div class="inline-form" style="align-items:center">
           <input id="bulkCount" type="number" inputmode="numeric" min="1" max="20" value="5" style="flex:0 0 90px; min-width:90px" aria-label="Number of keys to generate" />
           <button class="btn small" id="bulkGenBtn" onclick="generateBulkKeys()">Generate keys</button>
-          <label class="check"><input type="checkbox" id="bulkAdmin" /> admin keys</label>
+          <label class="check cx"><input type="checkbox" id="bulkAdmin" class="cx-input" /><span class="cx-box"><svg viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1"/></svg></span> admin keys</label>
         </div>
         <div class="inline-form">
           <input id="keySearch" placeholder="Filter by username…" maxlength="32" oninput="filterTable('keyList', this.value)" aria-label="Filter keys by username" />
@@ -751,11 +857,19 @@
         </div>
         <div class="field" id="trollUserWrap" style="display:none">
           <label>Target user</label>
-          <select id="trollTarget" aria-label="Target user" onchange="paintTrickButtons(); refreshTrollStates();"></select>
+          <div class="dd" id="dd-target" data-select="trollTarget">
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-target')" aria-label="Target user"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <div class="dd-panel"></div>
+          </div>
+          <select id="trollTarget" aria-label="Target user" style="display:none" onchange="paintTrickButtons(); refreshTrollStates();"></select>
         </div>
         <div class="field">
           <label>Scare image (jumpscare only)</label>
-          <select id="scareImg" aria-label="Scare image">
+          <div class="dd" id="dd-scare" data-select="scareImg">
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-scare')" aria-label="Scare image"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <div class="dd-panel"></div>
+          </div>
+          <select id="scareImg" aria-label="Scare image" style="display:none">
             <option value="scare1.jpg">scare1.jpg</option>
             <option value="scare2.jpg">scare2.jpg</option>
             <option value="scare3.jpg">scare3.jpg</option>
@@ -766,15 +880,15 @@
           <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing 🎉" maxlength="200" />
         </div>
         <div class="trick-grid" id="trickGrid">
-          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">✨<span>Ripple chaos</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">✨<span>Ripple chaos</span><em class="tpill"></em><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">🔔<span>Fake iOS alert</span><em class="tstate">INSTANT</em></button>
-          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">🎨<span>Color invert</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">🎨<span>Color invert</span><em class="tpill"></em><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">💬<span>Popup spam</span><em class="tstate">INSTANT</em></button>
-          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span><em class="tpill"></em><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
         <p class="muted">TOGGLE tricks (incl. jumpscare) switch on/off the moment you tap them — tap again to stop. INSTANT tricks arm the Send button below. Jumpscare uses the image picker above when toggled ON.</p>
@@ -798,7 +912,7 @@
   <div class="overlay" id="keyOverlay" onclick="if(event.target===this)closeKeyModal()">
     <div class="modal">
       <h2>New key created</h2>
-      <p class="sub">Send this to the requester now — it is shown only once. Only the hash is stored.</p>
+      <p class="sub">Send this to the requester now — it is shown only once.</p>
       <div class="newkey"><span id="keyModalText"></span><button class="btn small" id="keyCopyBtn" onclick="copyRevealedKey()">Copy</button></div>
       <div id="keyModalList"></div>
       <button class="btn block" style="margin-top:16px" onclick="closeKeyModal()">Done</button>
@@ -848,11 +962,20 @@
       t.className = 'toast' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
       t.textContent = msg;
       wrap.appendChild(t);
-      setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+      setTimeout(() => {
+        if (!t.parentNode) return;
+        t.classList.add('out');
+        setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 200);
+      }, 3000);
     }
 
     function setBtnLoading(btn, loading, label) {
       if (!btn) return;
+      if (btn.classList && btn.classList.contains('tswitch')) {
+        btn.disabled = loading;
+        btn.style.opacity = loading ? '0.55' : '';
+        return;
+      }
       if (loading) {
         btn.disabled = true;
         btn.setAttribute('data-label', btn.textContent);
@@ -900,11 +1023,7 @@
       }
     }
 
-    async function sha256hex(str) {
-      const data = new TextEncoder().encode(str);
-      const hash = await crypto.subtle.digest('SHA-256', data);
-      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
-    }
+    // Keys are stored as plaintext uppercase (no hashing anywhere).
 
     function esc(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
@@ -959,6 +1078,7 @@
       document.getElementById('dash').style.display = 'block';
       document.getElementById('adminLogout').style.display = 'inline-block';
       applyRankGating();
+      initDropdowns();
       // Mods land on a tab they can actually use.
       if (myRank === 'mod') {
         const btn = document.querySelector('.tabs button[data-tab="blacklist"]');
@@ -987,8 +1107,18 @@
       }
       document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById('sec-' + name).classList.add('active');
+      const nextSec = document.getElementById('sec-' + name);
+      const curSec = document.querySelector('.section.active');
+      document.querySelectorAll('.section').forEach(s => { if (s !== curSec && s !== nextSec) s.classList.remove('active'); });
+      if (curSec && curSec !== nextSec) {
+        curSec.classList.add('tab-exit');
+        setTimeout(() => {
+          curSec.classList.remove('active', 'tab-exit');
+          nextSec.classList.add('active');
+        }, 150);
+      } else {
+        nextSec.classList.add('active');
+      }
       if (name === 'dashboard') loadDashboard();
       if (name === 'requests') loadRequests();
       if (name === 'keys') loadKeys();
@@ -1022,7 +1152,12 @@
       const grid = document.getElementById('statGrid');
       if (!grid) return;
       const cards = grid.querySelectorAll('.stat-num');
-      const setAll = vals => cards.forEach((el, i) => { el.textContent = vals[i]; });
+      const setAll = vals => cards.forEach((el, i) => {
+        const n = parseInt(vals[i], 10);
+        if (!isNaN(n) && String(n) === String(vals[i])) countUp(el, n);
+        else el.textContent = vals[i];
+      });
+      // Numbers count up from 0 on load.
       try {
         const cutoff = new Date(Date.now() - 90000).toISOString();
         const [keys, used, online, pending] = await Promise.all([
@@ -1043,6 +1178,18 @@
         console.error('dashboard stats failed:', e);
         setAll(['!', '!', '!', '!', '100']);
       }
+    }
+
+    function countUp(el, target) {
+      const dur = 800;
+      let t0 = null;
+      function frame(t) {
+        if (t0 === null) t0 = t;
+        const p = Math.min(1, (t - t0) / dur);
+        el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
     }
 
     /* ---------- activity log (read-only) ---------- */
@@ -1080,8 +1227,8 @@
           return;
         }
         let html = '<table><tr><th>When</th><th>Type</th><th>Detail</th></tr>';
-        top.forEach(r => {
-          html += '<tr><td class="muted">' + esc(r.when ? new Date(r.when).toLocaleString() : '—') +
+        top.forEach((r, ai) => {
+          html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td class="muted">' + esc(r.when ? new Date(r.when).toLocaleString() : '—') +
             '</td><td>' + esc(r.kind) + '</td><td>' + esc(r.detail) + '</td></tr>';
         });
         box.innerHTML = html + '</table>';
@@ -1132,6 +1279,7 @@
           sel.appendChild(o);
         });
         if (prev) sel.value = prev;
+        syncDropdown('trollTarget');
         refreshTrollStates(); // paint ON states for the current scope
       } catch (e) {
         console.error('troll targets failed:', e);
@@ -1278,6 +1426,61 @@
       }
     }
 
+    /* ---------- custom dropdowns (mirror hidden native selects) ---------- */
+
+    function toggleDropdown(ddId) {
+      const dd = document.getElementById(ddId);
+      if (!dd) return;
+      const wasOpen = dd.classList.contains('open');
+      document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open'));
+      if (!wasOpen) dd.classList.add('open');
+    }
+
+    function syncDropdown(selectId) {
+      const sel = document.getElementById(selectId);
+      const dd = document.querySelector('.dd[data-select="' + selectId + '"]');
+      if (!sel || !dd) return;
+      const label = dd.querySelector('.dd-label');
+      const cur = sel.options[sel.selectedIndex];
+      if (label) label.textContent = cur ? cur.textContent : 'Select…';
+      const panel = dd.querySelector('.dd-panel');
+      panel.innerHTML = '';
+      Array.from(sel.options).forEach(o => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dd-opt' + (o.value === sel.value ? ' sel' : '');
+        const s = document.createElement('span');
+        s.textContent = o.textContent;
+        const tick = document.createElement('span');
+        tick.className = 'tick';
+        tick.textContent = '✓';
+        b.appendChild(s);
+        b.appendChild(tick);
+        b.onclick = (function (val) {
+          return function (e) {
+            e.stopPropagation();
+            sel.value = val;
+            dd.classList.remove('open');
+            syncDropdown(selectId);
+            if (typeof sel.onchange === 'function') sel.onchange();
+          };
+        })(o.value);
+        panel.appendChild(b);
+      });
+    }
+
+    function initDropdowns() {
+      syncDropdown('genRank');
+      syncDropdown('scareImg');
+      syncDropdown('trollTarget');
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest || !e.target.closest('.dd')) {
+        document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open'));
+      }
+    });
+
     /* ---------- bulk key generation ---------- */
 
     async function generateBulkKeys() {
@@ -1296,10 +1499,9 @@
         const ids = [];
         for (let i = 0; i < n; i++) {
           const plaintext = randomKey();
-          const hash = await sha256hex(plaintext);
           const { data: created, error } = await sb
             .from('license_keys')
-            .insert({ key: hash, is_active: true, is_admin: isAdmin, rank: rank, plaintext_reveal: plaintext })
+            .insert({ key: plaintext, is_active: true, is_admin: isAdmin, rank: rank, plaintext_reveal: plaintext })
             .select('id')
             .maybeSingle();
           if (error) throw error;
@@ -1392,8 +1594,8 @@
           return;
         }
         let html = '<table><tr><th>Name</th><th>Reason</th><th>Requested</th><th></th></tr>';
-        data.forEach(r => {
-          html += '<tr><td>' + esc(r.name) + '</td><td>' + esc(r.reason) +
+        data.forEach((r, ri) => {
+          html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.name) + '</td><td>' + esc(r.reason) +
             '</td><td class="muted">' + esc(new Date(r.created_at).toLocaleString()) +
             '</td><td><div class="row-actions">' +
             '<button class="btn small" onclick="approveRequest(' + r.id + ', this)">Approve</button>' +
@@ -1434,7 +1636,9 @@
     }
 
     function closeApproveModal() {
-      document.getElementById('approveOverlay').classList.remove('show');
+      const overlay = document.getElementById('approveOverlay');
+      overlay.classList.add('closing');
+      setTimeout(() => { overlay.classList.remove('show', 'closing'); }, 200);
       pendingApproveId = null;
     }
 
@@ -1455,10 +1659,9 @@
       setBtnLoading(btn, true);
       try {
         const plaintext = resolvePlaintext(custom);
-        const hash = await sha256hex(plaintext);
         const { data: created, error: insErr } = await sb
           .from('license_keys')
-          .insert({ key: hash, is_active: true, is_admin: false, rank: 'user', plaintext_reveal: plaintext, request_id: pendingApproveId })
+          .insert({ key: plaintext, is_active: true, is_admin: false, rank: 'user', plaintext_reveal: plaintext, request_id: pendingApproveId })
           .select('id')
           .maybeSingle();
         if (insErr) throw insErr;
@@ -1490,7 +1693,9 @@
     }
 
     function closeKeyModal() {
-      document.getElementById('keyOverlay').classList.remove('show');
+      const overlay = document.getElementById('keyOverlay');
+      overlay.classList.add('closing');
+      setTimeout(() => { overlay.classList.remove('show', 'closing'); }, 200);
       document.getElementById('keyModalText').textContent = '';
       document.getElementById('keyModalList').innerHTML = '';
       // One-time reveal: clear stored plaintext once dismissed.
@@ -1561,10 +1766,9 @@
       setBtnLoading(btn, true);
       try {
         const plaintext = resolvePlaintext(custom);
-        const hash = await sha256hex(plaintext);
         const { data: created, error } = await sb
           .from('license_keys')
-          .insert({ key: hash, is_active: true, is_admin: (rank === 'admin' || rank === 'owner'), rank: rank, plaintext_reveal: plaintext })
+          .insert({ key: plaintext, is_active: true, is_admin: (rank === 'admin' || rank === 'owner'), rank: rank, plaintext_reveal: plaintext })
           .select('id')
           .maybeSingle();
         if (error) throw error;
@@ -1620,19 +1824,18 @@
           return;
         }
         let html = '<table><tr><th>Key (hash)</th><th>Used by</th><th>Rank</th><th>Status</th><th>Activated</th><th></th></tr>';
-        data.forEach(k => {
+        data.forEach((k, ki) => {
           const trank = rankOf(k);
           const editable = canModify(trank);
           const isOwner = trank === 'owner';
-          html += '<tr><td class="mono">' + maskKey(k.key) +
+          html += '<tr class="arow" style="animation-delay:' + (ki * 40) + 'ms"><td class="mono">' + maskKey(k.key) +
             '</td><td>' + esc(k.used_by) + '</td><td>' + rankPill(trank) + '</td>' +
             '<td><span class="pill ' + (k.is_active ? 'on' : 'off') + '">' +
             (k.is_active ? 'active' : 'off') + '</span></td>' +
             '<td class="muted">' + (k.activated_at ? esc(new Date(k.activated_at).toLocaleString()) : '—') + '</td>' +
             '<td><div class="row-actions">' +
             (editable
-              ? '<button class="btn small ghost" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')">' +
-                (k.is_active ? 'Disable' : 'Enable') + '</button>' +
+              ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active — tap to disable' : 'Inactive — tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +
                 '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this, \'' + esc(trank) + '\')">Reset</button>'
               : '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Locked</button>') +
             (!isOwner && editable
@@ -1652,15 +1855,19 @@
       if (!canModify(targetRank || 'user')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const { error } = await sb
+        const { data, error } = await sb
           .from('license_keys')
           .update({ is_active: next })
-          .eq('id', id);
+          .eq('id', id)
+          .select('id');
         if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('Update affected 0 rows — check the UPDATE RLS policy on license_keys.');
+        }
         toast(next ? 'Key enabled' : 'Key disabled', 'ok');
         loadKeys();
       } catch (e) {
-        console.error(e);
+        console.error('toggle key failed:', e, { id: id, rank: targetRank });
         setBtnLoading(btn, false, next ? 'Enable' : 'Disable');
         toast('Toggle failed.', 'err');
       }
@@ -1671,15 +1878,19 @@
       if (!confirm('Reset this key so it can be redeemed again?')) return;
       setBtnLoading(btn, true);
       try {
-        const { error } = await sb
+        const { data, error } = await sb
           .from('license_keys')
           .update({ used_by: null, session_token: null, activated_at: null })
-          .eq('id', id);
+          .eq('id', id)
+          .select('id');
         if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error('Update affected 0 rows — check the UPDATE RLS policy on license_keys.');
+        }
         toast('Key reset', 'ok');
         loadKeys();
       } catch (e) {
-        console.error(e);
+        console.error('reset key failed:', e, { id: id, rank: targetRank });
         setBtnLoading(btn, false, 'Reset');
         toast('Reset failed.', 'err');
       }
@@ -1691,15 +1902,21 @@
       if (!confirm('Permanently delete this key? This cannot be undone.')) return;
       setBtnLoading(btn, true);
       try {
-        const { error } = await sb
+        const { data, error } = await sb
           .from('license_keys')
           .delete()
-          .eq('id', id);
+          .eq('id', id)
+          .select('id');
         if (error) throw error;
+        if (!data || data.length === 0) {
+          // RLS can make a delete silently affect 0 rows (HTTP success,
+          // nothing removed). Never report that as a success.
+          throw new Error('Delete affected 0 rows — check the DELETE RLS policy on license_keys.');
+        }
         toast('Key deleted', 'ok');
         loadKeys();
       } catch (e) {
-        console.error(e);
+        console.error('delete key failed:', e, { id: id, rank: targetRank });
         setBtnLoading(btn, false, 'Delete');
         toast('Delete failed.', 'err');
       }
@@ -1721,8 +1938,8 @@
           return;
         }
         let html = '<table><tr><th>Username</th><th>Reason</th><th></th></tr>';
-        data.forEach(b => {
-          html += '<tr><td>' + esc(b.username) + '</td><td>' + esc(b.reason) +
+        data.forEach((b, bi) => {
+          html += '<tr class="arow" style="animation-delay:' + (bi * 40) + 'ms"><td>' + esc(b.username) + '</td><td>' + esc(b.reason) +
             '</td><td><button class="btn small danger" onclick="removeBlacklist(' +
             b.id + ', this)">Remove</button></td></tr>';
         });
@@ -1817,8 +2034,8 @@
           return;
         }
         let html = '<table><tr><th>User</th><th>Message</th><th>When</th><th></th></tr>';
-        data.forEach(m => {
-          html += '<tr><td>' + esc(m.username) + (m.rank && m.rank !== 'user' ? ' ' + rankPill(m.rank) : '') +
+        data.forEach((m, mi) => {
+          html += '<tr class="arow" style="animation-delay:' + (mi * 40) + 'ms"><td>' + esc(m.username) + (m.rank && m.rank !== 'user' ? ' ' + rankPill(m.rank) : '') +
             '</td><td>' + esc(m.content) +
             '</td><td class="muted">' + esc(new Date(m.created_at).toLocaleString()) +
             '</td><td><button class="btn small danger" onclick="deleteMessage(' +
@@ -1874,8 +2091,8 @@
           return;
         }
         let html = '<table><tr><th>User</th><th>Playing</th><th>Last seen</th><th></th></tr>';
-        data.forEach(u => {
-          html += '<tr><td>' + esc(u.username) + ' ' + presencePill(u.last_seen) +
+        data.forEach((u, ui) => {
+          html += '<tr class="arow" style="animation-delay:' + (ui * 40) + 'ms"><td>' + esc(u.username) + ' ' + presencePill(u.last_seen) +
             '</td><td>' + esc(u.current_game || 'Browsing') +
             '</td><td class="muted">' + esc(new Date(u.last_seen).toLocaleString()) +
             '</td><td><button class="btn small" data-user="' + esc(u.username) +
@@ -1994,6 +2211,7 @@
 
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
+        document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open'));
         closeKeyModal();
         closeApproveModal();
       }

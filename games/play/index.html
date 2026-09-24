@@ -625,8 +625,8 @@
     .ios-alert button:active { background: rgba(0,0,0,0.06); }
 
     /* ===== FLAT DESIGN OVERRIDE (no glow, no blur, no shadow) ===== */
-    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1); }
-    @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.3s ease-out; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .bg, .blob { display: none !important; }
     * { text-shadow: none !important; }
     nav {
@@ -744,20 +744,49 @@
     .mini-btn:hover { background: #6d28d9; }
     .mini-btn:active { transform: scale(0.97); }
     .mini-btn.ghost { background: #1a1a24; border: 1.5px solid #2a2a3d; }
+    /* approved popup modal */
+    .overlay {
+      display: none; position: fixed; inset: 0; z-index: 250;
+      background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; animation: overlayIn 0.2s ease-out; }
+    @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+    .overlay.closing { opacity: 0; }
+    .overlay.closing .modal { opacity: 0; transform: translateY(20px); transition: opacity 0.2s ease-out, transform 0.2s ease-out; }
+    .modal {
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 32px 28px; width: calc(100% - 48px); max-width: 360px; text-align: center;
+      animation: modalUp 0.25s ease-out;
+    }
+    @keyframes modalUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .modal h2 { font-size: 18px; font-weight: 700; color: #e2e2f0; margin-bottom: 6px; }
+    .modal p { font-size: 13px; color: #6b6b8a; margin-bottom: 14px; line-height: 1.5; }
+    .keyline {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      margin-top: 10px; background: #1a1a24; border: 1px solid #2a2a3d;
+      border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px; color: #e2e2f0;
+    }
     #toastWrap { position: fixed; top: 16px; right: 16px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
     .toast {
       background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
       padding: 12px 16px; font-size: 13px; color: #e2e2f0; max-width: 300px;
-      animation: toastIn 0.2s cubic-bezier(0.22,1,0.36,1);
+      animation: toastIn 0.25s ease-out;
+      transition: opacity 0.2s ease-out, transform 0.2s ease-out;
     }
     .toast.err { border-left: 4px solid #ef4444; }
     .toast.ok { border-left: 4px solid #10b981; }
-    @keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+    .toast.out { opacity: 0; transform: translateX(110%); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(110%); } to { opacity: 1; transform: translateX(0); } }
     .skel {
-      background: #1a1a24; border-radius: 10px; min-height: 44px;
-      animation: skelPulse 1.2s ease-in-out infinite;
+      background: linear-gradient(90deg, #1a1a24 25%, #23232f 50%, #1a1a24 75%);
+      background-size: 200% 100%;
+      border-radius: 10px; min-height: 44px;
+      animation: skelShimmer 1.2s linear infinite;
     }
-    @keyframes skelPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    @keyframes skelShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    .arow { animation: itemIn 0.3s ease-out backwards; }
+    @keyframes itemIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .chat-msg { animation: itemIn 0.3s ease-out backwards; }
     .chat-fab, .dm-fab, .reply-btn, .chat-form button { touch-action: manipulation; }
   </style>
 </head>
@@ -832,6 +861,16 @@
     </form>
   </div>
 
+  <!-- APPROVED MODAL (pops like the request form) -->
+  <div class="overlay" id="approvedOverlay" onclick="if(event.target===this)closeApprovedModal()">
+    <div class="modal">
+      <h2>Request Approved! 🎉</h2>
+      <p>Use this key to log in:</p>
+      <div class="keyline"><span id="playKeyText"></span><button class="mini-btn" onclick="copyPlayKey()">Copy</button></div>
+      <div style="margin-top:14px"><button class="mini-btn" onclick="closeApprovedModal()">Done</button></div>
+    </div>
+  </div>
+
   <!-- TROLL LAYER (transient admin effects render here, then self-clear) -->
   <div id="trollLayer" aria-hidden="true"></div>
   <div id="toastWrap" aria-live="polite"></div>
@@ -856,7 +895,11 @@
       t.className = 'toast' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
       t.textContent = msg;
       wrap.appendChild(t);
-      setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+      setTimeout(() => {
+        if (!t.parentNode) return;
+        t.classList.add('out');
+        setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 200);
+      }, 3000);
     }
 
     function escPlay(s) {
@@ -945,7 +988,7 @@
       } catch (e) { return ''; }
     }
 
-    function appendMessage(msg) {
+    function appendMessage(msg, delayMs) {
       const box = document.getElementById('chatMsgs');
       const empty = box.querySelector('.chat-empty');
       if (empty) empty.remove();
@@ -953,6 +996,7 @@
       const uname = (msg.username || 'anon');
       const isAdmin = uname.toLowerCase() === 'admin' || msg.rank === 'admin' || msg.rank === 'owner';
       div.className = 'chat-msg' + (isAdmin ? ' admin' : '');
+      if (delayMs) div.style.animationDelay = delayMs + 'ms';
       div.setAttribute('data-mid', msg.id || '');
       div.setAttribute('data-user', uname);
       const meta = document.createElement('div');
@@ -1033,7 +1077,7 @@
         if (!data || data.length === 0) {
           box.innerHTML = '<div class="chat-empty">💬 No messages yet — say hi.</div>';
         } else {
-          data.forEach(appendMessage);
+          data.forEach((m, i) => appendMessage(m, i * 40));
         }
         document.getElementById('chatStatus').textContent = 'live';
       } catch (e) {
@@ -1472,11 +1516,18 @@
               .maybeSingle();
             if (!kerr && krow && krow.plaintext_reveal) keyText = krow.plaintext_reveal;
           } catch (e) {}
-          wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong><br>Use this key to log in:' +
-            (keyText
-              ? '<div class="keyline"><span id="playKeyText">' + escPlay(keyText) + '</span><button class="mini-btn" onclick="copyPlayKey()">Copy</button></div>'
-              : '<div style="margin-top:8px;color:#6b6b8a">Key is being prepared — check back shortly.</div>') +
-            '</div>';
+          playApprovedKey = keyText;
+          if (keyText) {
+            wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
+              '<div style="margin-top:10px"><button class="mini-btn" onclick="openApprovedModal()">View key</button></div></div>';
+            if (!playApprovedShown) {
+              playApprovedShown = true;
+              openApprovedModal();
+            }
+          } else {
+            wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
+              '<div style="margin-top:8px;color:#6b6b8a">Key is being prepared — check back shortly.</div></div>';
+          }
         } else {
           wrap.innerHTML = '';
         }
@@ -1501,6 +1552,24 @@
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => toast('Copied!', 'ok')).catch(() => toast('Copy failed', 'err'));
       }
+    }
+
+    // Approved popup — mirrors the request-form modal behavior.
+    let playApprovedKey = '';
+    let playApprovedShown = false;
+
+    function openApprovedModal() {
+      const keyEl = document.getElementById('playKeyText');
+      if (keyEl) keyEl.textContent = playApprovedKey || '';
+      const overlay = document.getElementById('approvedOverlay');
+      if (overlay) overlay.classList.add('show');
+    }
+
+    function closeApprovedModal() {
+      const overlay = document.getElementById('approvedOverlay');
+      if (!overlay) return;
+      overlay.classList.add('closing');
+      setTimeout(() => { overlay.classList.remove('show', 'closing'); }, 200);
     }
 
     function subscribeTrolls() {
@@ -1869,6 +1938,7 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         cancelReply();
+        closeApprovedModal();
         const cp = document.getElementById('chatPanel');
         const dp = document.getElementById('dmPanel');
         if (cp) cp.classList.remove('open');

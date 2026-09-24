@@ -257,13 +257,13 @@
       -webkit-backdrop-filter: blur(32px) saturate(1.5);
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.35),
         inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04);
-      transform: translateY(16px) scale(0.96);
-      transition: transform 0.34s cubic-bezier(0.22, 1.15, 0.36, 1), opacity 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
+      transform: translateY(20px);
+      transition: transform 0.25s ease-out, opacity 0.25s ease-out;
       opacity: 0;
       position: relative;
     }
     .overlay.visible .modal {
-      transform: translateY(0) scale(1);
+      transform: translateY(0);
       opacity: 1;
     }
 
@@ -357,8 +357,8 @@
     }
 
     /* ===== FLAT DESIGN OVERRIDE (no glow, no blur, no shadow) ===== */
-    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1); }
-    @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.3s ease-out; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .bg, .blob { display: none !important; }
     * { text-shadow: none !important; }
     .card, .modal {
@@ -415,7 +415,7 @@
     .req-banner.muted-note { color: #6b6b8a; text-align: center; }
     .req-banner.denied { border-left: 4px solid #ef4444; }
     .req-banner.approved { border-left: 4px solid #10b981; }
-    .req-banner .keyline {
+    .keyline, .req-banner .keyline {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
       margin-top: 10px; background: #1a1a24; border: 1px solid #2a2a3d;
       border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px;
@@ -434,11 +434,13 @@
     .toast {
       background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
       padding: 12px 16px; font-size: 13px; color: #e2e2f0; max-width: 300px;
-      animation: toastIn 0.2s cubic-bezier(0.22,1,0.36,1);
+      animation: toastIn 0.25s ease-out;
+      transition: opacity 0.2s ease-out, transform 0.2s ease-out;
     }
     .toast.err { border-left: 4px solid #ef4444; }
     .toast.ok { border-left: 4px solid #10b981; }
-    @keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+    .toast.out { opacity: 0; transform: translateX(110%); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(110%); } to { opacity: 1; transform: translateX(0); } }
   </style>
 </head>
 <body>
@@ -515,17 +517,26 @@
     </div>
   </div>
 
+  <!-- APPROVED MODAL (pops like the request form) -->
+  <div class="overlay" id="approvedOverlay" onclick="if(event.target===this)closeApprovedModal()">
+    <div class="modal" id="approvedModal">
+      <button class="modal-close" onclick="closeApprovedModal()">✕</button>
+      <h2>Request Approved! 🎉</h2>
+      <p>Use this key to log in:</p>
+      <div class="keyline"><span id="approvedKeyText"></span><button class="mini-btn" onclick="copyApprovedKey()">Copy</button></div>
+      <button class="btn" style="margin-top:14px" onclick="closeApprovedModal()">Done</button>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // ── Fill these in ──────────────────────────────────────────────
     const SUPABASE_URL = "https://hqjclkkwsepdhtwnwsvp.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxamNsa2t3c2VwZGh0d253c3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTY5NTMsImV4cCI6MjEwNTc3Mjk1M30.-OXxTRYmIi4snwJSiThFsAPr5YgVbwz4kwUY_DURFRA";
-    // ───────────────────────────────────────────────────────────────
-    // Assumes tables: license_keys(key, used_by, is_active, is_admin,
-    //   username, session_token, activated_at), blacklist(username),
-    //   key_requests(name, reason, status).
-    // NOTE: crypto.subtle requires a secure context (https / localhost).
-    // GitHub Pages serves https, so this is fine in production.
+    // Assumes tables: license_keys(key, used_by, is_active, is_admin, rank,
+    //   username, session_token, activated_at, plaintext_reveal, request_id),
+    //   blacklist(username), key_requests(name, reason, status).
+    // Keys are stored and compared as plaintext uppercase (no hashing).
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -540,17 +551,11 @@
       t.className = 'toast' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
       t.textContent = msg;
       wrap.appendChild(t);
-      setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
-    }
-
-    // SHA-256 hex of a string via Web Crypto
-    async function sha256hex(str) {
-      if (!window.crypto || !crypto.subtle) {
-        throw new Error('Secure context required (use https or localhost).');
-      }
-      const data = new TextEncoder().encode(str);
-      const hash = await crypto.subtle.digest('SHA-256', data);
-      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
+      setTimeout(() => {
+        if (!t.parentNode) return;
+        t.classList.add('out');
+        setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 200);
+      }, 3000);
     }
 
     function showError(msg) {
@@ -631,12 +636,12 @@
           return;
         }
 
-        // 2. Hash the key client-side, look up the hash
-        const keyHash = await sha256hex(rawKey.toUpperCase());
+        // 2. Plaintext lookup — keys are stored uppercase, unhashed
+        const keyValue = rawKey.toUpperCase();
         const { data: row, error: keyErr } = await sb
           .from('license_keys')
           .select('id, is_active, is_admin, rank, session_token')
-          .eq('key', keyHash)
+          .eq('key', keyValue)
           .maybeSingle();
         if (keyErr) throw keyErr;
         if (!row) {
@@ -743,6 +748,7 @@
         document.getElementById('successState').style.display = 'block';
         toast('Request sent', 'ok');
         checkRequestStatus();
+        subscribeRequestStatus(); // live approved/denied updates, no refresh needed
       } catch (e) {
         console.error(e);
         errBox.textContent = 'Could not send request. Try again later.';
@@ -798,11 +804,18 @@
               .maybeSingle();
             if (!kerr && krow && krow.plaintext_reveal) keyText = krow.plaintext_reveal;
           } catch (e) {}
-          wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong><br>Use this key to log in:' +
-            (keyText
-              ? '<div class="keyline"><span id="approvedKeyText">' + escReq(keyText) + '</span><button class="mini-btn" onclick="copyApprovedKey()">Copy</button></div>'
-              : '<div class="muted-note" style="margin-top:8px">Key is being prepared — check back shortly.</div>') +
-            '</div>';
+          approvedKey = keyText;
+          if (keyText) {
+            wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
+              '<div style="margin-top:10px"><button class="mini-btn" onclick="openApprovedModal()">View key</button></div></div>';
+            if (!approvedShown) {
+              approvedShown = true;
+              openApprovedModal();
+            }
+          } else {
+            wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
+              '<div class="muted-note" style="margin-top:8px">Key is being prepared — check back shortly.</div></div>';
+          }
         } else {
           wrap.innerHTML = '';
         }
@@ -832,12 +845,43 @@
       }
     }
 
+    // Approved popup — mirrors the request-form modal behavior.
+    let approvedKey = '';
+    let approvedShown = false;
+
+    function openApprovedModal() {
+      const keyEl = document.getElementById('approvedKeyText');
+      if (keyEl) keyEl.textContent = approvedKey || '';
+      const overlay = document.getElementById('approvedOverlay');
+      if (!overlay) return;
+      overlay.style.display = 'flex';
+      requestAnimationFrame(() => {
+        overlay.classList.add('show');
+        requestAnimationFrame(() => overlay.classList.add('visible'));
+      });
+    }
+
+    function closeApprovedModal() {
+      const overlay = document.getElementById('approvedOverlay');
+      if (!overlay) return;
+      overlay.classList.remove('visible');
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        overlay.style.display = 'none';
+      }, 250);
+    }
+
+    let reqChannel = null;
+    let reqSubName = null;
+
     function subscribeRequestStatus() {
       try {
         let name = null;
         try { name = localStorage.getItem('pending_request_name'); } catch (e) {}
-        if (!name) return;
-        sb.channel('ls-req-' + name)
+        if (!name || name === reqSubName) return;
+        if (reqChannel) { try { sb.removeChannel(reqChannel); } catch (e) {} reqChannel = null; }
+        reqSubName = name;
+        reqChannel = sb.channel('ls-req-' + name)
           .on('postgres_changes',
             { event: '*', schema: 'public', table: 'key_requests', filter: 'name=eq.' + name },
             () => checkRequestStatus())
@@ -851,6 +895,8 @@
       if (e.key === 'Escape') {
         const overlay = document.getElementById('overlay');
         if (overlay && overlay.classList.contains('visible')) closeModal();
+        const approved = document.getElementById('approvedOverlay');
+        if (approved && approved.classList.contains('visible')) closeApprovedModal();
       }
     });
 
