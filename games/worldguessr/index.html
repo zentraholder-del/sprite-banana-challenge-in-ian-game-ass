@@ -81,6 +81,23 @@
     <script>
       window.__cmgSplashStart = Date.now();
     </script>
+    <script>
+      // Backup splash killer: runs on timers alone, independent of the game
+      // code. If the app hides the splash itself first, this is a no-op.
+      (function () {
+        function hideSplash() {
+          var e = document.getElementById('cmg-splash');
+          if (!e) return;
+          e.style.transition = 'opacity 0.5s';
+          e.style.opacity = '0';
+          e.style.pointerEvents = 'none';
+          setTimeout(function () { if (e.parentNode) e.parentNode.removeChild(e); }, 600);
+        }
+        if (document.readyState === 'complete') { setTimeout(hideSplash, 2500); }
+        else { window.addEventListener('load', function () { setTimeout(hideSplash, 2500); }); }
+        setTimeout(hideSplash, 8000); // absolute fallback, game or no game
+      })();
+    </script>
     <div id="__next">
       <div class="chatboxParent   ">
         <button class="chatboxBtn  " style="font-size:16px;font-weight:bold;color:white;background:green;border:none;border-radius:5px;padding:10px 20px;cursor:pointer">Chat</button>
