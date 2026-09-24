@@ -475,6 +475,19 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 20px rgba(124,58,237,0.45);
     }
     .trick-btn.selected span { color: #fff; }
+    .trick-btn .tstate {
+      font-style: normal;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #6b7280;
+    }
+    .trick-btn.on {
+      background: linear-gradient(165deg, rgba(34,197,94,0.4), rgba(37,99,235,0.3));
+      border-color: rgba(52,211,153,0.8);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 0 2px rgba(52,211,153,0.25), 0 4px 24px rgba(52,211,153,0.4);
+    }
+    .trick-btn.on .tstate { color: #6ee7b7; }
 
     /* BULK KEY LIST */
     .keyrow {
@@ -612,7 +625,7 @@
         </div>
         <div class="field" id="trollUserWrap" style="display:none">
           <label>Target user</label>
-          <select id="trollTarget" aria-label="Target user"></select>
+          <select id="trollTarget" aria-label="Target user" onchange="paintTrickButtons(); refreshTrollStates();"></select>
         </div>
         <div class="field">
           <label>Scare image (jumpscare only)</label>
@@ -627,17 +640,18 @@
           <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing 🎉" maxlength="200" />
         </div>
         <div class="trick-grid" id="trickGrid">
-          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span></button>
-          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span></button>
-          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span></button>
-          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span></button>
-          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">✨<span>Ripple chaos</span></button>
-          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">🔔<span>Fake iOS alert</span></button>
-          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">🎨<span>Color invert</span></button>
-          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">💬<span>Popup spam</span></button>
-          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span></button>
-          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span></button>
+          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">✨<span>Ripple chaos</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">🔔<span>Fake iOS alert</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">🎨<span>Color invert</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">💬<span>Popup spam</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
+        <p class="muted">TOGGLE tricks switch on/off the moment you tap them (tap again to stop). INSTANT tricks arm the Send button below.</p>
         <button class="btn block" id="trickSendBtn" style="margin-top:16px" onclick="sendTrick()">Send trick</button>
         <div class="error" id="trollErr"></div>
         <div class="ok" id="trollOk"></div>
@@ -862,6 +876,8 @@
       document.getElementById('trollUserWrap').style.display = mode === 'user' ? 'block' : 'none';
       document.getElementById('trollOk').textContent = '';
       document.getElementById('trollErr').textContent = '';
+      paintTrickButtons();
+      refreshTrollStates();
     }
 
     async function loadTrollTargets() {
@@ -889,17 +905,104 @@
           sel.appendChild(o);
         });
         if (prev) sel.value = prev;
+        refreshTrollStates(); // paint ON states for the current scope
       } catch (e) {
         console.error('troll targets failed:', e);
       }
     }
 
+    // Instant tricks fire once via the Send button. Persistent tricks
+    // toggle on/off the moment their button is tapped.
+    const INSTANT_TRICKS = ['jumpscare', 'confetti', 'popups', 'alert'];
+    let trollStates = {}; // "type|scope" -> 'on' / 'off' / null (scope '*' = Everyone)
+
+    function currentScope() {
+      if (trollMode === 'user') {
+        const u = document.getElementById('trollTarget').value;
+        return { key: u || '', target: u || null };
+      }
+      return { key: '*', target: null };
+    }
+
+    function paintTrickButtons() {
+      const scope = currentScope().key;
+      document.querySelectorAll('#trickGrid .trick-btn').forEach(b => {
+        const t = b.getAttribute('data-trick');
+        const tag = b.querySelector('.tstate');
+        if (INSTANT_TRICKS.indexOf(t) !== -1) {
+          b.classList.remove('on');
+          if (tag) tag.textContent = 'INSTANT';
+          return;
+        }
+        const on = trollStates[t + '|' + scope] === 'on';
+        b.classList.toggle('on', on);
+        if (tag) tag.textContent = on ? 'ON' : 'OFF';
+      });
+    }
+
+    // Most-recent state per event_type + target scope, so the tab
+    // remembers what's currently active even after navigating away.
+    async function refreshTrollStates() {
+      try {
+        const { data, error } = await sb
+          .from('troll_events')
+          .select('event_type, target_username, payload, created_at')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (error) throw error;
+        const map = {};
+        (data || []).forEach(r => {
+          const k = r.event_type + '|' + (r.target_username || '*');
+          if (!(k in map)) map[k] = (r.payload && r.payload.state) || null;
+        });
+        trollStates = map;
+        paintTrickButtons();
+      } catch (e) {
+        console.error('troll states failed:', e);
+      }
+    }
+
     function selectTrick(btn) {
-      document.querySelectorAll('#trickGrid .trick-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedTrick = btn.getAttribute('data-trick');
+      const trick = btn.getAttribute('data-trick');
       document.getElementById('trollOk').textContent = '';
       document.getElementById('trollErr').textContent = '';
+      if (INSTANT_TRICKS.indexOf(trick) === -1) {
+        // Persistent tricks toggle immediately — clear any armed instant.
+        document.querySelectorAll('#trickGrid .trick-btn').forEach(b => b.classList.remove('selected'));
+        selectedTrick = null;
+        toggleTrick(trick);
+        return;
+      }
+      document.querySelectorAll('#trickGrid .trick-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedTrick = trick;
+    }
+
+    async function toggleTrick(trick) {
+      const errBox = document.getElementById('trollErr');
+      const okBox = document.getElementById('trollOk');
+      const scope = currentScope();
+      if (trollMode === 'user' && !scope.target) {
+        errBox.textContent = 'Pick a user first.';
+        return;
+      }
+      await refreshTrollStates();
+      const next = trollStates[trick + '|' + scope.key] === 'on' ? 'off' : 'on';
+      errBox.textContent = '';
+      try {
+        const { error } = await sb.from('troll_events').insert({
+          target_username: scope.target,
+          event_type: trick,
+          payload: { state: next }
+        });
+        if (error) throw error;
+        trollStates[trick + '|' + scope.key] = next;
+        paintTrickButtons();
+        okBox.textContent = trick + ' → ' + (scope.target || 'Everyone') + ': ' + next.toUpperCase() + ' ✓';
+      } catch (e) {
+        console.error('toggle trick failed:', e);
+        errBox.textContent = 'Send failed. Try again.';
+      }
     }
 
     async function sendTrick() {
@@ -909,6 +1012,10 @@
       okBox.textContent = '';
       errBox.textContent = '';
       if (!selectedTrick) { errBox.textContent = 'Pick a trick first.'; return; }
+      if (INSTANT_TRICKS.indexOf(selectedTrick) === -1) {
+        toggleTrick(selectedTrick); // persistent: Send toggles too
+        return;
+      }
       let target = null;
       if (trollMode === 'user') {
         target = document.getElementById('trollTarget').value;

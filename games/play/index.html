@@ -917,11 +917,12 @@
       const img = (payload && payload.image) || 'scare1.jpg';
       const safe = /^scare[1-3]\.jpg$/.test(img) ? img : 'scare1.jpg';
       const pic = document.createElement('img');
-      pic.src = '../admin/' + safe;
+      pic.src = '../../admin/' + safe;
       pic.alt = '';
       pic.className = 'troll-flash';
-      // If the image is missing, the flash + emoji still carry the joke.
+      // Log the exact resolved URL so a wrong path is visible in devtools.
       pic.onerror = () => {
+        console.error('jumpscare image failed to load:', pic.src);
         pic.style.display = 'none';
         const big = document.createElement('div');
         big.style.fontSize = '96px';
@@ -935,12 +936,14 @@
       clearAfter(box, 2000);
     }
 
-    function effectShake() {
+    // Persistent tricks: start() shows the effect and returns a stop()
+    // function. They run until an "off" event (or page reload) stops them.
+    function startShake() {
       document.body.classList.add('troll-shake');
-      setTimeout(() => document.body.classList.remove('troll-shake'), 2800);
+      return () => document.body.classList.remove('troll-shake');
     }
 
-    function effectDisconnect() {
+    function startDisconnect() {
       const layer = trollLayer();
       const box = document.createElement('div');
       box.className = 'troll-full';
@@ -954,22 +957,24 @@
       sub.textContent = 'Reconnecting… (just kidding, you are fine)';
       box.appendChild(spin); box.appendChild(title); box.appendChild(sub);
       layer.appendChild(box);
-      box.style.transition = 'opacity 0.6s';
-      setTimeout(() => { box.style.opacity = '0'; }, 3400);
-      clearAfter(box, 4200);
+      return () => {
+        box.style.transition = 'opacity 0.6s';
+        box.style.opacity = '0';
+        clearAfter(box, 700);
+      };
     }
 
-    function effectFlip() {
+    function startFlip() {
       document.body.classList.add('troll-flip');
-      setTimeout(() => document.body.classList.remove('troll-flip'), 5000);
+      return () => document.body.classList.remove('troll-flip');
     }
 
-    function effectRipples() {
+    function startRipples() {
       const layer = trollLayer();
       const hues = [265, 210, 320, 180, 0, 45];
       let n = 0;
       const timer = setInterval(() => {
-        if (n++ >= 30) { clearInterval(timer); return; }
+        if (n++ >= 500) { clearInterval(timer); return; } // runaway cap
         const r = document.createElement('div');
         r.className = 'troll-ripple';
         r.style.left = (Math.random() * 100) + 'vw';
@@ -978,7 +983,10 @@
         layer.appendChild(r);
         clearAfter(r, 1100);
       }, 320);
-      setTimeout(() => clearInterval(timer), 10500);
+      return () => {
+        clearInterval(timer);
+        layer.querySelectorAll('.troll-ripple').forEach(el => { if (el.parentNode) el.parentNode.removeChild(el); });
+      };
     }
 
     function effectAlert(payload) {
@@ -1002,9 +1010,9 @@
       setTimeout(() => { if (back.parentNode) back.parentNode.removeChild(back); }, 30000);
     }
 
-    function effectInvert() {
+    function startInvert() {
       document.body.classList.add('troll-invert');
-      setTimeout(() => document.body.classList.remove('troll-invert'), 5000);
+      return () => document.body.classList.remove('troll-invert');
     }
 
     function effectPopups(payload) {
@@ -1025,7 +1033,7 @@
       setTimeout(() => shown.forEach(t => { if (t.parentNode) t.parentNode.removeChild(t); }), msgs.length * 900 + 2500);
     }
 
-    function effectLoading() {
+    function startLoading() {
       const layer = trollLayer();
       const box = document.createElement('div');
       box.className = 'troll-full';
@@ -1039,9 +1047,11 @@
       sub.textContent = 'Good things come to those who wait';
       box.appendChild(spin); box.appendChild(title); box.appendChild(sub);
       layer.appendChild(box);
-      box.style.transition = 'opacity 0.6s';
-      setTimeout(() => { box.style.opacity = '0'; }, 7400);
-      clearAfter(box, 8200);
+      return () => {
+        box.style.transition = 'opacity 0.6s';
+        box.style.opacity = '0';
+        clearAfter(box, 700);
+      };
     }
 
     function effectConfetti() {
@@ -1059,22 +1069,60 @@
       }
     }
 
+    // Persistent tricks stay running until an "off" event for the same
+    // trick + scope arrives (scope = global '*' or one specific user).
+    // Instant tricks (jumpscare, confetti, popups, alert) always fire once.
+    const PERSISTENT_TRICKS = ['shake', 'disconnect', 'flip', 'ripples', 'invert', 'loading'];
+    const activeTricks = {}; // "type|scope" -> { stop }
+    // Original one-shot timings, used only for legacy rows with no state.
+    const LEGACY_MS = { shake: 2800, disconnect: 4200, flip: 5000, ripples: 10500, invert: 5000, loading: 8200 };
+
+    function stopTrick(key) {
+      const t = activeTricks[key];
+      if (!t) return;
+      delete activeTricks[key];
+      try { t.stop(); } catch (e) { console.error('trick stop failed:', e); }
+    }
+
+    function startPersistent(type) {
+      switch (type) {
+        case 'shake': return startShake();
+        case 'disconnect': return startDisconnect();
+        case 'flip': return startFlip();
+        case 'ripples': return startRipples();
+        case 'invert': return startInvert();
+        case 'loading': return startLoading();
+        default: return null;
+      }
+    }
+
     function dispatchTroll(row) {
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       if (row.target_username && row.target_username !== me) return; // not for me
+      const scope = row.target_username || '*';
+      const key = row.event_type + '|' + scope;
+      const state = row.payload && row.payload.state;
+      if (PERSISTENT_TRICKS.indexOf(row.event_type) !== -1) {
+        if (state === 'off') { stopTrick(key); return; }
+        stopTrick(key); // restart cleanly if already running
+        const stop = startPersistent(row.event_type);
+        if (!stop) return;
+        activeTricks[key] = { stop: stop };
+        if (!state || state === 'on') {
+          if (state === 'on') return; // stays on until "off" (or reload)
+          // Legacy row with no state: one-shot with the original timing.
+          const ms = LEGACY_MS[row.event_type] || 5000;
+          setTimeout(() => stopTrick(key), ms);
+        }
+        return;
+      }
       const payload = row.payload || {};
       switch (row.event_type) {
         case 'jumpscare': effectJumpscare(payload); break;
-        case 'shake': effectShake(); break;
-        case 'disconnect': effectDisconnect(); break;
-        case 'flip': effectFlip(); break;
-        case 'ripples': effectRipples(); break;
-        case 'alert': effectAlert(payload); break;
-        case 'invert': effectInvert(); break;
-        case 'popups': effectPopups(payload); break;
-        case 'loading': effectLoading(); break;
         case 'confetti': effectConfetti(); break;
+        case 'popups': effectPopups(payload); break;
+        case 'alert': effectAlert(payload); break;
         default: console.error('unknown trick:', row.event_type);
       }
     }
