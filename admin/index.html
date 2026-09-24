@@ -765,6 +765,7 @@
         <button data-tab="blacklist" onclick="showTab('blacklist', this)">Blacklist</button>
         <button data-tab="messages" onclick="showTab('messages', this)">Messaging</button>
         <button data-tab="users" onclick="showTab('users', this)">Users</button>
+        <button data-tab="reports" onclick="showTab('reports', this)">Reports</button>
         <button data-tab="troll" onclick="showTab('troll', this)">Troll</button>
         <button data-tab="activity" onclick="showTab('activity', this)">Activity</button>
         <a class="tablink" href="../games/play/">▶ Play Games</a>
@@ -840,6 +841,12 @@
           <input id="adminMsg" placeholder="Announcement or troll…" maxlength="500" />
           <button class="btn small" onclick="postAdminMessage()">Post</button>
         </div>
+        <div class="inline-form" style="align-items:center;margin-top:12px">
+          <input id="slowSecs" type="number" inputmode="numeric" min="0" max="300" value="0" style="flex:0 0 90px;min-width:90px" aria-label="Slowmode seconds" />
+          <button class="btn small" onclick="setSlowmode()">Set slowmode</button>
+          <button class="btn small ghost" onclick="setSlowmodeOff()">Off</button>
+          <span class="muted" id="slowStatus"></span>
+        </div>
         <div class="error" id="msgError"></div>
         <div class="ok" id="msgOk"></div>
         <h2 style="margin-top:24px">Recent announcements</h2>
@@ -864,6 +871,12 @@
             <button class="btn small" onclick="sendDm()">Send</button>
           </div>
         </div>
+      </div>
+
+      <div class="card section" id="sec-reports">
+        <h2>Player reports</h2>
+        <p class="sub">Flagged chat messages. Dismiss, delete the message, or mute the author.</p>
+        <div id="reportList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-troll">
@@ -1160,8 +1173,9 @@
       if (name === 'adminreqs') startPoller('adminreqs', loadAdminRequests, 3000);
       if (name === 'keys') startPoller('keys', loadKeys, 10000);
       if (name === 'blacklist') startPoller('blacklist', loadBlacklist, 10000);
-      if (name === 'messages') { startPoller('announce', loadAnnouncements, 3000); startPoller('chatmod', loadChatMod, 3000); }
+      if (name === 'messages') { startPoller('announce', loadAnnouncements, 3000); startPoller('chatmod', loadChatMod, 3000); loadSlowStatus(); }
       if (name === 'users') { startPoller('users', loadUsers, 3000); startPoller('dms', pollDms, 3000); }
+      if (name === 'reports') startPoller('reports', loadReports, 3000);
       if (name === 'troll') { loadTrollTargets(); startPoller('trollstates', refreshTrollStates, 10000); }
       if (name === 'activity') startPoller('activity', loadActivity, 5000);
     }
@@ -2241,6 +2255,47 @@
       }
     }
 
+    async function loadSlowStatus() {
+      try {
+        const { data, error } = await sb
+          .from('chat_settings')
+          .select('slowmode_seconds')
+          .eq('id', 1)
+          .maybeSingle();
+        const el = document.getElementById('slowStatus');
+        if (!el) return;
+        if (error) throw error;
+        const s = (data && data.slowmode_seconds) || 0;
+        el.textContent = s > 0 ? ('Slow mode: ' + s + 's between messages') : 'Slow mode off';
+        const inp = document.getElementById('slowSecs');
+        if (inp) inp.value = s;
+      } catch (e) {
+        console.error('slowmode status failed:', e);
+      }
+    }
+
+    async function setSlowmode() {
+      const inp = document.getElementById('slowSecs');
+      let n = inp ? parseInt(inp.value, 10) : 0;
+      if (isNaN(n) || n < 0) n = 0;
+      if (n > 300) n = 300;
+      try {
+        const { error } = await sb.from('chat_settings').upsert({ id: 1, slowmode_seconds: n });
+        if (error) throw error;
+        toast(n > 0 ? ('Slow mode: ' + n + 's') : 'Slow mode off', 'ok');
+        loadSlowStatus();
+      } catch (e) {
+        console.error('set slowmode failed:', e);
+        toast('Save failed.', 'err');
+      }
+    }
+
+    async function setSlowmodeOff() {
+      const inp = document.getElementById('slowSecs');
+      if (inp) inp.value = 0;
+      setSlowmode();
+    }
+
     async function deleteAnnouncement(id, btn) {
       setBtnLoading(btn, true);
       try {
@@ -2359,6 +2414,17 @@
             (r.data || []).forEach(k => { if (k.used_by) rankMap[k.used_by] = k.rank || 'user'; });
           } catch (e) { console.error('rank map failed:', e); }
         }
+        // Moderation maps (all staff ranks can warn/mute/ban from here).
+        let warnCounts = {};
+        let mutedMap = {};
+        try {
+          const w = await sb.from('warnings').select('username').limit(500);
+          if (!w.error) (w.data || []).forEach(x => { if (x.username) warnCounts[x.username] = (warnCounts[x.username] || 0) + 1; });
+        } catch (e) { console.error('warnings map failed:', e); }
+        try {
+          const m = await sb.from('mutes').select('username, expires_at').gt('expires_at', new Date().toISOString()).limit(200);
+          if (!m.error) (m.data || []).forEach(x => { if (x.username) mutedMap[x.username] = x.expires_at; });
+        } catch (e) { console.error('mutes map failed:', e); }
         let myName = '';
         try { myName = localStorage.getItem(LS_USER) || ''; } catch (e) {}
         let html = '<table><tr><th>User</th><th>Rank</th><th>Playing</th><th>Last seen</th><th></th></tr>';
@@ -2371,12 +2437,29 @@
           } else {
             rankCell = rankPill(urank) + (isMe ? ' <span class="muted">you</span>' : '');
           }
+          const wc = warnCounts[u.username] || 0;
+          // Staff can only moderate down: owner hits anyone but fellow owners
+          // and self; admin/mod only hit plain users.
+          const canMod = !isMe && urank !== 'owner' && (myRank === 'owner' || urank === 'user');
+          const warnBtn = canMod
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="warnUser(this)">Warn' + (wc > 0 ? ' (' + wc + ')' : '') + '</button>'
+            : (wc > 0 ? '<span class="pill rank-user">⚠ ' + wc + '</span>' : '');
+          const muteBtn = !canMod ? '' : (mutedMap[u.username]
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="unmuteUser(this)" title="Muted until ' + esc(mutedMap[u.username]) + '">Unmute</button>'
+            : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>');
+          const banBtns = (canMod && wc >= 3)
+            ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 5)">Ban 5m</button>' +
+              '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
+              '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 60)">Ban 1h</button>'
+            : '';
           html += '<tr class="arow" style="animation-delay:' + (ui * 40) + 'ms"><td>' + esc(u.username) + ' ' + presencePill(u.last_seen) +
             '</td><td>' + rankCell +
             '</td><td>' + esc(u.current_game || 'Browsing') +
             '</td><td class="muted">' + esc(new Date(u.last_seen).toLocaleString()) +
-            '</td><td><button class="btn small" data-user="' + esc(u.username) +
-            '" onclick="openDm(this)">Message</button></td></tr>';
+            '</td><td><div class="row-actions">' +
+            '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
+            warnBtn + muteBtn + banBtns +
+            '</div></td></tr>';
         });
         box.innerHTML = html + '</table>';
         reapplyFilter('userSearch', 'userList');
@@ -2442,6 +2525,217 @@
       } catch (e) {
         console.error('set rank failed:', e, { username: username, rank: rank });
         toast('Rank change failed.', 'err');
+      }
+    }
+
+    /* ---------- warnings / mutes / temp game bans (all staff ranks) ---------- */
+
+    function staffName() {
+      try { return localStorage.getItem(LS_USER) || 'staff'; } catch (e) { return 'staff'; }
+    }
+
+    async function warnUser(btn) {
+      const username = btn.getAttribute('data-user');
+      if (!username) return;
+      const reason = prompt('Warn ' + username + ' — reason (optional):');
+      if (reason === null) return;
+      try {
+        const { data, error } = await sb
+          .from('warnings')
+          .insert({ username: username, reason: (reason || '').slice(0, 200), warned_by: staffName() })
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Insert affected 0 rows.');
+        toast('Warned ' + username, 'ok');
+        loadUsers();
+      } catch (e) {
+        console.error('warn failed:', e, { username: username });
+        toast('Warn failed.', 'err');
+      }
+    }
+
+    async function muteUser(username, minutes) {
+      if (!username) return;
+      try {
+        const until = new Date(Date.now() + minutes * 60000).toISOString();
+        const { data, error } = await sb
+          .from('mutes')
+          .insert({ username: username, reason: 'Muted by staff', muted_by: staffName(), expires_at: until })
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Insert affected 0 rows.');
+        toast(username + ' muted for ' + minutes + 'm', 'ok');
+        loadUsers();
+      } catch (e) {
+        console.error('mute failed:', e, { username: username });
+        toast('Mute failed.', 'err');
+      }
+    }
+
+    async function unmuteUser(btn) {
+      const username = btn.getAttribute('data-user');
+      if (!username) return;
+      setBtnLoading(btn, true);
+      try {
+        const { error } = await sb
+          .from('mutes')
+          .delete()
+          .eq('username', username)
+          .gt('expires_at', new Date().toISOString());
+        if (error) throw error;
+        toast(username + ' unmuted', 'ok');
+        loadUsers();
+      } catch (e) {
+        console.error('unmute failed:', e, { username: username });
+        setBtnLoading(btn, false, 'Unmute');
+        toast('Unmute failed.', 'err');
+      }
+    }
+
+    async function gameBan(btn, minutes) {
+      const username = btn.getAttribute('data-user');
+      if (!username) return;
+      if (!confirm('Ban ' + username + ' from games for ' + minutes + ' minutes? They stay logged in.')) return;
+      setBtnLoading(btn, true);
+      try {
+        const until = new Date(Date.now() + minutes * 60000).toISOString();
+        const { data, error } = await sb
+          .from('game_bans')
+          .insert({ username: username, reason: 'Banned after 3+ warnings', banned_by: staffName(), expires_at: until })
+          .select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Insert affected 0 rows.');
+        toast(username + ' banned from games for ' + minutes + 'm', 'ok');
+        loadUsers();
+      } catch (e) {
+        console.error('game ban failed:', e, { username: username });
+        setBtnLoading(btn, false, 'Ban');
+        toast('Ban failed.', 'err');
+      }
+    }
+
+    // Mute-duration picker reusing the .dd component styling.
+    const MUTE_OPTS = [['10m', 10], ['1h', 60], ['24h', 1440]];
+    document.addEventListener('click', e => {
+      const trg = e.target && e.target.closest ? e.target.closest('.mutedd .dd-trigger') : null;
+      if (!trg) return;
+      const dd = trg.closest('.mutedd');
+      const wasOpen = dd.classList.contains('open');
+      document.querySelectorAll('.mutedd.open').forEach(d => d.classList.remove('open'));
+      if (wasOpen) return;
+      const panel = dd.querySelector('.dd-panel');
+      panel.innerHTML = '';
+      MUTE_OPTS.forEach(([label, mins]) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dd-opt';
+        const s = document.createElement('span');
+        s.textContent = label;
+        b.appendChild(s);
+        b.onclick = ev => {
+          ev.stopPropagation();
+          dd.classList.remove('open');
+          muteUser(dd.getAttribute('data-user'), mins);
+        };
+        panel.appendChild(b);
+      });
+      dd.classList.add('open');
+    });
+
+    /* ---------- player reports ---------- */
+
+    async function loadReports() {
+      const box = document.getElementById('reportList');
+      if (!box) return;
+      const first = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (first) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      try {
+        const { data, error } = await sb
+          .from('reports')
+          .select('id, reporter, reported_user, message_id, reason, status, created_at')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending reports.</div>';
+          return;
+        }
+        const ids = data.map(r => r.message_id).filter(Boolean);
+        let msgMap = {};
+        if (ids.length > 0) {
+          try {
+            const m = await sb.from('messages').select('id, username, content').in('id', ids);
+            if (!m.error) (m.data || []).forEach(x => { msgMap[x.id] = x; });
+          } catch (e) { console.error('report context failed:', e); }
+        }
+        let html = '<table><tr><th>Reported</th><th>Message</th><th>By</th><th></th></tr>';
+        data.forEach((r, ri) => {
+          const ctx = (r.message_id && msgMap[r.message_id]) ? msgMap[r.message_id].content : '(message gone)';
+          html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.reported_user) +
+            '</td><td>' + esc(String(ctx).slice(0, 120)) +
+            '</td><td class="muted">' + esc(r.reporter) +
+            '</td><td><div class="row-actions">' +
+            '<button class="btn small danger" onclick="deleteReportedMessage(' + r.id + ',' + (r.message_id || 'null') + ', this)">Delete msg</button>' +
+            '<button class="btn small ghost" onclick="muteReported(' + r.id + ', \'' + esc(r.reported_user).replace(/'/g, "\\'") + '\', this)">Mute 30m</button>' +
+            '<button class="btn small ghost" onclick="dismissReport(' + r.id + ', this)">Dismiss</button>' +
+            '</div></td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error('load reports failed:', e);
+        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load reports.</div>';
+      }
+    }
+
+    async function dismissReport(id, btn) {
+      setBtnLoading(btn, true);
+      try {
+        const { error } = await sb.from('reports').update({ status: 'reviewed' }).eq('id', id);
+        if (error) throw error;
+        toast('Report dismissed', 'ok');
+        loadReports();
+      } catch (e) {
+        console.error('dismiss report failed:', e, { id: id });
+        setBtnLoading(btn, false, 'Dismiss');
+        toast('Dismiss failed.', 'err');
+      }
+    }
+
+    async function deleteReportedMessage(reportId, messageId, btn) {
+      setBtnLoading(btn, true);
+      try {
+        if (messageId) {
+          const { error: derr } = await sb.from('messages').delete().eq('id', messageId);
+          if (derr) throw derr;
+        }
+        const { error } = await sb.from('reports').update({ status: 'actioned' }).eq('id', reportId);
+        if (error) throw error;
+        toast('Message deleted', 'ok');
+        loadReports();
+      } catch (e) {
+        console.error('delete reported failed:', e, { id: reportId });
+        setBtnLoading(btn, false, 'Delete msg');
+        toast('Delete failed.', 'err');
+      }
+    }
+
+    async function muteReported(reportId, username, btn) {
+      setBtnLoading(btn, true);
+      try {
+        const until = new Date(Date.now() + 30 * 60000).toISOString();
+        const { error: merr } = await sb
+          .from('mutes')
+          .insert({ username: username, reason: 'Muted from report', muted_by: staffName(), expires_at: until });
+        if (merr) throw merr;
+        const { error } = await sb.from('reports').update({ status: 'actioned' }).eq('id', reportId);
+        if (error) throw error;
+        toast(username + ' muted 30m', 'ok');
+        loadReports();
+      } catch (e) {
+        console.error('mute reported failed:', e, { id: reportId });
+        setBtnLoading(btn, false, 'Mute 30m');
+        toast('Mute failed.', 'err');
       }
     }
 

@@ -118,6 +118,56 @@
     .online-line { display: flex; align-items: center; font-size: 12px; color: #6b6b8a; margin-top: 8px; }
     .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 8px; }
     .reqadmin-note { font-size: 12px; color: #6b6b8a; }
+    /* moderation + leaderboard */
+    #banBanner { margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .ban-card {
+      background: #13131a; border: 1px solid #1e1e2e; border-left: 4px solid #ef4444;
+      border-radius: 16px; padding: 14px 16px; font-size: 13px; color: #e2e2f0; line-height: 1.5;
+      animation: pageIn 0.2s ease-out;
+    }
+    .staff-bar {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      margin-bottom: 14px; font-size: 12px; color: #6b6b8a;
+    }
+    .staff-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 20px;
+      padding: 6px 12px; font-size: 12px; color: #e2e2f0;
+    }
+    .staff-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
+    .leader-card {
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 16px; margin-bottom: 18px;
+    }
+    .leader-card h3 { font-size: 14px; font-weight: 700; color: #e2e2f0; margin-bottom: 10px; }
+    .leader-row {
+      display: flex; align-items: center; gap: 10px; padding: 7px 0;
+      border-bottom: 1px solid #1e1e2e; font-size: 13px; color: #e2e2f0;
+    }
+    .leader-row:last-child { border-bottom: none; }
+    .leader-rank { font-weight: 800; color: #7c3aed; min-width: 28px; }
+    .leader-time { margin-left: auto; color: #6b6b8a; font-variant-numeric: tabular-nums; }
+    .fav-btn {
+      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px; color: #6b6b8a;
+      font-size: 13px; padding: 8px 14px; cursor: pointer; min-height: 44px;
+      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1);
+      touch-action: manipulation;
+    }
+    .fav-btn.active { border-color: #7c3aed; color: #7c3aed; }
+    .game-card .fav-star {
+      position: absolute; top: 10px; right: 10px; width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(10,10,15,0.7); border: 1px solid #2a2a3d; border-radius: 10px;
+      color: #6b6b8a; font-size: 18px; cursor: pointer;
+    }
+    .game-card .fav-star.on { color: #f59e0b; border-color: #f59e0b; }
+    .game-card { position: relative; }
+    .result-count { font-size: 12px; color: #6b6b8a; margin: 12px 0; }
+    .flag-btn {
+      background: none; border: none; color: #6b6b8a; font-size: 12px; cursor: pointer;
+      min-width: 44px; min-height: 44px; margin-left: 2px;
+    }
+    .flag-btn:hover { color: #ef4444; }
 
     .search-wrap {
       margin-top: 16px;
@@ -916,6 +966,7 @@
 
   <div class="main">
     <div id="reqBanner" aria-live="polite"></div>
+    <div id="banBanner" aria-live="polite"></div>
     <div class="page-header">
       <h1>Games</h1>
       <p>Pick a game and get playing.</p>
@@ -924,6 +975,18 @@
         <input id="search" type="text" placeholder="Search games..." oninput="filterGames()" />
       </div>
     </div>
+
+    <div class="staff-bar" id="staffBar"></div>
+
+    <div class="leader-card" id="leaderCard">
+      <h3>🏆 Most played today</h3>
+      <div id="leaderList"><div class="skel" style="height:32px"></div></div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()">★ Favorites</button>
+    </div>
+    <div class="result-count" id="resultCount"></div>
 
     <div class="games-grid" id="gamesGrid">
     </div>
@@ -1139,6 +1202,13 @@
       replyBtn.setAttribute('aria-label', 'Reply to ' + uname);
       replyBtn.onclick = () => startReply(msg.id, uname, msg.content || '');
       meta.appendChild(replyBtn);
+      const flagBtn = document.createElement('button');
+      flagBtn.className = 'flag-btn';
+      flagBtn.textContent = '🚩';
+      flagBtn.title = 'Report message';
+      flagBtn.setAttribute('aria-label', 'Report message from ' + uname);
+      flagBtn.onclick = () => sendReport(msg.id, uname);
+      meta.appendChild(flagBtn);
       div.appendChild(meta);
       // Quoted reply preview, if this message is a reply.
       const replyUser = msg.reply_username || null;
@@ -1246,6 +1316,17 @@
       } catch (err) {
         console.error(err);
       }
+      // Mute + slowmode gates (refreshed every 3s by the session poller).
+      if (myMuteUntil && Date.now() < myMuteUntil) {
+        status.textContent = 'muted';
+        toast('You are muted until ' + new Date(myMuteUntil).toLocaleString(), 'err');
+        return false;
+      }
+      if (slowmodeSecs > 0 && Date.now() - lastChatSent < slowmodeSecs * 1000) {
+        const waitS = Math.ceil(slowmodeSecs - (Date.now() - lastChatSent) / 1000);
+        toast('Slow mode: wait ' + waitS + 's', 'err');
+        return false;
+      }
       input.value = '';
       const sendBtn = document.querySelector('.chat-form button[type="submit"]');
       if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '…'; }
@@ -1271,6 +1352,7 @@
         }
         if (error) throw error;
         cancelReply();
+        lastChatSent = Date.now();
         if (status.textContent === 'blocked') status.textContent = 'live';
       } catch (err) {
         console.error(err);
@@ -1282,8 +1364,24 @@
       return false;
     }
 
-    /* ---------- Troll events (transient admin effects) ---------- */
+    async function sendReport(messageId, username) {
+      let me = 'anon';
+      try { me = (localStorage.getItem(LS_USER) || 'anon').slice(0, 32); } catch (e) {}
+      if (!messageId) { toast('Cannot report this message', 'err'); return; }
+      if (!confirm('Report this message from ' + username + ' to staff?')) return;
+      try {
+        const { error } = await sb
+          .from('reports')
+          .insert({ reporter: me, reported_user: username, message_id: messageId, reason: 'Reported from chat', status: 'pending' });
+        if (error) throw error;
+        toast('Reported. Staff will review.', 'ok');
+      } catch (e) {
+        console.error('report failed:', e);
+        toast('Report failed', 'err');
+      }
+    }
 
+    /* ---------- Troll events (transient admin effects) ---------- */
     let trollAudioCtx = null;
 
     // iOS Safari blocks audio until a user gesture. Unlock on first tap
@@ -1648,8 +1746,10 @@
             try { dispatchTroll(row, true); } catch (e) { console.error('resume trick failed:', e); }
           }
         }
+        trollReady = true;
       } catch (e) {
         console.error('init troll state failed:', e);
+        trollReady = true; // let the poll take over converging persistent state
       }
     }
 
@@ -1750,6 +1850,9 @@
     // reset, never cleared. Out-of-scope rows are ignored entirely and
     // never added.
     const seenTrollIds = new Set();
+    // False until initTrollState finishes seeding. The poll refuses to run
+    // before that, so it can never replay history on a fresh load.
+    let trollReady = false;
 
     let trollChannel = null;
     function subscribeTrolls() {
@@ -1779,6 +1882,7 @@
     // 3s fallback poll — catches events realtime missed. Only unseen ids
     // dispatch, so running effects are never restarted by the poll.
     async function pollTrolls() {
+      if (!trollReady) return; // init hasn't seeded history yet — fire nothing
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
@@ -1792,6 +1896,9 @@
           if (r.target_username && r.target_username !== me) return; // not mine: ignore entirely
           if (seenTrollIds.has(r.id)) return; // already processed: do NOTHING
           seenTrollIds.add(r.id);
+          // Instant one-shots are realtime-only: a stale confetti/popup/alert
+          // must never re-fire from a poll. Only persistent on/off syncs here.
+          if (PERSISTENT_TRICKS.indexOf(r.event_type) === -1) return;
           try { dispatchTroll(r); } catch (e) { console.error('trick failed:', e); }
         });
       } catch (e) {
@@ -1895,11 +2002,106 @@
       } catch (e) {
         console.error('online count failed:', e);
       }
+      loadStaffAndBoard();
+    }
+
+    // Staff online strip + daily playtime leaderboard (quiet on failure).
+    async function loadStaffAndBoard() {
+      const cutoff = new Date(Date.now() - 90000).toISOString();
+      try {
+        const [act, staff] = await Promise.all([
+          sb.from('active_sessions').select('username').gte('last_seen', cutoff).limit(100),
+          sb.from('license_keys').select('used_by, rank').in('rank', ['owner', 'admin', 'mod']).limit(100)
+        ]);
+        if (!act.error && !staff.error) renderStaffBar(act.data || [], staff.data || []);
+      } catch (e) { console.error('staff bar failed:', e); }
+      try {
+        const day = new Date().toISOString().slice(0, 10);
+        const lb = await sb
+          .from('daily_playtime')
+          .select('username, seconds')
+          .eq('day', day)
+          .order('seconds', { ascending: false })
+          .limit(5);
+        if (!lb.error) renderLeaderboard(lb.data || []);
+      } catch (e) { console.error('leaderboard failed:', e); }
+    }
+
+    function renderStaffBar(sessions, staffKeys) {
+      const bar = document.getElementById('staffBar');
+      if (!bar) return;
+      const online = {};
+      sessions.forEach(s => { if (s.username) online[s.username] = true; });
+      const present = staffKeys.filter(k => k.used_by && online[k.used_by]);
+      bar.innerHTML = '';
+      const label = document.createElement('span');
+      label.textContent = '🟢 Staff online:';
+      bar.appendChild(label);
+      if (present.length === 0) {
+        const none = document.createElement('span');
+        none.textContent = 'none right now';
+        bar.appendChild(none);
+        return;
+      }
+      present.forEach(k => {
+        const pill = document.createElement('span');
+        pill.className = 'staff-pill';
+        const dot = document.createElement('span');
+        dot.className = 'staff-dot';
+        const nm = document.createElement('span');
+        nm.textContent = k.used_by;
+        const badge = document.createElement('span');
+        badge.innerHTML = rankBadgeHtml(k.rank);
+        pill.appendChild(dot);
+        pill.appendChild(nm);
+        pill.appendChild(badge);
+        bar.appendChild(pill);
+      });
+    }
+
+    function fmtPlay(secs) {
+      secs = Math.max(0, parseInt(secs, 10) || 0);
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      if (h > 0) return h + 'h ' + m + 'm';
+      if (m > 0) return m + 'm';
+      return secs + 's';
+    }
+
+    function renderLeaderboard(rows) {
+      const box = document.getElementById('leaderList');
+      if (!box) return;
+      box.innerHTML = '';
+      if (rows.length === 0) {
+        box.innerHTML = '<div style="font-size:13px;color:#6b6b8a">No playtime yet today — be the first!</div>';
+        return;
+      }
+      const medals = ['🥇', '🥈', '🥉'];
+      rows.forEach((r, i) => {
+        const div = document.createElement('div');
+        div.className = 'leader-row';
+        const rk = document.createElement('span');
+        rk.className = 'leader-rank';
+        rk.textContent = medals[i] || ((i + 1) + '.');
+        const nm = document.createElement('span');
+        nm.textContent = r.username || 'anon';
+        const tm = document.createElement('span');
+        tm.className = 'leader-time';
+        tm.textContent = fmtPlay(r.seconds);
+        div.appendChild(rk);
+        div.appendChild(nm);
+        div.appendChild(tm);
+        box.appendChild(div);
+      });
     }
 
     /* ---------- Request admin access (once per account, ever) ---------- */
 
-    let adminReqState = 'unknown'; // null | pending | approved | denied
+    let adminReqState = 'unknown'; // null | pending | approved | denied | unsupported
+    let myGameBan = null; // { expires_at, reason } while banned from games (session stays alive)
+    let myMuteUntil = 0; // timestamp ms while chat-muted
+    let slowmodeSecs = 0; // chat slowmode from chat_settings
+    let lastChatSent = 0; // client-side slowmode clock
 
     async function loadAdminRequestState() {
       const wrap = document.getElementById('adminReqWrap');
@@ -2015,10 +2217,70 @@
           toast('Your rank is now ' + rank.toUpperCase(), 'ok');
         }
         const st = data.admin_request_status || null;
-        if (st !== adminReqState) loadAdminRequestState();
+        if (adminReqState !== 'unsupported' && st !== adminReqState) loadAdminRequestState();
+        refreshModeration();
       } catch (e) {
         console.error('session refresh failed:', e);
       }
+    }
+
+    // Mute / game-ban / slowmode state. Quiet on failure (pre-migration safe).
+    async function refreshModeration() {
+      let me = 'player';
+      try { me = (localStorage.getItem(LS_USER) || 'player').slice(0, 32); } catch (e) {}
+      try {
+        const now = new Date().toISOString();
+        const [ban, mute, slow] = await Promise.all([
+          sb.from('game_bans').select('expires_at, reason').eq('username', me).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
+          sb.from('mutes').select('expires_at, reason').eq('username', me).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
+          sb.from('chat_settings').select('slowmode_seconds').eq('id', 1).maybeSingle()
+        ]);
+        myGameBan = (!ban.error && ban.data) ? ban.data : null;
+        myMuteUntil = (!mute.error && mute.data && mute.data.expires_at) ? new Date(mute.data.expires_at).getTime() : 0;
+        slowmodeSecs = (!slow.error && slow.data && slow.data.slowmode_seconds) ? slow.data.slowmode_seconds : 0;
+        renderBanBanner();
+      } catch (e) {
+        console.error('moderation refresh failed:', e);
+      }
+    }
+
+    function renderBanBanner() {
+      const wrap = document.getElementById('banBanner');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+      if (myGameBan && myGameBan.expires_at && new Date(myGameBan.expires_at).getTime() > Date.now()) {
+        const card = document.createElement('div');
+        card.className = 'ban-card';
+        card.textContent = '⛔ You are banned from playing until ' + new Date(myGameBan.expires_at).toLocaleString() +
+          (myGameBan.reason ? ' — ' + myGameBan.reason : '');
+        wrap.appendChild(card);
+      }
+    }
+
+    // Live check used when opening a game (blocks even inside the 3s window).
+    async function isGameBannedLive() {
+      let me = 'player';
+      try { me = (localStorage.getItem(LS_USER) || 'player').slice(0, 32); } catch (e) {}
+      try {
+        const { data, error } = await sb
+          .from('game_bans')
+          .select('expires_at, reason')
+          .eq('username', me)
+          .gt('expires_at', new Date().toISOString())
+          .order('expires_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        if (data) {
+          myGameBan = data;
+          renderBanBanner();
+          return true;
+        }
+        myGameBan = null;
+        renderBanBanner();
+        return false;
+      } catch (e) { console.error('ban check failed:', e); }
+      return false;
     }
 
     /* ---------- Presence (active_sessions) ---------- */
@@ -2049,7 +2311,36 @@
           .update({ last_seen: new Date().toISOString() })
           .eq('username', myName)
           .then(({ error }) => { if (error) console.error(error); });
+        trackPlaytime();
       }, 30000);
+    }
+
+    // Adds ~30s to today's playtime total (drives the daily leaderboard).
+    async function trackPlaytime() {
+      try {
+        const day = new Date().toISOString().slice(0, 10);
+        const { data, error } = await sb
+          .from('daily_playtime')
+          .select('id, seconds')
+          .eq('username', myName)
+          .eq('day', day)
+          .maybeSingle();
+        if (error) throw error;
+        if (data) {
+          const { error: uerr } = await sb
+            .from('daily_playtime')
+            .update({ seconds: (data.seconds || 0) + 30 })
+            .eq('id', data.id);
+          if (uerr) throw uerr;
+        } else {
+          const { error: ierr } = await sb
+            .from('daily_playtime')
+            .insert({ username: myName, day: day, seconds: 30 });
+          if (ierr) throw ierr;
+        }
+      } catch (e) {
+        console.error('playtime failed:', e);
+      }
     }
 
     /* ---------- Game modal (in-page player + fullscreen-safe overlay) ----------
@@ -2085,6 +2376,10 @@
       const ticket = ++gameTicket;
       await trackPresence(name);
       if (ticket !== gameTicket) return; // superseded by a newer open
+      if (await isGameBannedLive()) {
+        toast('You are banned from playing right now.', 'err');
+        return;
+      }
       closeGame(); // teardown first: rapid switches never stack iframes
       document.getElementById('gameModalTitle').textContent = name;
       const wrap = document.getElementById('gameFrameWrap');
@@ -2430,12 +2725,38 @@
       return EMOJIS[i % EMOJIS.length];
     }
 
+    // Favorites live in localStorage (personal, per device).
+    let favOnly = false;
+    function getFavs() {
+      try { return JSON.parse(localStorage.getItem('ls_favs') || '[]'); }
+      catch (e) { return []; }
+    }
+    function isFav(path) { return getFavs().indexOf(path) !== -1; }
+    function toggleFav(path, ev) {
+      if (ev) ev.stopPropagation();
+      let favs = getFavs();
+      const i = favs.indexOf(path);
+      if (i === -1) favs.push(path); else favs.splice(i, 1);
+      try { localStorage.setItem('ls_favs', JSON.stringify(favs)); } catch (e) {}
+      renderGames(document.getElementById('search').value);
+    }
+    function toggleFavFilter() {
+      favOnly = !favOnly;
+      document.getElementById('favFilterBtn').classList.toggle('active', favOnly);
+      renderGames(document.getElementById('search').value);
+    }
+
     function renderGames(filter = '') {
       const grid = document.getElementById('gamesGrid');
       const q = filter.trim().toLowerCase();
       grid.innerHTML = '';
+      const favs = getFavs();
       const list = GAMES
-        .filter(p => prettyName(p).toLowerCase().includes(q) || p.toLowerCase().includes(q));
+        .filter(p => prettyName(p).toLowerCase().includes(q) || p.toLowerCase().includes(q))
+        .filter(p => !favOnly || favs.indexOf(p) !== -1)
+        .sort((a, b) => prettyName(a).localeCompare(prettyName(b)));
+      const rc = document.getElementById('resultCount');
+      if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ★' : '');
       if (list.length === 0) {
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#6b6b8a;font-size:14px">🎮 No games found — try a different search.</div>';
         return;
@@ -2446,11 +2767,26 @@
           const card = document.createElement('div');
           card.className = 'game-card';
           card.onclick = () => { openGame(path, name); };
-          card.innerHTML =
-            '<div class="game-thumb">' + emojiFor(path, GAMES.indexOf(path)) + '</div>' +
-            '<div class="game-info"><h3>' + name + '</h3>' +
-            '<p>' + path + '</p>' +
-            '<span class="game-tag">Play</span></div>';
+          const star = document.createElement('button');
+          star.className = 'fav-star' + (favs.indexOf(path) !== -1 ? ' on' : '');
+          star.textContent = '★';
+          star.setAttribute('aria-label', 'Favorite ' + name);
+          star.onclick = ev => toggleFav(path, ev);
+          const info = document.createElement('div');
+          info.className = 'game-info';
+          const h = document.createElement('h3');
+          h.textContent = name;
+          const tag = document.createElement('span');
+          tag.className = 'game-tag';
+          tag.textContent = 'Play';
+          info.appendChild(h);
+          info.appendChild(tag);
+          const thumb = document.createElement('div');
+          thumb.className = 'game-thumb';
+          thumb.textContent = emojiFor(path, GAMES.indexOf(path));
+          card.appendChild(thumb);
+          card.appendChild(info);
+          card.appendChild(star);
           grid.appendChild(card);
         });
     }
