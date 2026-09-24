@@ -36,11 +36,11 @@
     .blob {
       position: absolute;
       border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.12;
+      filter: blur(140px);
+      opacity: 0.2;
     }
-    .blob1 { width: 500px; height: 500px; background: #7c3aed; top: -150px; left: -150px; }
-    .blob2 { width: 400px; height: 400px; background: #2563eb; bottom: -100px; right: -100px; }
+    .blob1 { width: 560px; height: 560px; background: #7c3aed; top: -170px; left: -170px; }
+    .blob2 { width: 460px; height: 460px; background: #2563eb; bottom: -120px; right: -120px; }
 
     nav {
       position: relative;
@@ -50,10 +50,11 @@
       justify-content: space-between;
       padding: 0 32px;
       height: 60px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      background: rgba(8,8,16,0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(10,10,22,0.55);
+      backdrop-filter: blur(28px) saturate(1.5);
+      -webkit-backdrop-filter: blur(28px) saturate(1.5);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), 0 8px 32px rgba(0,0,0,0.35);
     }
     .nav-logo {
       font-size: 16px;
@@ -64,15 +65,23 @@
       -webkit-text-fill-color: transparent;
     }
     .logout-btn {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
       padding: 7px 14px;
       font-size: 13px;
       color: #9ca3af;
       cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.35);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
-    .logout-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .logout-btn:hover {
+      background: linear-gradient(165deg, rgba(255,255,255,0.14), rgba(124,58,237,0.12));
+      color: #fff;
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.4);
+    }
 
     .wrap {
       position: relative;
@@ -83,13 +92,15 @@
     }
 
     .card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%, rgba(124,58,237,0.07));
+      background-color: rgba(14,14,26,0.5);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 24px;
       padding: 32px;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07);
+      backdrop-filter: blur(32px) saturate(1.5);
+      -webkit-backdrop-filter: blur(32px) saturate(1.5);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.5), 0 32px 96px rgba(0,0,0,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,255,255,0.04);
     }
     .card.center { max-width: 400px; margin: 8vh auto; text-align: center; }
     .card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
@@ -108,64 +119,111 @@
     }
     .field input, .field textarea {
       width: 100%;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+      background-color: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
       padding: 12px 14px;
       font-size: 14px;
       color: #fff;
       outline: none;
       font-family: inherit;
+      transition: border-color 0.3s cubic-bezier(0.22, 1.15, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
     .field input.mono { font-family: monospace; letter-spacing: 2px; }
     .field input:focus, .field textarea:focus {
-      border-color: rgba(124,58,237,0.6);
-      box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+      border-color: rgba(124,58,237,0.65);
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.16), inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 20px rgba(124,58,237,0.2);
     }
     .field textarea { resize: none; height: 80px; }
 
     .btn {
       display: inline-block;
       padding: 12px 18px;
-      border: none;
-      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 14px;
       background: linear-gradient(135deg, #7c3aed, #2563eb);
       color: #fff;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 2px 6px rgba(0,0,0,0.4), 0 8px 24px rgba(124,58,237,0.35);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
-    .btn:disabled { opacity: 0.55; cursor: wait; }
+    .btn:hover {
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(124,58,237,0.5);
+    }
+    .btn:active { transform: translateY(0) scale(0.98); }
+    .btn:disabled { opacity: 0.55; cursor: wait; transform: none; }
     .btn.block { width: 100%; }
     .btn.small { padding: 7px 12px; font-size: 12px; }
     .btn.ghost {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: none;
+      background: linear-gradient(165deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.35);
     }
-    .btn.danger { background: linear-gradient(135deg, #dc2626, #7c2d12); box-shadow: none; }
+    .btn.ghost:hover {
+      background: linear-gradient(165deg, rgba(255,255,255,0.14), rgba(124,58,237,0.12));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .btn.danger {
+      background: linear-gradient(135deg, #e03434, #8a2d12);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 2px 6px rgba(0,0,0,0.4), 0 8px 24px rgba(220,38,38,0.3);
+    }
+    .btn.danger:hover { background: linear-gradient(135deg, #ef4444, #9a3412); }
 
     .error { margin-top: 12px; font-size: 13px; color: #f87171; min-height: 18px; }
     .ok { margin-top: 12px; font-size: 13px; color: #6ee7b7; min-height: 18px; word-break: break-all; }
 
     .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-    .tabs button {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
+    .tabs button, .tabs a.tablink {
+      background: linear-gradient(165deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
       padding: 9px 16px;
       font-size: 13px;
       color: #9ca3af;
       cursor: pointer;
+      text-decoration: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+    .tabs button:hover, .tabs a.tablink:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
     }
     .tabs button.active {
       background: linear-gradient(135deg, #7c3aed, #2563eb);
       color: #fff;
-      border-color: transparent;
+      border-color: rgba(255,255,255,0.16);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 16px rgba(124,58,237,0.45);
+    }
+    .tabs a.tablink {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-weight: 600;
+      border-color: rgba(255,255,255,0.16);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 16px rgba(124,58,237,0.45);
+    }
+    .tabs a.tablink:hover {
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 8px 24px rgba(124,58,237,0.55);
     }
     .section { display: none; }
-    .section.active { display: block; }
+    .section.active {
+      display: block;
+      animation: sectionIn 0.32s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+    @keyframes sectionIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
     table {
       width: 100%;
@@ -195,9 +253,9 @@
     .newkey {
       margin: 14px 0;
       padding: 14px 16px;
-      border-radius: 12px;
-      background: rgba(124,58,237,0.12);
-      border: 1px solid rgba(124,58,237,0.35);
+      border-radius: 16px;
+      background: linear-gradient(165deg, rgba(124,58,237,0.2), rgba(124,58,237,0.07));
+      border: 1px solid rgba(124,58,237,0.4);
       font-family: monospace;
       font-size: 16px;
       letter-spacing: 1px;
@@ -206,6 +264,7 @@
       justify-content: space-between;
       gap: 12px;
       word-break: break-all;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 4px 20px rgba(124,58,237,0.25);
     }
     .muted { font-size: 12px; color: #6b7280; margin-top: 10px; line-height: 1.6; }
     .check {
@@ -221,13 +280,19 @@
     .inline-form input {
       flex: 1;
       min-width: 140px;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+      background-color: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
       padding: 10px 12px;
       font-size: 13px;
       color: #fff;
       outline: none;
+      transition: border-color 0.3s cubic-bezier(0.22, 1.15, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+    .inline-form input:focus {
+      border-color: rgba(124,58,237,0.65);
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.16), inset 0 1px 0 rgba(255,255,255,0.08);
     }
 
     /* DM THREAD */
@@ -246,12 +311,13 @@
     .dm-line .text {
       display: inline-block;
       margin-top: 2px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 10px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
       padding: 7px 10px;
       color: #e5e7eb;
       word-break: break-word;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
 
     footer {
@@ -270,25 +336,162 @@
       position: fixed;
       inset: 0;
       z-index: 50;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(24px) saturate(1.3);
+      -webkit-backdrop-filter: blur(24px) saturate(1.3);
       align-items: center;
       justify-content: center;
     }
     .overlay.show { display: flex; }
     .modal {
-      background: #111118;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 20px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02) 45%, rgba(124,58,237,0.08));
+      background-color: rgba(17,17,24,0.72);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
       padding: 32px 28px;
       width: 100%;
       max-width: 420px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+      backdrop-filter: blur(32px) saturate(1.5);
+      -webkit-backdrop-filter: blur(32px) saturate(1.5);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04);
       text-align: center;
+      animation: modalIn 0.34s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(14px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
     .modal p.sub { font-size: 13px; color: #6b7280; margin-bottom: 16px; line-height: 1.5; }
+
+    /* STAT CARDS (dashboard) */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    .stat-card {
+      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 20px;
+      padding: 18px 14px;
+      text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.35);
+    }
+    .stat-num {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-label {
+      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    /* SEGMENTED TARGET SELECTOR (troll tab) */
+    .segrow { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .seg-btn {
+      flex: 1;
+      min-width: 140px;
+      min-height: 48px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #9ca3af;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+    .seg-btn.active {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      border-color: rgba(255,255,255,0.16);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 16px rgba(124,58,237,0.45);
+    }
+
+    /* NATIVE SELECTS + 16px inputs (no iOS auto-zoom, native picker kept) */
+    .field select {
+      width: 100%;
+      background-color: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 16px;
+      color: #fff;
+      outline: none;
+      font-family: inherit;
+      min-height: 48px;
+    }
+    .field select:focus {
+      border-color: rgba(124,58,237,0.65);
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.16);
+    }
+    .field select option { background: #111118; color: #fff; }
+    #trollMsg, #keySearch, #userSearch { font-size: 16px; }
+
+    /* TRICK GRID */
+    .trick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .trick-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 88px;
+      padding: 14px 10px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      font-size: 26px;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .trick-btn span { font-size: 12px; font-weight: 600; color: #c4b5fd; }
+    .trick-btn:active { transform: scale(0.96); }
+    .trick-btn.selected {
+      background: linear-gradient(165deg, rgba(124,58,237,0.35), rgba(37,99,235,0.25));
+      border-color: rgba(139,92,246,0.7);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 20px rgba(124,58,237,0.45);
+    }
+    .trick-btn.selected span { color: #fff; }
+
+    /* BULK KEY LIST */
+    .keyrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-top: 8px;
+      background: rgba(124,58,237,0.1);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 14px;
+      font-family: monospace;
+      font-size: 14px;
+      letter-spacing: 1px;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -314,14 +517,30 @@
     <!-- DASHBOARD -->
     <div id="dash" style="display:none">
       <div class="tabs">
-        <button class="active" onclick="showTab('requests', this)">Key requests</button>
+        <button class="active" onclick="showTab('dashboard', this)">Dashboard</button>
+        <button onclick="showTab('requests', this)">Key requests</button>
         <button onclick="showTab('keys', this)">Manage keys</button>
         <button onclick="showTab('blacklist', this)">Blacklist</button>
         <button onclick="showTab('messages', this)">Messaging</button>
         <button onclick="showTab('users', this)">Users</button>
+        <button onclick="showTab('troll', this)">Troll</button>
+        <button onclick="showTab('activity', this)">Activity</button>
+        <a class="tablink" href="../games/play/">▶ Play Games</a>
       </div>
 
-      <div class="card section active" id="sec-requests">
+      <div class="card section active" id="sec-dashboard">
+        <h2>Overview</h2>
+        <p class="sub">Read-only snapshot. Refreshes every time this tab opens.</p>
+        <div class="stat-grid" id="statGrid">
+          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Active keys</div></div>
+          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Users activated</div></div>
+          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Online now</div></div>
+          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Pending requests</div></div>
+          <div class="stat-card"><div class="stat-num">100</div><div class="stat-label">Games available</div></div>
+        </div>
+      </div>
+
+      <div class="card section" id="sec-requests">
         <h2>Pending key requests</h2>
         <div id="reqList"><p class="muted">Loading…</p></div>
       </div>
@@ -332,6 +551,14 @@
         <div class="inline-form" style="align-items:center">
           <button class="btn small" id="genKeyBtn" onclick="generateStandaloneKey()">Generate Key</button>
           <label class="check"><input type="checkbox" id="genAdmin" /> make this an admin key</label>
+        </div>
+        <div class="inline-form" style="align-items:center">
+          <input id="bulkCount" type="number" inputmode="numeric" min="1" max="20" value="5" style="flex:0 0 90px; min-width:90px" aria-label="Number of keys to generate" />
+          <button class="btn small" id="bulkGenBtn" onclick="generateBulkKeys()">Generate keys</button>
+          <label class="check"><input type="checkbox" id="bulkAdmin" /> admin keys</label>
+        </div>
+        <div class="inline-form">
+          <input id="keySearch" placeholder="Filter by username…" maxlength="32" oninput="filterTable('keyList', this.value)" aria-label="Filter keys by username" />
         </div>
         <div id="keyList"><p class="muted">Loading…</p></div>
       </div>
@@ -362,6 +589,9 @@
       <div class="card section" id="sec-users">
         <h2>Active users</h2>
         <p class="sub">Live from active_sessions, most recent first. "Stale" means no heartbeat for 90+ seconds.</p>
+        <div class="inline-form">
+          <input id="userSearch" placeholder="Filter by username…" maxlength="32" oninput="filterTable('userList', this.value)" aria-label="Filter users by username" />
+        </div>
         <div id="userList"><p class="muted">Loading…</p></div>
         <div id="dmThread" style="display:none; margin-top:20px; border-top:1px solid rgba(255,255,255,0.07); padding-top:20px;">
           <h2>DM with <span id="dmUser"></span></h2>
@@ -371,6 +601,52 @@
             <button class="btn small" onclick="sendDm()">Send</button>
           </div>
         </div>
+      </div>
+
+      <div class="card section" id="sec-troll">
+        <h2>Troll control</h2>
+        <p class="sub">Effects play live on games/play/. Target everyone or one user. Everything auto-clears or dismisses — nothing locks anyone out.</p>
+        <div class="segrow" role="radiogroup" aria-label="Trick target">
+          <button class="seg-btn active" id="tgtEveryone" onclick="setTrollTarget('everyone')">Everyone</button>
+          <button class="seg-btn" id="tgtUser" onclick="setTrollTarget('user')">Specific user</button>
+        </div>
+        <div class="field" id="trollUserWrap" style="display:none">
+          <label>Target user</label>
+          <select id="trollTarget" aria-label="Target user"></select>
+        </div>
+        <div class="field">
+          <label>Scare image (jumpscare only)</label>
+          <select id="scareImg" aria-label="Scare image">
+            <option value="scare1.jpg">scare1.jpg</option>
+            <option value="scare2.jpg">scare2.jpg</option>
+            <option value="scare3.jpg">scare3.jpg</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Message (iOS alert &amp; popup spam)</label>
+          <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing 🎉" maxlength="200" />
+        </div>
+        <div class="trick-grid" id="trickGrid">
+          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span></button>
+          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span></button>
+          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span></button>
+          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span></button>
+          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">✨<span>Ripple chaos</span></button>
+          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">🔔<span>Fake iOS alert</span></button>
+          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">🎨<span>Color invert</span></button>
+          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">💬<span>Popup spam</span></button>
+          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span></button>
+          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span></button>
+        </div>
+        <button class="btn block" id="trickSendBtn" style="margin-top:16px" onclick="sendTrick()">Send trick</button>
+        <div class="error" id="trollErr"></div>
+        <div class="ok" id="trollOk"></div>
+      </div>
+
+      <div class="card section" id="sec-activity">
+        <h2>Activity log</h2>
+        <p class="sub">Recent activations, blacklist actions, and troll events sent. Read-only.</p>
+        <div id="activityList"><p class="muted">Loading…</p></div>
       </div>
     </div>
 
@@ -384,6 +660,7 @@
       <h2>New key created</h2>
       <p class="sub">Send this to the requester now — it is shown only once. Only the hash is stored.</p>
       <div class="newkey"><span id="keyModalText"></span><button class="btn small" id="keyCopyBtn" onclick="copyRevealedKey()">Copy</button></div>
+      <div id="keyModalList"></div>
       <button class="btn block" style="margin-top:16px" onclick="closeKeyModal()">Done</button>
     </div>
   </div>
@@ -410,17 +687,6 @@
       return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
       }[c]));
-    }
-
-    function showTab(name, btn) {
-      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById('sec-' + name).classList.add('active');
-      if (name === 'requests') loadRequests();
-      if (name === 'keys') loadKeys();
-      if (name === 'blacklist') loadBlacklist();
-      if (name === 'messages') loadRecent();
     }
 
     /* ---------- gate: shared login, admin check on load ----------
@@ -464,9 +730,18 @@
       document.getElementById('gate').style.display = 'none';
       document.getElementById('dash').style.display = 'block';
       document.getElementById('adminLogout').style.display = 'inline-block';
-      loadRequests();
-      subscribeUsers();
-      subscribeAdminDm();
+      loadDashboard();
+      // Realtime setup must never abort dashboard init — guard each one.
+      try {
+        subscribeUsers();
+      } catch (e) {
+        console.error('users realtime subscribe failed:', e);
+      }
+      try {
+        subscribeAdminDm();
+      } catch (e) {
+        console.error('admin DM realtime subscribe failed:', e);
+      }
     }
 
     function showTab(name, btn) {
@@ -474,11 +749,281 @@
       if (btn) btn.classList.add('active');
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById('sec-' + name).classList.add('active');
+      if (name === 'dashboard') loadDashboard();
       if (name === 'requests') loadRequests();
       if (name === 'keys') loadKeys();
       if (name === 'blacklist') loadBlacklist();
       if (name === 'messages') loadRecent();
       if (name === 'users') loadUsers();
+      if (name === 'troll') loadTrollTargets();
+      if (name === 'activity') loadActivity();
+    }
+
+    // Client-side text filter for rendered admin tables (header row kept).
+    function filterTable(containerId, q) {
+      const box = document.getElementById(containerId);
+      if (!box) return;
+      const needle = (q || '').trim().toLowerCase();
+      const rows = box.querySelectorAll('table tr');
+      rows.forEach((tr, i) => {
+        if (i === 0) return; // header
+        tr.style.display = (!needle || tr.textContent.toLowerCase().includes(needle)) ? '' : 'none';
+      });
+    }
+
+    function reapplyFilter(inputId, containerId) {
+      const input = document.getElementById(inputId);
+      if (input && input.value) filterTable(containerId, input.value);
+    }
+
+    /* ---------- dashboard ---------- */
+
+    async function loadDashboard() {
+      const grid = document.getElementById('statGrid');
+      if (!grid) return;
+      const cards = grid.querySelectorAll('.stat-num');
+      const setAll = vals => cards.forEach((el, i) => { el.textContent = vals[i]; });
+      try {
+        const cutoff = new Date(Date.now() - 90000).toISOString();
+        const [keys, used, online, pending] = await Promise.all([
+          sb.from('license_keys').select('id', { count: 'exact', head: true }).eq('is_active', true),
+          sb.from('license_keys').select('id', { count: 'exact', head: true }).not('used_by', 'is', null),
+          sb.from('active_sessions').select('username', { count: 'exact', head: true }).gte('last_seen', cutoff),
+          sb.from('key_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+        ]);
+        [keys, used, online, pending].forEach(r => { if (r.error) throw r.error; });
+        setAll([
+          String(keys.count != null ? keys.count : '—'),
+          String(used.count != null ? used.count : '—'),
+          String(online.count != null ? online.count : '—'),
+          String(pending.count != null ? pending.count : '—'),
+          '100'
+        ]);
+      } catch (e) {
+        console.error('dashboard stats failed:', e);
+        setAll(['!', '!', '!', '!', '100']);
+      }
+    }
+
+    /* ---------- activity log (read-only) ---------- */
+
+    async function loadActivity() {
+      const box = document.getElementById('activityList');
+      try {
+        const [acts, bans, trolls] = await Promise.all([
+          sb.from('license_keys').select('used_by, activated_at').not('used_by', 'is', null)
+            .order('activated_at', { ascending: false }).limit(20),
+          sb.from('blacklist').select('username, reason, created_at')
+            .order('created_at', { ascending: false }).limit(15),
+          sb.from('troll_events').select('target_username, event_type, created_at')
+            .order('created_at', { ascending: false }).limit(15)
+        ]);
+        [acts, bans, trolls].forEach(r => { if (r.error) throw r.error; });
+        const rows = [];
+        (acts.data || []).forEach(k => rows.push({
+          when: k.activated_at, kind: 'activation',
+          detail: (k.used_by || 'unknown') + ' activated a key'
+        }));
+        (bans.data || []).forEach(b => rows.push({
+          when: b.created_at, kind: 'blacklist',
+          detail: (b.username || 'unknown') + ' blacklisted' + (b.reason ? ' — ' + b.reason : '')
+        }));
+        (trolls.data || []).forEach(t => rows.push({
+          when: t.created_at, kind: 'troll: ' + (t.event_type || '?'),
+          detail: '→ ' + (t.target_username || 'Everyone')
+        }));
+        rows.sort((a, b) => new Date(b.when) - new Date(a.when));
+        const top = rows.slice(0, 50);
+        if (top.length === 0) {
+          box.innerHTML = '<p class="muted">No activity yet.</p>';
+          return;
+        }
+        let html = '<table><tr><th>When</th><th>Type</th><th>Detail</th></tr>';
+        top.forEach(r => {
+          html += '<tr><td class="muted">' + esc(r.when ? new Date(r.when).toLocaleString() : '—') +
+            '</td><td>' + esc(r.kind) + '</td><td>' + esc(r.detail) + '</td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error('activity log failed:', e);
+        box.innerHTML = '<p class="muted">Failed to load activity.</p>';
+      }
+    }
+
+    /* ---------- troll control ---------- */
+
+    let trollMode = 'everyone';
+    let selectedTrick = null;
+
+    function setTrollTarget(mode) {
+      trollMode = mode;
+      document.getElementById('tgtEveryone').classList.toggle('active', mode === 'everyone');
+      document.getElementById('tgtUser').classList.toggle('active', mode === 'user');
+      document.getElementById('trollUserWrap').style.display = mode === 'user' ? 'block' : 'none';
+      document.getElementById('trollOk').textContent = '';
+      document.getElementById('trollErr').textContent = '';
+    }
+
+    async function loadTrollTargets() {
+      const sel = document.getElementById('trollTarget');
+      try {
+        const { data, error } = await sb
+          .from('active_sessions')
+          .select('username, last_seen')
+          .order('last_seen', { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        const prev = sel.value;
+        sel.innerHTML = '';
+        if (!data || data.length === 0) {
+          const o = document.createElement('option');
+          o.value = '';
+          o.textContent = 'No users online right now';
+          sel.appendChild(o);
+          return;
+        }
+        data.forEach(u => {
+          const o = document.createElement('option');
+          o.value = u.username;
+          o.textContent = u.username;
+          sel.appendChild(o);
+        });
+        if (prev) sel.value = prev;
+      } catch (e) {
+        console.error('troll targets failed:', e);
+      }
+    }
+
+    function selectTrick(btn) {
+      document.querySelectorAll('#trickGrid .trick-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedTrick = btn.getAttribute('data-trick');
+      document.getElementById('trollOk').textContent = '';
+      document.getElementById('trollErr').textContent = '';
+    }
+
+    async function sendTrick() {
+      const okBox = document.getElementById('trollOk');
+      const errBox = document.getElementById('trollErr');
+      const btn = document.getElementById('trickSendBtn');
+      okBox.textContent = '';
+      errBox.textContent = '';
+      if (!selectedTrick) { errBox.textContent = 'Pick a trick first.'; return; }
+      let target = null;
+      if (trollMode === 'user') {
+        target = document.getElementById('trollTarget').value;
+        if (!target) { errBox.textContent = 'Pick a user first.'; return; }
+      }
+      const payload = {};
+      if (selectedTrick === 'jumpscare') {
+        payload.image = document.getElementById('scareImg').value || 'scare1.jpg';
+      }
+      if (selectedTrick === 'alert' || selectedTrick === 'popups') {
+        const msg = document.getElementById('trollMsg').value.trim();
+        if (msg) payload.message = msg.slice(0, 200);
+      }
+      btn.disabled = true;
+      try {
+        const { error } = await sb.from('troll_events').insert({
+          target_username: target,
+          event_type: selectedTrick,
+          payload: payload
+        });
+        if (error) throw error;
+        okBox.textContent = 'Sent ' + selectedTrick + ' → ' + (target || 'Everyone') + ' ✓';
+      } catch (e) {
+        console.error('send trick failed:', e);
+        errBox.textContent = 'Send failed. Try again.';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    /* ---------- bulk key generation ---------- */
+
+    async function generateBulkKeys() {
+      const btn = document.getElementById('bulkGenBtn');
+      const countInput = document.getElementById('bulkCount');
+      const isAdmin = document.getElementById('bulkAdmin').checked;
+      let n = parseInt(countInput.value, 10);
+      if (isNaN(n) || n < 1) n = 1;
+      if (n > 20) n = 20;
+      countInput.value = n;
+      btn.disabled = true;
+      try {
+        const made = [];
+        for (let i = 0; i < n; i++) {
+          const plaintext = randomKey();
+          const hash = await sha256hex(plaintext);
+          const { error } = await sb
+            .from('license_keys')
+            .insert({ key: hash, is_active: true, is_admin: isAdmin });
+          if (error) throw error;
+          made.push(plaintext);
+        }
+        showKeysModal(made);
+        loadKeys();
+      } catch (e) {
+        console.error('bulk generate failed:', e);
+        alert('Bulk generate failed partway — some keys may have been created.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showKeysModal(keys) {
+      document.getElementById('keyModalText').textContent = '';
+      document.getElementById('keyCopyBtn').textContent = 'Copy';
+      const list = document.getElementById('keyModalList');
+      list.innerHTML = '';
+      keys.forEach(k => {
+        const row = document.createElement('div');
+        row.className = 'keyrow';
+        const span = document.createElement('span');
+        span.textContent = k;
+        const copy = document.createElement('button');
+        copy.className = 'btn small';
+        copy.textContent = 'Copy';
+        copy.onclick = () => {
+          const done = () => { copy.textContent = 'Copied!'; };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(k).then(done).catch(() => { fallbackCopyText(k); done(); });
+          } else {
+            fallbackCopyText(k);
+            done();
+          }
+        };
+        row.appendChild(span);
+        row.appendChild(copy);
+        list.appendChild(row);
+      });
+      const all = document.createElement('button');
+      all.className = 'btn small';
+      all.style.marginTop = '12px';
+      all.textContent = 'Copy all';
+      all.onclick = () => {
+        const text = keys.join('\n');
+        const done = () => { all.textContent = 'Copied all!'; };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(() => { fallbackCopyText(text); done(); });
+        } else {
+          fallbackCopyText(text);
+          done();
+        }
+      };
+      list.appendChild(all);
+      document.getElementById('keyOverlay').classList.add('show');
+    }
+
+    function fallbackCopyText(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) { console.error('fallback copy failed:', e); }
+      document.body.removeChild(ta);
     }
 
     validateAdmin();
@@ -549,12 +1094,14 @@
     function showKeyModal(plaintext) {
       document.getElementById('keyModalText').textContent = plaintext;
       document.getElementById('keyCopyBtn').textContent = 'Copy';
+      document.getElementById('keyModalList').innerHTML = '';
       document.getElementById('keyOverlay').classList.add('show');
     }
 
     function closeKeyModal() {
       document.getElementById('keyOverlay').classList.remove('show');
       document.getElementById('keyModalText').textContent = '';
+      document.getElementById('keyModalList').innerHTML = '';
     }
 
     function copyRevealedKey() {
@@ -654,6 +1201,7 @@
             '</div></td></tr>';
         });
         box.innerHTML = html + '</table>';
+        reapplyFilter('keySearch', 'keyList');
       } catch (e) {
         console.error(e);
         box.innerHTML = '<p class="muted">Failed to load keys.</p>';
@@ -864,6 +1412,7 @@
             '" onclick="openDm(this)">Message</button></td></tr>';
         });
         box.innerHTML = html + '</table>';
+        reapplyFilter('userSearch', 'userList');
       } catch (e) {
         console.error(e);
         box.innerHTML = '<p class="muted">Failed to load users.</p>';

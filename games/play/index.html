@@ -24,11 +24,11 @@
     .blob {
       position: absolute;
       border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.12;
+      filter: blur(140px);
+      opacity: 0.2;
     }
-    .blob1 { width: 500px; height: 500px; background: #7c3aed; top: -150px; left: -150px; }
-    .blob2 { width: 400px; height: 400px; background: #2563eb; bottom: -100px; right: -100px; }
+    .blob1 { width: 560px; height: 560px; background: #7c3aed; top: -170px; left: -170px; }
+    .blob2 { width: 460px; height: 460px; background: #2563eb; bottom: -120px; right: -120px; }
 
     /* NAV */
     nav {
@@ -39,9 +39,11 @@
       justify-content: space-between;
       padding: 0 32px;
       height: 60px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      background: rgba(8,8,16,0.8);
-      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(10,10,22,0.55);
+      backdrop-filter: blur(28px) saturate(1.5);
+      -webkit-backdrop-filter: blur(28px) saturate(1.5);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), 0 8px 32px rgba(0,0,0,0.35);
     }
 
     .nav-logo {
@@ -70,16 +72,23 @@
     }
 
     .logout-btn {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
       padding: 7px 14px;
       font-size: 13px;
       color: #9ca3af;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.35);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
-    .logout-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .logout-btn:hover {
+      background: linear-gradient(165deg, rgba(255,255,255,0.14), rgba(124,58,237,0.12));
+      color: #fff;
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.4);
+    }
 
     /* MAIN */
     .main {
@@ -114,17 +123,25 @@
     .search-wrap input {
       width: 100%;
       max-width: 340px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      background-color: rgba(10,10,22,0.5);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 14px;
       padding: 10px 14px;
       font-size: 14px;
       color: #fff;
       outline: none;
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3);
+      transition: border-color 0.3s cubic-bezier(0.22, 1.15, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
 
     .search-wrap input::placeholder { color: #4b5563; }
-    .search-wrap input:focus { border-color: rgba(124,58,237,0.6); }
+    .search-wrap input:focus {
+      border-color: rgba(124,58,237,0.65);
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.16), inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 20px rgba(124,58,237,0.2);
+    }
 
     /* GRID */
     .games-grid {
@@ -135,18 +152,31 @@
 
     /* GAME CARD */
     .game-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%, rgba(124,58,237,0.06));
+      background-color: rgba(14,14,26,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 22px;
       overflow: hidden;
       cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 32px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.03);
+      transition: all 0.32s cubic-bezier(0.22, 1.15, 0.36, 1);
+      animation: cardIn 0.35s cubic-bezier(0.22, 1.15, 0.36, 1) backwards;
     }
 
     .game-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(124,58,237,0.4);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      transform: translateY(-6px);
+      border-color: rgba(139,92,246,0.5);
+      background: linear-gradient(165deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03) 45%, rgba(124,58,237,0.14));
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 18px 48px rgba(0,0,0,0.5), 0 8px 32px rgba(124,58,237,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.05);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .game-thumb {
@@ -157,6 +187,7 @@
       align-items: center;
       justify-content: center;
       font-size: 40px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -12px 24px rgba(0,0,0,0.25);
     }
 
     .game-info {
@@ -180,12 +211,13 @@
       display: inline-block;
       margin-top: 10px;
       padding: 3px 10px;
-      background: rgba(124,58,237,0.15);
-      border: 1px solid rgba(124,58,237,0.25);
+      background: linear-gradient(165deg, rgba(124,58,237,0.22), rgba(124,58,237,0.1));
+      border: 1px solid rgba(124,58,237,0.3);
       border-radius: 20px;
       font-size: 11px;
       color: #a78bfa;
       font-weight: 500;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);
     }
 
     footer {
@@ -206,16 +238,23 @@
       z-index: 50;
       width: 52px;
       height: 52px;
-      border: none;
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 50%;
       background: linear-gradient(135deg, #7c3aed, #2563eb);
       color: #fff;
       font-size: 22px;
       cursor: pointer;
-      box-shadow: 0 8px 28px rgba(124,58,237,0.45);
-      transition: transform 0.15s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2),
+        0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(124,58,237,0.5);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
-    .chat-fab:hover { transform: scale(1.06); }
+    .chat-fab:hover {
+      transform: scale(1.08);
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.2),
+        0 2px 6px rgba(0,0,0,0.4), 0 16px 40px rgba(124,58,237,0.6);
+    }
+    .chat-fab:active { transform: scale(0.96); }
 
     .chat-panel {
       position: fixed;
@@ -227,14 +266,23 @@
       display: none;
       flex-direction: column;
       overflow: hidden;
-      background: rgba(17,17,24,0.92);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%, rgba(124,58,237,0.06));
+      background-color: rgba(17,17,24,0.6);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 22px;
+      backdrop-filter: blur(32px) saturate(1.5);
+      -webkit-backdrop-filter: blur(32px) saturate(1.5);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,255,255,0.04);
     }
-    .chat-panel.open { display: flex; }
+    .chat-panel.open {
+      display: flex;
+      animation: panelIn 0.32s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
     .chat-head {
       padding: 12px 16px;
@@ -273,12 +321,13 @@
     .chat-msg.admin .meta strong { color: #f472b6; }
     .chat-msg .bubble {
       display: inline-block;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 10px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
       padding: 7px 10px;
       color: #e5e7eb;
       word-break: break-word;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
     .chat-empty {
       text-align: center;
@@ -295,25 +344,37 @@
     }
     .chat-form input {
       flex: 1;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+      background-color: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
       padding: 9px 12px;
       font-size: 13px;
       color: #fff;
       outline: none;
+      transition: border-color 0.3s cubic-bezier(0.22, 1.15, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
-    .chat-form input:focus { border-color: rgba(124,58,237,0.6); }
+    .chat-form input:focus {
+      border-color: rgba(124,58,237,0.65);
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.16), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
     .chat-form button {
-      border: none;
-      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 14px;
       padding: 0 14px;
       background: linear-gradient(135deg, #7c3aed, #2563eb);
       color: #fff;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 2px 6px rgba(0,0,0,0.4), 0 6px 20px rgba(124,58,237,0.4);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
+    .chat-form button:hover {
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      transform: translateY(-1px);
+    }
+    .chat-form button:active { transform: scale(0.97); }
 
     /* ADMIN FAB (visible to admins only) */
     .admin-fab {
@@ -323,19 +384,25 @@
       z-index: 50;
       display: none;
       padding: 8px 14px;
-      border-radius: 20px;
-      background: rgba(17,17,24,0.85);
-      border: 1px solid rgba(124,58,237,0.4);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      border-radius: 22px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+      background-color: rgba(17,17,24,0.6);
+      border: 1px solid rgba(124,58,237,0.45);
+      backdrop-filter: blur(28px) saturate(1.5);
+      -webkit-backdrop-filter: blur(28px) saturate(1.5);
       color: #c4b5fd;
       font-size: 12px;
       font-weight: 600;
       text-decoration: none;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      transition: border-color 0.15s, color 0.15s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 2px 6px rgba(0,0,0,0.4), 0 10px 28px rgba(0,0,0,0.45);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
-    .admin-fab:hover { border-color: rgba(124,58,237,0.8); color: #fff; }
+    .admin-fab:hover {
+      border-color: rgba(139,92,246,0.8);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(124,58,237,0.4);
+    }
     .admin-fab.show { display: inline-block; }
 
     /* DM WIDGET (bottom-left, separate from global chat) */
@@ -346,16 +413,23 @@
       z-index: 50;
       width: 52px;
       height: 52px;
-      border: none;
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 50%;
       background: linear-gradient(135deg, #7c3aed, #2563eb);
       color: #fff;
       font-size: 22px;
       cursor: pointer;
-      box-shadow: 0 8px 28px rgba(124,58,237,0.45);
-      transition: transform 0.15s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2),
+        0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(124,58,237,0.5);
+      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
-    .dm-fab:hover { transform: scale(1.06); }
+    .dm-fab:hover {
+      transform: scale(1.08);
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.2),
+        0 2px 6px rgba(0,0,0,0.4), 0 16px 40px rgba(124,58,237,0.6);
+    }
+    .dm-fab:active { transform: scale(0.96); }
     .dm-dot {
       position: absolute;
       top: 2px;
@@ -379,20 +453,176 @@
       display: none;
       flex-direction: column;
       overflow: hidden;
-      background: rgba(17,17,24,0.92);
-      border: 1px solid rgba(244,114,182,0.25);
-      border-radius: 16px;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%, rgba(244,114,182,0.06));
+      background-color: rgba(17,17,24,0.6);
+      border: 1px solid rgba(244,114,182,0.3);
+      border-radius: 22px;
+      backdrop-filter: blur(32px) saturate(1.5);
+      -webkit-backdrop-filter: blur(32px) saturate(1.5);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,255,255,0.04);
     }
-    .dm-panel.open { display: flex; }
+    .dm-panel.open {
+      display: flex;
+      animation: panelIn 0.32s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
     .dm-note {
       padding: 8px 14px;
       font-size: 11px;
       color: #6b7280;
       border-bottom: 1px solid rgba(255,255,255,0.07);
     }
+
+    /* TROLL LAYER (transient admin effects, all self-clearing) */
+    #trollLayer {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .troll-full {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(8,8,16,0.92);
+      color: #fff;
+      text-align: center;
+      padding: 24px;
+    }
+    .troll-full img {
+      max-width: 92vw;
+      max-height: 70vh;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+    }
+    .troll-flash { animation: trollFlash 0.28s linear 7; }
+    @keyframes trollFlash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+    body.troll-shake { animation: trollShake 0.45s linear 6; }
+    @keyframes trollShake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      20% { transform: translate(-8px, 4px) rotate(-0.6deg); }
+      40% { transform: translate(7px, -5px) rotate(0.6deg); }
+      60% { transform: translate(-5px, -3px) rotate(-0.4deg); }
+      80% { transform: translate(6px, 5px) rotate(0.4deg); }
+    }
+    body.troll-flip {
+      transform: rotate(180deg);
+      transition: transform 0.5s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+    body.troll-invert { filter: invert(1); }
+    .troll-spin {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.15);
+      border-top-color: #a78bfa;
+      animation: trollSpin 0.9s linear infinite;
+    }
+    @keyframes trollSpin { to { transform: rotate(360deg); } }
+    .troll-title { font-size: 17px; font-weight: 700; }
+    .troll-sub { font-size: 13px; color: #9ca3af; }
+    .troll-ripple {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: trollRipple 1s ease-out forwards;
+    }
+    @keyframes trollRipple {
+      from { opacity: 0.9; scale: 0.4; }
+      to { opacity: 0; scale: 5; }
+    }
+    .troll-toast {
+      position: absolute;
+      left: 50%;
+      bottom: 96px;
+      transform: translateX(-50%);
+      max-width: 86vw;
+      background: rgba(17,17,24,0.92);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 16px;
+      padding: 12px 18px;
+      font-size: 14px;
+      color: #fff;
+      text-align: center;
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.16);
+      animation: toastIn 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    .troll-confetti {
+      position: absolute;
+      top: -16px;
+      width: 10px;
+      height: 16px;
+      border-radius: 3px;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      to { transform: translateY(110vh) rotate(720deg); }
+    }
+    /* Fake iOS alert (obvious joke, OK button dismisses) */
+    .ios-alert-back {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.35);
+      pointer-events: auto;
+      padding: 24px;
+    }
+    .ios-alert {
+      width: 270px;
+      max-width: 80vw;
+      background: rgba(242,242,247,0.94);
+      backdrop-filter: blur(24px) saturate(1.6);
+      -webkit-backdrop-filter: blur(24px) saturate(1.6);
+      border-radius: 14px;
+      overflow: hidden;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      animation: panelIn 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
+      pointer-events: auto;
+    }
+    .ios-alert h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #000;
+      padding: 18px 16px 6px;
+    }
+    .ios-alert p {
+      font-size: 13px;
+      color: #000;
+      padding: 0 16px 16px;
+      line-height: 1.4;
+    }
+    .ios-alert button {
+      width: 100%;
+      min-height: 44px;
+      border: none;
+      border-top: 1px solid rgba(0,0,0,0.12);
+      background: transparent;
+      color: #007aff;
+      font-size: 17px;
+      font-weight: 400;
+      cursor: pointer;
+    }
+    .ios-alert button:active { background: rgba(0,0,0,0.06); }
   </style>
 </head>
 <body>
@@ -460,6 +690,10 @@
       <button type="submit">Send</button>
     </form>
   </div>
+
+  <!-- TROLL LAYER (transient admin effects render here, then self-clear) -->
+  <div id="trollLayer" aria-hidden="true"></div>
+  <audio id="trollAudio" preload="auto"></audio>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -621,6 +855,240 @@
         input.value = content; // restore so the user doesn't lose it
       }
       return false;
+    }
+
+    /* ---------- Troll events (transient admin effects) ---------- */
+
+    let trollAudioCtx = null;
+
+    // iOS Safari blocks audio until a user gesture. Unlock on first tap
+    // (touchend for iPad, pointerdown for everything else). Visuals never
+    // depend on sound succeeding.
+    function registerTrollUnlock() {
+      const unlock = () => {
+        try {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) {
+            if (!trollAudioCtx) trollAudioCtx = new AC();
+            if (trollAudioCtx.state === 'suspended') trollAudioCtx.resume();
+          }
+          const el = document.getElementById('trollAudio');
+          if (el) {
+            const p = el.play();
+            if (p && p.catch) p.catch(() => {});
+          }
+        } catch (e) { /* visual effects must work regardless */ }
+      };
+      window.addEventListener('touchend', unlock, { once: true, passive: true });
+      window.addEventListener('pointerdown', unlock, { once: true });
+    }
+
+    // Short synthesized scare burst (no audio file needed). Best effort.
+    function scareSound() {
+      try {
+        if (!trollAudioCtx || trollAudioCtx.state !== 'running') return;
+        const ctx = trollAudioCtx;
+        const t = ctx.currentTime;
+        [110, 116.5, 123.5].forEach((f, i) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sawtooth';
+          o.frequency.value = f;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.25, t + 0.05 + i * 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+          o.connect(g).connect(ctx.destination);
+          o.start(t);
+          o.stop(t + 1.5);
+        });
+      } catch (e) { /* silent — visual still plays */ }
+    }
+
+    function trollLayer() { return document.getElementById('trollLayer'); }
+
+    function clearAfter(el, ms) {
+      setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, ms);
+    }
+
+    function effectJumpscare(payload) {
+      const layer = trollLayer();
+      const box = document.createElement('div');
+      box.className = 'troll-full';
+      const img = (payload && payload.image) || 'scare1.jpg';
+      const safe = /^scare[1-3]\.jpg$/.test(img) ? img : 'scare1.jpg';
+      const pic = document.createElement('img');
+      pic.src = '../admin/' + safe;
+      pic.alt = '';
+      pic.className = 'troll-flash';
+      // If the image is missing, the flash + emoji still carry the joke.
+      pic.onerror = () => {
+        pic.style.display = 'none';
+        const big = document.createElement('div');
+        big.style.fontSize = '96px';
+        big.textContent = '👹';
+        big.className = 'troll-flash';
+        box.insertBefore(big, box.firstChild);
+      };
+      box.appendChild(pic);
+      layer.appendChild(box);
+      scareSound();
+      clearAfter(box, 2000);
+    }
+
+    function effectShake() {
+      document.body.classList.add('troll-shake');
+      setTimeout(() => document.body.classList.remove('troll-shake'), 2800);
+    }
+
+    function effectDisconnect() {
+      const layer = trollLayer();
+      const box = document.createElement('div');
+      box.className = 'troll-full';
+      const spin = document.createElement('div');
+      spin.className = 'troll-spin';
+      const title = document.createElement('div');
+      title.className = 'troll-title';
+      title.textContent = 'Connection lost';
+      const sub = document.createElement('div');
+      sub.className = 'troll-sub';
+      sub.textContent = 'Reconnecting… (just kidding, you are fine)';
+      box.appendChild(spin); box.appendChild(title); box.appendChild(sub);
+      layer.appendChild(box);
+      box.style.transition = 'opacity 0.6s';
+      setTimeout(() => { box.style.opacity = '0'; }, 3400);
+      clearAfter(box, 4200);
+    }
+
+    function effectFlip() {
+      document.body.classList.add('troll-flip');
+      setTimeout(() => document.body.classList.remove('troll-flip'), 5000);
+    }
+
+    function effectRipples() {
+      const layer = trollLayer();
+      const hues = [265, 210, 320, 180, 0, 45];
+      let n = 0;
+      const timer = setInterval(() => {
+        if (n++ >= 30) { clearInterval(timer); return; }
+        const r = document.createElement('div');
+        r.className = 'troll-ripple';
+        r.style.left = (Math.random() * 100) + 'vw';
+        r.style.top = (Math.random() * 100) + 'vh';
+        r.style.background = 'hsla(' + hues[n % hues.length] + ', 90%, 65%, 0.8)';
+        layer.appendChild(r);
+        clearAfter(r, 1100);
+      }, 320);
+      setTimeout(() => clearInterval(timer), 10500);
+    }
+
+    function effectAlert(payload) {
+      const layer = trollLayer();
+      const back = document.createElement('div');
+      back.className = 'ios-alert-back';
+      const dlg = document.createElement('div');
+      dlg.className = 'ios-alert';
+      dlg.setAttribute('role', 'alertdialog');
+      const h = document.createElement('h3');
+      h.textContent = '🎉 Congratulations!';
+      const p = document.createElement('p');
+      p.textContent = (payload && payload.message) || 'Your iPad has won absolutely nothing. Claim your prize: keep playing.';
+      const ok = document.createElement('button');
+      ok.textContent = 'OK';
+      ok.onclick = () => { if (back.parentNode) back.parentNode.removeChild(back); };
+      dlg.appendChild(h); dlg.appendChild(p); dlg.appendChild(ok);
+      back.appendChild(dlg);
+      layer.appendChild(back);
+      // Auto-clear safety net in case OK is never tapped.
+      setTimeout(() => { if (back.parentNode) back.parentNode.removeChild(back); }, 30000);
+    }
+
+    function effectInvert() {
+      document.body.classList.add('troll-invert');
+      setTimeout(() => document.body.classList.remove('troll-invert'), 5000);
+    }
+
+    function effectPopups(payload) {
+      const layer = trollLayer();
+      const msgs = (payload && Array.isArray(payload.messages) && payload.messages.length)
+        ? payload.messages.slice(0, 4)
+        : ['psst…', 'behind you', 'just kidding 😅', 'carry on!'];
+      const shown = [];
+      msgs.forEach((m, i) => {
+        setTimeout(() => {
+          const t = document.createElement('div');
+          t.className = 'troll-toast';
+          t.textContent = String(m).slice(0, 200);
+          layer.appendChild(t);
+          shown.push(t);
+        }, i * 900);
+      });
+      setTimeout(() => shown.forEach(t => { if (t.parentNode) t.parentNode.removeChild(t); }), msgs.length * 900 + 2500);
+    }
+
+    function effectLoading() {
+      const layer = trollLayer();
+      const box = document.createElement('div');
+      box.className = 'troll-full';
+      const spin = document.createElement('div');
+      spin.className = 'troll-spin';
+      const title = document.createElement('div');
+      title.className = 'troll-title';
+      title.textContent = 'Loading…';
+      const sub = document.createElement('div');
+      sub.className = 'troll-sub';
+      sub.textContent = 'Good things come to those who wait';
+      box.appendChild(spin); box.appendChild(title); box.appendChild(sub);
+      layer.appendChild(box);
+      box.style.transition = 'opacity 0.6s';
+      setTimeout(() => { box.style.opacity = '0'; }, 7400);
+      clearAfter(box, 8200);
+    }
+
+    function effectConfetti() {
+      const layer = trollLayer();
+      const colors = ['#a78bfa', '#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#f87171'];
+      for (let i = 0; i < 80; i++) {
+        const c = document.createElement('div');
+        c.className = 'troll-confetti';
+        c.style.left = (Math.random() * 100) + 'vw';
+        c.style.background = colors[i % colors.length];
+        c.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+        c.style.animationDelay = (Math.random() * 1.2) + 's';
+        layer.appendChild(c);
+        clearAfter(c, 5500);
+      }
+    }
+
+    function dispatchTroll(row) {
+      let me = 'anon';
+      try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
+      if (row.target_username && row.target_username !== me) return; // not for me
+      const payload = row.payload || {};
+      switch (row.event_type) {
+        case 'jumpscare': effectJumpscare(payload); break;
+        case 'shake': effectShake(); break;
+        case 'disconnect': effectDisconnect(); break;
+        case 'flip': effectFlip(); break;
+        case 'ripples': effectRipples(); break;
+        case 'alert': effectAlert(payload); break;
+        case 'invert': effectInvert(); break;
+        case 'popups': effectPopups(payload); break;
+        case 'loading': effectLoading(); break;
+        case 'confetti': effectConfetti(); break;
+        default: console.error('unknown trick:', row.event_type);
+      }
+    }
+
+    function subscribeTrolls() {
+      try {
+        sb.channel('ls-trolls')
+          .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'troll_events' },
+            payload => { try { dispatchTroll(payload.new); } catch (e) { console.error('trick failed:', e); } })
+          .subscribe();
+      } catch (e) {
+        console.error('troll realtime subscribe failed:', e);
+      }
     }
 
     /* ---------- Presence (active_sessions) ---------- */
@@ -965,6 +1433,8 @@
       loadChat();
       subscribeChat();
     })();
+    registerTrollUnlock();
+    subscribeTrolls();
   </script>
 
 </body>
