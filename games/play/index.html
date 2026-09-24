@@ -1045,6 +1045,14 @@
   <div class="main">
     <div id="reqBanner" aria-live="polite"></div>
     <div id="banBanner" aria-live="polite"></div>
+    <div id="schoolBanner" style="display:none">
+      <div class="req-banner approved"><strong>Which school are you with?</strong>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="mini-btn" onclick="setSchool('SST')">SST</button>
+          <button class="mini-btn" onclick="setSchool('Lenham')">Lenham</button>
+        </div>
+      </div>
+    </div>
     <div class="page-header">
       <h1>Games</h1>
       <p>Pick a game and get playing.</p>
@@ -1069,6 +1077,16 @@
     <div class="leader-card" id="xpBoardCard">
       <h3>⭐ XP leaders <small style="color:#6b6b8a;font-weight:400">(<a href="#" id="xpBoardToggle" onclick="toggleXpBoard(event)" style="color:#7c3aed">week</a>)</small></h3>
       <div id="xpBoardList"><div class="skel" style="height:32px"></div></div>
+    </div>
+
+    <div class="leader-card" id="schoolBoardCard">
+      <h3>🏫 SST vs Lenham</h3>
+      <div id="schoolScore" style="font-size:20px;font-weight:800;color:#e2e2f0;text-align:center;margin-bottom:10px">…</div>
+      <div style="height:12px;border-radius:8px;overflow:hidden;display:flex;background:#1a1a24">
+        <div id="schoolBarSST" style="background:#7c3aed;width:50%;transition:width 0.4s ease-out"></div>
+        <div id="schoolBarLen" style="background:#10b981;width:50%;transition:width 0.4s ease-out"></div>
+      </div>
+      <div id="schoolCounts" style="font-size:12px;color:#6b6b8a;text-align:center;margin-top:8px">…</div>
     </div>
 
     <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
@@ -2120,6 +2138,109 @@
         if (dl) dl.textContent = d.length ? (d[0] + ' is typing…') : '';
       } catch (e) { console.error('typing failed:', e); }
     }
+
+    /* ---------- School rivalry (SST vs Lenham) ---------- */
+
+    function aggSchools(keys, xpRows) {
+      const life = {};
+      (xpRows || []).forEach(r => { if (r.username) life[r.username] = r.lifetime || 0; });
+      const out = { SST: { xp: 0, players: 0 }, Lenham: { xp: 0, players: 0 } };
+      (keys || []).forEach(k => {
+        if (!k.used_by || !out[k.school]) return;
+        out[k.school].players++;
+        out[k.school].xp += life[k.used_by] || 0;
+      });
+      return out;
+    }
+
+    async function loadSchoolBoard() {
+      try {
+        const [keys, xp] = await Promise.all([
+          sb.from('license_keys').select('used_by, school').in('school', ['SST', 'Lenham']).limit(500),
+          sb.from('xp_balances').select('username, lifetime').limit(500)
+        ]);
+        if (keys.error) throw keys.error;
+        if (xp.error) throw xp.error;
+        const agg = aggSchools(keys.data || [], xp.data || []);
+        const total = agg.SST.xp + agg.Lenham.xp;
+        const pctS = total > 0 ? Math.round((agg.SST.xp / total) * 100) : 50;
+        const score = document.getElementById('schoolScore');
+        if (score) score.textContent = 'SST ' + agg.SST.xp.toLocaleString() + ' — ' + agg.Lenham.xp.toLocaleString() + ' Lenham';
+        const bS = document.getElementById('schoolBarSST');
+        const bL = document.getElementById('schoolBarLen');
+        if (bS) bS.style.width = pctS + '%';
+        if (bL) bL.style.width = (100 - pctS) + '%';
+        const ct = document.getElementById('schoolCounts');
+        if (ct) ct.textContent = agg.SST.players + ' SST players · ' + agg.Lenham.players + ' Lenham players';
+      } catch (e) { console.error('school board failed:', e); }
+    }
+
+    async function loadMySchool() {
+      const bar = document.getElementById('schoolBanner');
+      if (!bar) return;
+      let token = null;
+      try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
+      if (!token) { bar.style.display = 'none'; return; }
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .select('school')
+          .eq('session_token', token)
+          .maybeSingle();
+        if (error) throw error;
+        bar.style.display = (data && data.school) ? 'none' : 'block';
+      } catch (e) {
+        console.error('school check failed:', e);
+        bar.style.display = 'none';
+      }
+    }
+
+    async function setSchool(s) {
+      if (s !== 'SST' && s !== 'Lenham') return;
+      let token = null;
+      try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
+      if (!token) return;
+      try {
+        const { error } = await sb
+          .from('license_keys')
+          .update({ school: s })
+          .eq('session_token', token);
+        if (error) throw error;
+        document.getElementById('schoolBanner').style.display = 'none';
+        toast('School set: ' + s, 'ok');
+        loadSchoolBoard();
+      } catch (e) {
+        console.error('set school failed:', e);
+        toast('Save failed', 'err');
+      }
+    }
+
+    /* ---------- Panic button (snap back to the boring calculator) ---------- */
+
+    function panic() {
+      try { if (gameModalOpen) closeGame(); } catch (e) {}
+      window.location.href = '../../index.html';
+    }
+
+    let logoTaps = 0;
+    let logoTimer = null;
+    function armPanicLogo() {
+      const logo = document.querySelector('.nav-logo');
+      if (!logo) return;
+      logo.style.cursor = 'pointer';
+      logo.onclick = () => {
+        logoTaps++;
+        clearTimeout(logoTimer);
+        logoTimer = setTimeout(() => { logoTaps = 0; }, 1200);
+        if (logoTaps >= 3) { logoTaps = 0; panic(); }
+      };
+    }
+    document.addEventListener('keydown', e => {
+      if (!e || e.code !== 'Backquote') return;
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      panic();
+    });
 
     /* ---------- Troll events (transient admin effects) ---------- */
     let trollAudioCtx = null;
@@ -3831,11 +3952,15 @@
       startPoller('mycos', loadMyXp, 15000);
       startPoller('cosmap', loadCosmeticsMap, 15000);
       startPoller('trivia', renderTrivia, 60000);
+      startPoller('schools', loadSchoolBoard, 30000);
       loadMyXp();
       loadXpBoard();
       loadQuests();
       loadBlocks();
+      loadMySchool();
+      loadSchoolBoard();
       renderTrivia();
+      armPanicLogo();
     })();
     (function () {
       const ci = document.getElementById('chatInput');
