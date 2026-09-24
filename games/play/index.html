@@ -483,6 +483,89 @@
       pointer-events: none;
       overflow: hidden;
     }
+    /* In-modal mode: the layer is reparented inside the game frame wrap
+       so every effect renders above the game iframe, including when the
+       modal wrapper itself is fullscreened. */
+    #trollLayer.in-modal {
+      position: absolute;
+      z-index: 30;
+    }
+    /* GAME MODAL (games play in-page; hub listeners keep running) */
+    #gameModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      background: rgba(10,10,15,0.9);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #gameModal.open { display: flex; }
+    #gameModal:fullscreen { padding: 0; background: #0a0a0f; }
+    .game-modal-card {
+      background: #13131a;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      width: min(1100px, 100%);
+      height: min(780px, 94vh);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    #gameModal:fullscreen .game-modal-card {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 0;
+    }
+    .game-modal-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 8px 8px 16px;
+      border-bottom: 1px solid #1e1e2e;
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e2f0;
+    }
+    .game-modal-head span {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .gm-btn {
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a24;
+      border: 1.5px solid #2a2a3d;
+      border-radius: 10px;
+      color: #e2e2f0;
+      font-size: 17px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .gm-btn:hover { background: #7c3aed; }
+    .gm-btn:active { transform: scale(0.97); }
+    .game-frame-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      background: #000;
+    }
+    #gameFrame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #000;
+    }
     .troll-full {
       position: absolute;
       inset: 0;
@@ -508,7 +591,7 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.25; }
     }
-    body.troll-shake { animation: trollShake 0.45s linear 6; }
+    body.troll-shake, #gameFrameWrap.troll-shake { animation: trollShake 0.45s linear 6; }
     @keyframes trollShake {
       0%, 100% { transform: translate(0, 0) rotate(0deg); }
       20% { transform: translate(-8px, 4px) rotate(-0.6deg); }
@@ -516,11 +599,11 @@
       60% { transform: translate(-5px, -3px) rotate(-0.4deg); }
       80% { transform: translate(6px, 5px) rotate(0.4deg); }
     }
-    body.troll-flip {
+    body.troll-flip, #gameFrameWrap.troll-flip {
       transform: rotate(180deg);
       transition: transform 0.5s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
-    body.troll-invert { filter: invert(1); }
+    body.troll-invert, #gameFrameWrap.troll-invert { filter: invert(1); }
     .troll-spin {
       width: 46px;
       height: 46px;
@@ -896,6 +979,18 @@
     </div>
   </div>
 
+  <!-- GAME MODAL (games play in-page; hub listeners keep running) -->
+  <div id="gameModal" aria-hidden="true" role="dialog" aria-label="Game">
+    <div class="game-modal-card" id="gameModalCard">
+      <div class="game-modal-head">
+        <span id="gameModalTitle">Game</span>
+        <button id="gameFsBtn" class="gm-btn" onclick="toggleGameFullscreen()" aria-label="Enter fullscreen">⛶</button>
+        <button class="gm-btn" onclick="closeGame()" aria-label="Close game">✕</button>
+      </div>
+      <div class="game-frame-wrap" id="gameFrameWrap"></div>
+    </div>
+  </div>
+
   <!-- TROLL LAYER (transient admin effects render here, then self-clear) -->
   <div id="trollLayer" aria-hidden="true"></div>
   <div id="toastWrap" aria-live="polite"></div>
@@ -1256,7 +1351,7 @@
       jumpscareImg.src = imageSrc;
       jumpscareImg.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:99999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
       jumpscareImg.onerror = () => console.error('jumpscare image failed to load:', imageSrc);
-      document.body.appendChild(jumpscareImg);
+      trollLayer().appendChild(jumpscareImg);
       scareSound();
       await sleep(50);
       if (!jumpscareActive) { jumpscareImg?.remove(); jumpscareImg = null; return; }
@@ -1294,12 +1389,12 @@
     function startShake() {
       console.log('[troll] startShake called');
       shakeActive = true;
-      document.body.classList.add('troll-shake');
+      trollEffectTarget().classList.add('troll-shake');
     }
     function stopShake() {
       console.log('[troll] stopShake called');
       shakeActive = false;
-      document.body.classList.remove('troll-shake');
+      trollEffectTarget().classList.remove('troll-shake');
     }
 
     let disconnectActive = false;
@@ -1333,12 +1428,12 @@
     function startFlip() {
       console.log('[troll] startFlip called');
       flipActive = true;
-      document.body.classList.add('troll-flip');
+      trollEffectTarget().classList.add('troll-flip');
     }
     function stopFlip() {
       console.log('[troll] stopFlip called');
       flipActive = false;
-      document.body.classList.remove('troll-flip');
+      trollEffectTarget().classList.remove('troll-flip');
     }
 
     let ripplesActive = false;
@@ -1395,12 +1490,12 @@
     function startInvert() {
       console.log('[troll] startInvert called');
       invertActive = true;
-      document.body.classList.add('troll-invert');
+      trollEffectTarget().classList.add('troll-invert');
     }
     function stopInvert() {
       console.log('[troll] stopInvert called');
       invertActive = false;
-      document.body.classList.remove('troll-invert');
+      trollEffectTarget().classList.remove('troll-invert');
     }
 
     function effectPopups(payload) {
@@ -1831,11 +1926,115 @@
       }, 30000);
     }
 
-    // Cards route through here so the open is recorded before navigating.
-    async function openGame(path, name) {
-      await trackPresence(name);
-      window.location.href = '../' + path + '/index.html';
+    /* ---------- Game modal (in-page player + fullscreen-safe overlay) ----------
+       Games open in an iframe inside #gameModal so chat, announcements, the
+       3s pollers and the troll receiver keep running. Fullscreen is requested
+       on the modal wrapper (never the iframe) with the troll layer reparented
+       inside it, so every effect renders above the game. */
+
+    let gameModalOpen = false;
+    let gameTicket = 0; // latest openGame wins; stale async opens abort
+
+    // Mount point for class-based effects: the frame wrap while a game is
+    // open (fullscreen-safe), otherwise the page body.
+    function trollEffectTarget() {
+      return gameModalOpen ? document.getElementById('gameFrameWrap') : document.body;
     }
+
+    // Move running shake/flip/invert classes across the modal boundary so
+    // an already-active effect stays visible immediately on open/close.
+    function migrateEffectClasses(toWrap) {
+      const wrap = document.getElementById('gameFrameWrap');
+      if (!wrap) return;
+      const from = toWrap ? document.body : wrap;
+      const to = toWrap ? wrap : document.body;
+      ['troll-shake', 'troll-flip', 'troll-invert'].forEach(c => {
+        if (from.classList.contains(c)) { from.classList.remove(c); to.classList.add(c); }
+      });
+    }
+
+    // Cards route through here so the open is recorded, then the game
+    // opens in-page instead of navigating away from the hub.
+    async function openGame(path, name) {
+      const ticket = ++gameTicket;
+      await trackPresence(name);
+      if (ticket !== gameTicket) return; // superseded by a newer open
+      closeGame(); // teardown first: rapid switches never stack iframes
+      document.getElementById('gameModalTitle').textContent = name;
+      const wrap = document.getElementById('gameFrameWrap');
+      const frame = document.createElement('iframe');
+      frame.id = 'gameFrame';
+      frame.title = name;
+      frame.src = '../' + path + '/index.html';
+      wrap.appendChild(frame);
+      const layer = trollLayer();
+      wrap.appendChild(layer);
+      layer.classList.add('in-modal');
+      migrateEffectClasses(true);
+      gameModalOpen = true;
+      const modal = document.getElementById('gameModal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      updateFsBtn();
+    }
+
+    function closeGame() {
+      if (!gameModalOpen) return;
+      gameTicket++; // invalidate any in-flight open racing this close
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          const p = document.exitFullscreen();
+          if (p && p.catch) p.catch(() => {});
+        }
+      } catch (e) {}
+      const frame = document.getElementById('gameFrame');
+      if (frame) {
+        try { frame.src = 'about:blank'; } catch (e) {}
+        if (frame.parentNode) frame.parentNode.removeChild(frame);
+      }
+      const layer = document.getElementById('trollLayer');
+      if (layer) {
+        layer.classList.remove('in-modal');
+        document.body.appendChild(layer);
+      }
+      migrateEffectClasses(false);
+      gameModalOpen = false;
+      const modal = document.getElementById('gameModal');
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      updateFsBtn();
+      trackPresence('Browsing');
+    }
+
+    function toggleGameFullscreen() {
+      const modal = document.getElementById('gameModal');
+      if (!modal) return;
+      try {
+        if (document.fullscreenElement) {
+          if (document.exitFullscreen) {
+            const p = document.exitFullscreen();
+            if (p && p.catch) p.catch(() => {});
+          }
+        } else if (modal.requestFullscreen) {
+          const p = modal.requestFullscreen();
+          if (p && p.catch) p.catch(() => {});
+        }
+      } catch (e) { console.error('fullscreen failed:', e); }
+    }
+
+    function updateFsBtn() {
+      const b = document.getElementById('gameFsBtn');
+      if (!b) return;
+      const fs = !!document.fullscreenElement;
+      b.textContent = fs ? '🗗' : '⛶';
+      b.setAttribute('aria-label', fs ? 'Exit fullscreen' : 'Enter fullscreen');
+    }
+
+    // Native fullscreen-exit (Escape key, browser gesture) closes the game.
+    document.addEventListener('fullscreenchange', () => {
+      updateFsBtn();
+      if (!document.fullscreenElement && gameModalOpen) closeGame();
+    });
 
     /* ---------- Direct messages (admin ↔ you) ---------- */
 
@@ -2158,6 +2357,7 @@
     subscribeTrolls();
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
+        if (gameModalOpen) { closeGame(); return; }
         cancelReply();
         closeApprovedModal();
         const cp = document.getElementById('chatPanel');
