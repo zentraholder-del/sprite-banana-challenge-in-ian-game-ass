@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lightspeed</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #080810;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* Background glow blobs */
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+    }
+    .blob1 { width: 400px; height: 400px; background: #7c3aed; top: -80px; left: -100px; }
+    .blob2 { width: 350px; height: 350px; background: #2563eb; bottom: -60px; right: -80px; }
+    .blob3 { width: 200px; height: 200px; background: #a78bfa; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+    /* CARD */
+    .card {
+      position: relative;
+      z-index: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 44px 40px;
+      width: 100%;
+      max-width: 400px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 14px;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+    }
+
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo p {
+      font-size: 13px;
+      color: #4b5563;
+      margin-top: 5px;
+    }
+
+    /* INPUT */
+    .field { margin-bottom: 14px; }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 7px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: 15px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-wrap input.mono {
+      letter-spacing: 3px;
+      font-family: monospace;
+    }
+
+    .input-wrap input::placeholder {
+      letter-spacing: 0;
+      color: #374151;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+
+    .input-wrap input:focus {
+      border-color: rgba(124,58,237,0.6);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+    }
+
+    .input-wrap input.error-input {
+      border-color: rgba(239,68,68,0.6);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+    }
+
+    /* BUTTON */
+    .btn {
+      width: 100%;
+      margin-top: 6px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+      letter-spacing: 0.2px;
+    }
+
+    .btn:active { opacity: 0.85; transform: scale(0.99); }
+    .btn:disabled { opacity: 0.55; cursor: wait; }
+
+    .error-msg {
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: #f87171;
+      text-align: center;
+      min-height: 18px;
+      transition: opacity 0.2s;
+    }
+
+    .status-msg {
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: #93c5fd;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* DIVIDER */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+    }
+    .divider span {
+      font-size: 11px;
+      color: #374151;
+      letter-spacing: 0.5px;
+    }
+
+    /* REQUEST LINK */
+    .request-link {
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .request-link button {
+      background: none;
+      border: none;
+      color: #a78bfa;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: color 0.15s;
+      padding: 0;
+    }
+    .request-link button:hover { color: #c4b5fd; }
+
+    /* MODAL OVERLAY */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .overlay.show {
+      display: flex;
+      opacity: 0;
+    }
+    .overlay.visible {
+      opacity: 1;
+    }
+
+    .modal {
+      background: #111118;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+      transform: translateY(16px) scale(0.97);
+      transition: transform 0.25s, opacity 0.25s;
+      opacity: 0;
+      position: relative;
+    }
+    .overlay.visible .modal {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255,255,255,0.06);
+      border: none;
+      color: #6b7280;
+      font-size: 16px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    .modal h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+    .modal > p {
+      font-size: 13px;
+      color: #4b5563;
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    .modal .field input,
+    .modal .field textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      letter-spacing: 0;
+    }
+    .modal .field input:focus,
+    .modal .field textarea:focus {
+      border-color: rgba(124,58,237,0.6);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+    }
+    .modal .field input::placeholder,
+    .modal .field textarea::placeholder { color: #374151; }
+
+    .modal .field textarea {
+      resize: none;
+      height: 90px;
+    }
+
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 10px 0;
+    }
+    .success-state .tick {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .success-state h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .success-state p {
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      margin-top: 28px;
+      font-size: 11px;
+      color: #1f2937;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+  </div>
+
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <h1>Lightspeed</h1>
+      <p>Enter your access key to continue</p>
+    </div>
+
+    <div class="field">
+      <label>Username</label>
+      <div class="input-wrap">
+        <input type="text" id="usernameInput" placeholder="Pick a username" autocomplete="username" maxlength="32" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Access Key</label>
+      <div class="input-wrap">
+        <input type="password" id="keyInput" class="mono" placeholder="Enter your key" autocomplete="off" />
+      </div>
+    </div>
+
+    <button class="btn" id="loginBtn" onclick="tryLogin()">Continue</button>
+    <div class="error-msg" id="error"></div>
+    <div class="status-msg" id="status"></div>
+
+    <div class="divider"><span>or</span></div>
+
+    <div class="request-link">
+      Don't have a key? <button onclick="openModal()">Request access</button>
+    </div>
+  </div>
+
+  <footer>LIGHTSPEED &copy; 2026</footer>
+
+  <!-- REQUEST MODAL -->
+  <div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+    <div class="modal" id="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+
+      <div id="formState">
+        <h2>Request Access</h2>
+        <p>Fill in your details and we'll review your request.</p>
+
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="reqName" placeholder="Enter your name" maxlength="64" />
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>Reason</label>
+          <textarea id="reqMsg" placeholder="Why do you want access?" maxlength="500"></textarea>
+        </div>
+        <button class="btn" id="reqBtn" style="margin-top:14px" onclick="submitRequest()">Send Request</button>
+        <div class="error-msg" id="reqError"></div>
+      </div>
+
+      <div class="success-state" id="successState">
+        <div class="tick">✅</div>
+        <h3>Request sent!</h3>
+        <p>We'll review it and get back to you with a key.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ── Fill these in ──────────────────────────────────────────────
+    const SUPABASE_URL = "https://hqjclkkwsepdhtwnwsvp.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxamNsa2t3c2VwZGh0d253c3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTY5NTMsImV4cCI6MjEwNTc3Mjk1M30.-OXxTRYmIi4snwJSiThFsAPr5YgVbwz4kwUY_DURFRA";
+    // ───────────────────────────────────────────────────────────────
+    // Assumes tables: license_keys(key, used_by, is_active, is_admin,
+    //   username, session_token, activated_at), blacklist(username),
+    //   key_requests(name, reason, status).
+    // NOTE: crypto.subtle requires a secure context (https / localhost).
+    // GitHub Pages serves https, so this is fine in production.
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const LS_TOKEN = 'ls_session_token';
+    const LS_USER = 'ls_username';
+
+    // SHA-256 hex of a string via Web Crypto
+    async function sha256hex(str) {
+      if (!window.crypto || !crypto.subtle) {
+        throw new Error('Secure context required (use https or localhost).');
+      }
+      const data = new TextEncoder().encode(str);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function showError(msg) {
+      const err = document.getElementById('error');
+      err.textContent = msg;
+      document.getElementById('status').textContent = '';
+    }
+
+    function showStatus(msg) {
+      document.getElementById('status').textContent = msg;
+      document.getElementById('error').textContent = '';
+    }
+
+    function clearMessages() {
+      document.getElementById('error').textContent = '';
+      document.getElementById('status').textContent = '';
+      document.getElementById('keyInput').classList.remove('error-input');
+    }
+
+    // Auto-redirect if a valid session token is already stored
+    async function checkExistingSession() {
+      const token = localStorage.getItem(LS_TOKEN);
+      if (!token) return;
+      showStatus('Checking saved session…');
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .select('id, is_active')
+          .eq('session_token', token)
+          .maybeSingle();
+        if (error) throw error;
+        if (data && data.is_active) {
+          window.location.href = 'main.html';
+        } else {
+          localStorage.removeItem(LS_TOKEN);
+          localStorage.removeItem(LS_USER);
+          document.getElementById('status').textContent = '';
+        }
+      } catch (e) {
+        // Stay on login; surface only config-like errors, not the token itself
+        document.getElementById('status').textContent = '';
+      }
+    }
+
+    async function tryLogin() {
+      clearMessages();
+      const username = document.getElementById('usernameInput').value.trim();
+      const rawKey = document.getElementById('keyInput').value.trim();
+      const input = document.getElementById('keyInput');
+      const btn = document.getElementById('loginBtn');
+
+      if (!username) { showError('Enter a username first.'); return; }
+      if (!rawKey) {
+        showError('Enter your access key.');
+        input.classList.add('error-input');
+        return;
+      }
+
+      btn.disabled = true;
+      showStatus('Verifying…');
+
+      try {
+        // 1. Blacklist check (by username)
+        const { data: banned, error: banErr } = await sb
+          .from('blacklist')
+          .select('id')
+          .eq('username', username)
+          .limit(1);
+        if (banErr) throw banErr;
+        if (banned && banned.length > 0) {
+          showError('This username is blacklisted.');
+          btn.disabled = false;
+          return;
+        }
+
+        // 2. Hash the key client-side, look up the hash
+        const keyHash = await sha256hex(rawKey.toUpperCase());
+        const { data: row, error: keyErr } = await sb
+          .from('license_keys')
+          .select('id, is_active, session_token')
+          .eq('key', keyHash)
+          .maybeSingle();
+        if (keyErr) throw keyErr;
+        if (!row) {
+          showError('Invalid key — request access below.');
+          input.classList.add('error-input');
+          btn.disabled = false;
+          return;
+        }
+        if (!row.is_active) {
+          showError('This key has been deactivated.');
+          btn.disabled = false;
+          return;
+        }
+        if (row.session_token) {
+          showError('This key has already been activated on another device.');
+          btn.disabled = false;
+          return;
+        }
+
+        // 3. First activation: claim the key with a fresh session token
+        const token = crypto.randomUUID();
+        const { error: updErr } = await sb
+          .from('license_keys')
+          .update({
+            session_token: token,
+            used_by: username,
+            activated_at: new Date().toISOString()
+          })
+          .eq('id', row.id);
+        if (updErr) throw updErr;
+
+        localStorage.setItem(LS_TOKEN, token);
+        localStorage.setItem(LS_USER, username);
+        // Drop legacy stub flag if present
+        try { sessionStorage.removeItem('ls_auth'); } catch (e) {}
+        window.location.href = 'main.html';
+      } catch (e) {
+        console.error(e);
+        showError('Login failed. Check your connection and try again.');
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('keyInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') tryLogin();
+    });
+    document.getElementById('usernameInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') tryLogin();
+    });
+    document.getElementById('keyInput').addEventListener('input', () => {
+      document.getElementById('keyInput').classList.remove('error-input');
+      document.getElementById('error').textContent = '';
+    });
+
+    function openModal() {
+      const overlay = document.getElementById('overlay');
+      overlay.style.display = 'flex';
+      requestAnimationFrame(() => {
+        overlay.classList.add('show');
+        requestAnimationFrame(() => overlay.classList.add('visible'));
+      });
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('overlay');
+      overlay.classList.remove('visible');
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        overlay.style.display = 'none';
+        // reset
+        document.getElementById('formState').style.display = 'block';
+        document.getElementById('successState').style.display = 'none';
+        document.getElementById('reqName').value = '';
+        document.getElementById('reqMsg').value = '';
+        document.getElementById('reqError').textContent = '';
+        document.getElementById('reqBtn').disabled = false;
+      }, 250);
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('overlay')) closeModal();
+    }
+
+    async function submitRequest() {
+      const name = document.getElementById('reqName').value.trim();
+      const reason = document.getElementById('reqMsg').value.trim();
+      const errBox = document.getElementById('reqError');
+      const btn = document.getElementById('reqBtn');
+      errBox.textContent = '';
+      if (!name) { errBox.textContent = 'Enter your name.'; return; }
+      btn.disabled = true;
+      try {
+        const { error } = await sb
+          .from('key_requests')
+          .insert({ name, reason, status: 'pending' });
+        if (error) throw error;
+        document.getElementById('formState').style.display = 'none';
+        document.getElementById('successState').style.display = 'block';
+      } catch (e) {
+        console.error(e);
+        errBox.textContent = 'Could not send request. Try again later.';
+        btn.disabled = false;
+      }
+    }
+
+    checkExistingSession();
+  </script>
+
+</body>
+</html>

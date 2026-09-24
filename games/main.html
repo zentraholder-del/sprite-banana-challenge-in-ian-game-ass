@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lightspeed — Games</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #080810;
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    /* Background blobs */
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.12;
+    }
+    .blob1 { width: 500px; height: 500px; background: #7c3aed; top: -150px; left: -150px; }
+    .blob2 { width: 400px; height: 400px; background: #2563eb; bottom: -100px; right: -100px; }
+
+    /* NAV */
+    nav {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 60px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(8,8,16,0.8);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-logo {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-user {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    .nav-user strong {
+      color: #c4b5fd;
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 13px;
+      color: #9ca3af;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+    /* MAIN */
+    .main {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    .page-header p {
+      font-size: 13px;
+      color: #4b5563;
+      margin-top: 4px;
+    }
+
+    .search-wrap {
+      margin-top: 16px;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      max-width: 340px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+    }
+
+    .search-wrap input::placeholder { color: #4b5563; }
+    .search-wrap input:focus { border-color: rgba(124,58,237,0.6); }
+
+    /* GRID */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    /* GAME CARD */
+    .game-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .game-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(124,58,237,0.4);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+
+    .game-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: linear-gradient(135deg, #1e1b4b, #1e3a5f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    .game-info {
+      padding: 14px 16px;
+    }
+
+    .game-info h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .game-info p {
+      font-size: 12px;
+      color: #4b5563;
+      line-height: 1.5;
+    }
+
+    .game-tag {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 3px 10px;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 20px;
+      font-size: 11px;
+      color: #a78bfa;
+      font-weight: 500;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      font-size: 11px;
+      color: #1f2937;
+      padding: 40px 0 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* CHAT WIDGET */
+    .chat-fab {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 50;
+      width: 52px;
+      height: 52px;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 8px 28px rgba(124,58,237,0.45);
+      transition: transform 0.15s;
+    }
+    .chat-fab:hover { transform: scale(1.06); }
+
+    .chat-panel {
+      position: fixed;
+      right: 22px;
+      bottom: 86px;
+      z-index: 50;
+      width: 320px;
+      max-height: 440px;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(17,17,24,0.92);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    }
+    .chat-panel.open { display: flex; }
+
+    .chat-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-head small {
+      font-weight: 400;
+      color: #4b5563;
+      font-size: 11px;
+    }
+
+    .chat-msgs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 200px;
+      max-height: 300px;
+    }
+
+    .chat-msg { font-size: 12.5px; line-height: 1.45; }
+    .chat-msg .meta {
+      font-size: 10.5px;
+      color: #6b7280;
+      margin-bottom: 2px;
+    }
+    .chat-msg .meta strong { color: #a78bfa; font-weight: 600; }
+    .chat-msg.admin .meta strong { color: #f472b6; }
+    .chat-msg .bubble {
+      display: inline-block;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 7px 10px;
+      color: #e5e7eb;
+      word-break: break-word;
+    }
+    .chat-empty {
+      text-align: center;
+      font-size: 12px;
+      color: #4b5563;
+      padding: 24px 0;
+    }
+
+    .chat-form {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .chat-form input {
+      flex: 1;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 13px;
+      color: #fff;
+      outline: none;
+    }
+    .chat-form input:focus { border-color: rgba(124,58,237,0.6); }
+    .chat-form button {
+      border: none;
+      border-radius: 10px;
+      padding: 0 14px;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+  </div>
+
+  <nav>
+    <div class="nav-logo">⚡ Lightspeed</div>
+    <div class="nav-right">
+      <span class="nav-user" id="navUser"></span>
+      <button class="logout-btn" onclick="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="page-header">
+      <h1>Games</h1>
+      <p>Pick a game and get playing.</p>
+      <div class="search-wrap">
+        <input id="search" type="text" placeholder="Search games..." oninput="filterGames()" />
+      </div>
+    </div>
+
+    <div class="games-grid" id="gamesGrid">
+    </div>
+  </div>
+
+  <footer>LIGHTSPEED &copy; 2026</footer>
+
+  <!-- GLOBAL CHAT -->
+  <button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Global chat">💬</button>
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-head">
+      <span>Global Chat</span>
+      <small id="chatStatus">connecting…</small>
+    </div>
+    <div class="chat-msgs" id="chatMsgs">
+      <div class="chat-empty">Loading messages…</div>
+    </div>
+    <form class="chat-form" onsubmit="return sendChat(event)">
+      <input id="chatInput" type="text" placeholder="Say something…" maxlength="500" autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ── Fill these in (same values as games/index.html) ─────────────
+    const SUPABASE_URL = "https://hqjclkkwsepdhtwnwsvp.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxamNsa2t3c2VwZGh0d253c3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTY5NTMsImV4cCI6MjEwNTc3Mjk1M30.-OXxTRYmIi4snwJSiThFsAPr5YgVbwz4kwUY_DURFRA";
+    // ───────────────────────────────────────────────────────────────
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const LS_TOKEN = 'ls_session_token';
+    const LS_USER = 'ls_username';
+
+    function logout() {
+      localStorage.removeItem(LS_TOKEN);
+      localStorage.removeItem(LS_USER);
+      try { sessionStorage.removeItem('ls_auth'); } catch (e) {}
+      window.location.href = 'index.html';
+    }
+
+    // Validate the stored session token against Supabase.
+    // Redirects to the login page if missing, revoked, or deactivated.
+    async function checkAuth() {
+      const token = localStorage.getItem(LS_TOKEN);
+      if (!token) {
+        window.location.href = 'index.html';
+        return null;
+      }
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .select('id, is_active, username, used_by')
+          .eq('session_token', token)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data || !data.is_active) {
+          logout();
+          return null;
+        }
+        const name = localStorage.getItem(LS_USER) || data.used_by || data.username || 'player';
+        document.getElementById('navUser').innerHTML =
+          'Signed in as <strong></strong>';
+        document.getElementById('navUser').querySelector('strong').textContent = name;
+        return data;
+      } catch (e) {
+        console.error(e);
+        // Don't hard-redirect on transient network errors: show games but
+        // block chat until auth can be confirmed on next load.
+        document.getElementById('navUser').textContent = '';
+        return null;
+      }
+    }
+
+    /* ---------- Global chat (messages table + Realtime) ---------- */
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function formatTime(iso) {
+      try {
+        return new Date(iso).toLocaleString([], {
+          month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (e) { return ''; }
+    }
+
+    function appendMessage(msg) {
+      const box = document.getElementById('chatMsgs');
+      const empty = box.querySelector('.chat-empty');
+      if (empty) empty.remove();
+      const div = document.createElement('div');
+      const isAdmin = (msg.username || '').toLowerCase() === 'admin';
+      div.className = 'chat-msg' + (isAdmin ? ' admin' : '');
+      div.innerHTML =
+        '<div class="meta"><strong></strong> · <span></span></div>' +
+        '<div class="bubble"></div>';
+      div.querySelector('strong').textContent = msg.username || 'anon';
+      div.querySelector('.meta span').textContent = msg.created_at ? formatTime(msg.created_at) : '';
+      div.querySelector('.bubble').textContent = msg.content || '';
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function loadChat() {
+      try {
+        const { data, error } = await sb
+          .from('messages')
+          .select('id, username, content, created_at')
+          .order('created_at', { ascending: true })
+          .limit(50);
+        if (error) throw error;
+        const box = document.getElementById('chatMsgs');
+        box.innerHTML = '';
+        if (!data || data.length === 0) {
+          box.innerHTML = '<div class="chat-empty">No messages yet — say hi.</div>';
+        } else {
+          data.forEach(appendMessage);
+        }
+        document.getElementById('chatStatus').textContent = 'live';
+      } catch (e) {
+        console.error(e);
+        document.getElementById('chatMsgs').innerHTML =
+          '<div class="chat-empty">Chat unavailable.</div>';
+        document.getElementById('chatStatus').textContent = 'offline';
+      }
+    }
+
+    function subscribeChat() {
+      sb.channel('ls-messages')
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'messages' },
+          payload => appendMessage(payload.new))
+        .subscribe();
+    }
+
+    function toggleChat() {
+      document.getElementById('chatPanel').classList.toggle('open');
+    }
+
+    async function sendChat(e) {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const status = document.getElementById('chatStatus');
+      const content = input.value.trim();
+      if (!content) return false;
+      const username = (localStorage.getItem(LS_USER) || 'anon').slice(0, 32);
+      try {
+        // Re-check blacklist on every send — a login-time check can go
+        // stale if the user is blacklisted mid-session. If this select
+        // fails on a transient network error we still attempt the insert
+        // below, which restores the input on failure.
+        const { data: banned, error: banErr } = await sb
+          .from('blacklist')
+          .select('id')
+          .eq('username', username)
+          .limit(1);
+        if (!banErr && banned && banned.length > 0) {
+          status.textContent = 'blocked';
+          return false;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      input.value = '';
+      try {
+        const { error } = await sb
+          .from('messages')
+          .insert({ username, content: content.slice(0, 500) });
+        if (error) throw error;
+        if (status.textContent === 'blocked') status.textContent = 'live';
+      } catch (err) {
+        console.error(err);
+        input.value = content; // restore so the user doesn't lose it
+      }
+      return false;
+    }
+
+    // All games — path is relative to games/ folder (main.html lives in games/)
+    const GAMES = [
+      "baseball",
+      "battle-racing-stars",
+      "bitlife",
+      "block-blast",
+      "bowmasters",
+      "bridge-race",
+      "btd5",
+      "captcha-ware",
+      "car-drawing-game",
+      "ccl",
+      "cookieclicker",
+      "crazy-candy-creator",
+      "cricket17",
+      "crossy-road",
+      "ctr",
+      "dartspro",
+      "doge-miner-2",
+      "draw-climber",
+      "draw-the-hill",
+      "drift-boss",
+      "drive-mad",
+      "drivenwild",
+      "duck-duck-clicker",
+      "eaglercraft",
+      "fast-runner",
+      "final-earth",
+      "flappy-bird",
+      "fnae",
+      "FNAW",
+      "fnaf/FNAF1",
+      "fnaf/FNAF2",
+      "fnaf/FNAF3",
+      "formula-rush",
+      "fruit-ninja",
+      "gd-sub0",
+      "gd-wave",
+      "gdworld",
+      "gobble",
+      "gunspin",
+      "happyglass",
+      "holiday",
+      "hundred-percent-golf",
+      "idle-football",
+      "impossiblequiz",
+      "jellymario",
+      "jetpack-joyride",
+      "knifehit",
+      "liquid-sort",
+      "monkey-mart",
+      "monster-tracks",
+      "more-sushi",
+      "moto-x3m",
+      "ninety-nine-balls",
+      "npng",
+      "nutsort",
+      "ovo",
+      "ovo-dimensions",
+      "ovo2",
+      "papas-freezeria",
+      "papas-pizzeria",
+      "paperio2",
+      "penkick",
+      "pvz",
+      "ragdoll-archers",
+      "ragdoll-hit",
+      "randoms/basket",
+      "randoms/boxing",
+      "randoms/soccer",
+      "randoms/volley",
+      "recoil",
+      "rise-higher",
+      "rocketgoal",
+      "roll",
+      "roper",
+      "skyrace3d",
+      "slice-master",
+      "slice-roll",
+      "small-world-cup",
+      "stack",
+      "stickman-hook",
+      "stickmin/breakingthebank",
+      "stickmin/escapingtheprison",
+      "stickmin/fleeingthecomplex",
+      "stickmin/infiltratingtheairship",
+      "stickmin/stealingthediamond",
+      "subway-surfers",
+      "survival-race",
+      "swooop",
+      "tap-goal",
+      "there-is-no-game",
+      "thorns-and-balloons",
+      "time-travel",
+      "tiny-fishing",
+      "tiny-fishing-update",
+      "totm",
+      "twelve-mini-battles",
+      "webgl",
+      "wheelie-bike",
+      "worldguessr",
+      "x3m"
+    ];
+
+    const NAME_OVERRIDES = {
+      "ctr": "Cut the Rope",
+      "ccl": "Crazy Crash Landing",
+      "ovo": "OvO",
+      "ovo2": "OvO 2",
+      "ovo-dimensions": "OvO Dimensions",
+      "fnae": "Five Nights at Big E",
+      "fnaf1": "FNAF 1",
+      "fnaf2": "FNAF 2",
+      "fnaf3": "FNAF 3",
+      "fnaw": "Five Nights at Winston's",
+      "btd5": "Bloons TD 5",
+      "pvz": "Plants vs Zombies",
+      "totm": "Tomb of the Mask",
+      "gd-sub0": "Geometry Dash SubZero",
+      "gdworld": "Geometry Dash World",
+      "gd-wave": "Geometry Dash Wave",
+      "npng": "No Pain No Gain",
+      "paperio2": "Paper.io 2",
+      "moto-x3m": "Moto X3M",
+      "x3m": "Moto X3M Winter",
+      "cookieclicker": "Cookie Clicker",
+      "impossiblequiz": "The Impossible Quiz",
+      "there-is-no-game": "There Is No Game",
+      "small-world-cup": "A Small World Cup",
+      "twelve-mini-battles": "Twelve Mini Battles",
+      "basket": "Basket Random",
+      "boxing": "Boxing Random",
+      "soccer": "Soccer Random",
+      "volley": "Volley Random",
+      "breakingthebank": "Breaking the Bank",
+      "escapingtheprison": "Escaping the Prison",
+      "fleeingthecomplex": "Fleeing the Complex",
+      "infiltratingtheairship": "Infiltrating the Airship",
+      "stealingthediamond": "Stealing the Diamond"
+    };
+
+    const EMOJIS = ["🎮","🏎️","🧠","🧱","🏹","🏁","🎈","🍪","🍬","🏏","🐔","✂️","🎯","⛏️","🧗","🎨","🏎️","🚗","🦆","⛏️","🏃","🌍","🐦","🐻","🏁","🍉","📐","🌍","👻","🔫","🍫","🎁","⛳","⚽","❓","🍄","🚀","🔪","🧪","🐵","👾","🍣","🏍️","⚽","💪","🥜","🌀","🍕","⚽","🧟","🏹","🥊","⚽","🚀","🎢","🎯","🏁","🍰","⚽","🥞","🪝","🏄","🏁","🪂","⚽","👾","🎈","⏳","🎣","🎣","🕹️","⚔️","🌊","🚲","🌍","🏍️"];
+
+    function prettyName(path) {
+      const base = path.split('/').pop();
+      const key = base.toLowerCase();
+      if (NAME_OVERRIDES[key]) return NAME_OVERRIDES[key];
+      return base.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
+    function emojiFor(path, i) {
+      return EMOJIS[i % EMOJIS.length];
+    }
+
+    function renderGames(filter = '') {
+      const grid = document.getElementById('gamesGrid');
+      const q = filter.trim().toLowerCase();
+      grid.innerHTML = '';
+      GAMES
+        .filter(p => prettyName(p).toLowerCase().includes(q) || p.toLowerCase().includes(q))
+        .forEach((path, i) => {
+          const name = prettyName(path);
+          const card = document.createElement('div');
+          card.className = 'game-card';
+          card.onclick = () => { window.location.href = './' + path + '/index.html'; };
+          card.innerHTML =
+            '<div class="game-thumb">' + emojiFor(path, GAMES.indexOf(path)) + '</div>' +
+            '<div class="game-info"><h3>' + name + '</h3>' +
+            '<p>' + path + '</p>' +
+            '<span class="game-tag">Play</span></div>';
+          grid.appendChild(card);
+        });
+    }
+
+    function filterGames() {
+      renderGames(document.getElementById('search').value);
+    }
+
+    renderGames();
+    checkAuth();
+    loadChat();
+    subscribeChat();
+  </script>
+
+</body>
+</html>

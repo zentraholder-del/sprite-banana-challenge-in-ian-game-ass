@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<!--
+  Lightspeed admin panel (single file, no build step).
+  Tradeoff note on the login gate: this checks license_keys.is_admin
+  in Supabase rather than a hardcoded password in the HTML. That keeps
+  secrets out of view-source, but it does require your anon RLS policy
+  to allow reading the is_admin flag during the gate check. A hardcoded
+  check would work with zero DB reads but leaks the secret to anyone
+  who opens devtools. DB check chosen here.
+
+  Required schema (run once in Supabase SQL editor):
+    alter table license_keys add column if not exists session_token text;
+    alter table license_keys add column if not exists activated_at timestamptz;
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lightspeed — Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #080810;
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.12;
+    }
+    .blob1 { width: 500px; height: 500px; background: #7c3aed; top: -150px; left: -150px; }
+    .blob2 { width: 400px; height: 400px; background: #2563eb; bottom: -100px; right: -100px; }
+
+    nav {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 60px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(8,8,16,0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logout-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 13px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+    .card.center { max-width: 400px; margin: 8vh auto; text-align: center; }
+    .card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .card p.sub { font-size: 13px; color: #6b7280; margin-bottom: 22px; }
+
+    .field { margin-bottom: 14px; text-align: left; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 7px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .field input, .field textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      font-family: inherit;
+    }
+    .field input.mono { font-family: monospace; letter-spacing: 2px; }
+    .field input:focus, .field textarea:focus {
+      border-color: rgba(124,58,237,0.6);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+    }
+    .field textarea { resize: none; height: 80px; }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+    }
+    .btn:disabled { opacity: 0.55; cursor: wait; }
+    .btn.block { width: 100%; }
+    .btn.small { padding: 7px 12px; font-size: 12px; }
+    .btn.ghost {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: none;
+    }
+    .btn.danger { background: linear-gradient(135deg, #dc2626, #7c2d12); box-shadow: none; }
+
+    .error { margin-top: 12px; font-size: 13px; color: #f87171; min-height: 18px; }
+    .ok { margin-top: 12px; font-size: 13px; color: #6ee7b7; min-height: 18px; word-break: break-all; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tabs button {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: 13px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+    .tabs button.active {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      border-color: transparent;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      vertical-align: top;
+    }
+    th { color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; }
+    td { color: #e5e7eb; }
+    td.mono { font-family: monospace; font-size: 12px; }
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .pill.on { background: rgba(52,211,153,0.15); color: #6ee7b7; }
+    .pill.off { background: rgba(248,113,113,0.15); color: #f87171; }
+    .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .newkey {
+      margin: 14px 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(124,58,237,0.12);
+      border: 1px solid rgba(124,58,237,0.35);
+      font-family: monospace;
+      font-size: 16px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      word-break: break-all;
+    }
+    .muted { font-size: 12px; color: #6b7280; margin-top: 10px; line-height: 1.6; }
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+    .check input { width: 15px; height: 15px; accent-color: #7c3aed; cursor: pointer; }
+    .inline-form { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .inline-form input {
+      flex: 1;
+      min-width: 140px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #fff;
+      outline: none;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      font-size: 11px;
+      color: #1f2937;
+      padding: 40px 0 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* KEY REVEAL MODAL */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      background: #111118;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+      text-align: center;
+    }
+    .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .modal p.sub { font-size: 13px; color: #6b7280; margin-bottom: 16px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+  </div>
+
+  <nav>
+    <div class="nav-logo">⚡ Lightspeed · Admin</div>
+    <div><button class="logout-btn" id="adminLogout" onclick="adminLogout()" style="display:none">Sign out</button></div>
+  </nav>
+
+  <div class="wrap">
+
+    <!-- GATE -->
+    <div class="card center" id="gate">
+      <h1>Admin</h1>
+      <p class="sub">Enter an admin key to continue.</p>
+      <div class="field">
+        <label>Admin Key</label>
+        <input type="password" id="adminKey" class="mono" placeholder="Enter admin key" autocomplete="off" />
+      </div>
+      <button class="btn block" id="gateBtn" onclick="adminLogin()">Unlock</button>
+      <div class="error" id="gateError"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dash" style="display:none">
+      <div class="tabs">
+        <button class="active" onclick="showTab('requests', this)">Key requests</button>
+        <button onclick="showTab('keys', this)">Manage keys</button>
+        <button onclick="showTab('blacklist', this)">Blacklist</button>
+        <button onclick="showTab('messages', this)">Messaging</button>
+      </div>
+
+      <div class="card section active" id="sec-requests">
+        <h2>Pending key requests</h2>
+        <div id="reqList"><p class="muted">Loading…</p></div>
+      </div>
+
+      <div class="card section" id="sec-keys">
+        <h2>License keys</h2>
+        <p class="sub">Hashes only — plaintext is shown once at creation time. Reset clears activation so a key can be redeemed again.</p>
+        <div class="inline-form" style="align-items:center">
+          <button class="btn small" id="genKeyBtn" onclick="generateStandaloneKey()">Generate Key</button>
+          <label class="check"><input type="checkbox" id="genAdmin" /> make this an admin key</label>
+        </div>
+        <div id="keyList"><p class="muted">Loading…</p></div>
+      </div>
+
+      <div class="card section" id="sec-blacklist">
+        <h2>Blacklist</h2>
+        <div class="inline-form">
+          <input id="blUser" placeholder="username" maxlength="32" />
+          <input id="blReason" placeholder="reason (optional)" maxlength="200" />
+          <button class="btn small" onclick="addBlacklist()">Add</button>
+        </div>
+        <div id="blList"><p class="muted">Loading…</p></div>
+      </div>
+
+      <div class="card section" id="sec-messages">
+        <h2>Post as admin</h2>
+        <p class="sub">Shows in the live chat on main.html as <b>admin</b>.</p>
+        <div class="inline-form">
+          <input id="adminMsg" placeholder="Announcement or troll…" maxlength="500" />
+          <button class="btn small" onclick="postAdminMessage()">Post</button>
+        </div>
+        <div class="error" id="msgError"></div>
+        <div class="ok" id="msgOk"></div>
+        <h2 style="margin-top:24px">Recent messages</h2>
+        <div id="recentMsgs"><p class="muted">Loading…</p></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>LIGHTSPEED &copy; 2026</footer>
+
+  <!-- ONE-TIME KEY REVEAL (plaintext is never stored) -->
+  <div class="overlay" id="keyOverlay" onclick="if(event.target===this)closeKeyModal()">
+    <div class="modal">
+      <h2>New key created</h2>
+      <p class="sub">Send this to the requester now — it is shown only once. Only the hash is stored.</p>
+      <div class="newkey"><span id="keyModalText"></span><button class="btn small" id="keyCopyBtn" onclick="copyRevealedKey()">Copy</button></div>
+      <button class="btn block" style="margin-top:16px" onclick="closeKeyModal()">Done</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ── Fill these in (same values as games/*.html) ────────────────
+    const SUPABASE_URL = "https://hqjclkkwsepdhtwnwsvp.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxamNsa2t3c2VwZGh0d253c3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTY5NTMsImV4cCI6MjEwNTc3Mjk1M30.-OXxTRYmIi4snwJSiThFsAPr5YgVbwz4kwUY_DURFRA";
+    // ───────────────────────────────────────────────────────────────
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function sha256hex(str) {
+      const data = new TextEncoder().encode(str);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function showTab(name, btn) {
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('sec-' + name).classList.add('active');
+      if (name === 'requests') loadRequests();
+      if (name === 'keys') loadKeys();
+      if (name === 'blacklist') loadBlacklist();
+      if (name === 'messages') loadRecent();
+    }
+
+    /* ---------- gate ---------- */
+
+    async function adminLogin() {
+      const err = document.getElementById('gateError');
+      const btn = document.getElementById('gateBtn');
+      err.textContent = '';
+      const raw = document.getElementById('adminKey').value.trim();
+      if (!raw) { err.textContent = 'Enter your admin key.'; return; }
+      btn.disabled = true;
+      try {
+        const hash = await sha256hex(raw.toUpperCase());
+        const { data, error } = await sb
+          .from('license_keys')
+          .select('id, is_active, is_admin')
+          .eq('key', hash)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data || !data.is_admin || !data.is_active) {
+          err.textContent = 'Not an active admin key.';
+          btn.disabled = false;
+          return;
+        }
+        sessionStorage.setItem('ls_admin_ok', '1');
+        openDash();
+      } catch (e) {
+        console.error(e);
+        err.textContent = 'Login failed. Check connection and try again.';
+        btn.disabled = false;
+      }
+    }
+
+    function adminLogout() {
+      sessionStorage.removeItem('ls_admin_ok');
+      location.reload();
+    }
+
+    function openDash() {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('dash').style.display = 'block';
+      document.getElementById('adminLogout').style.display = 'inline-block';
+      loadRequests();
+    }
+
+    document.getElementById('adminKey').addEventListener('keydown', e => {
+      if (e.key === 'Enter') adminLogin();
+    });
+
+    if (sessionStorage.getItem('ls_admin_ok') === '1') openDash();
+
+    /* ---------- key requests ---------- */
+
+    async function loadRequests() {
+      const box = document.getElementById('reqList');
+      try {
+        const { data, error } = await sb
+          .from('key_requests')
+          .select('id, name, reason, status, created_at')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          box.innerHTML = '<p class="muted">No pending requests.</p>';
+          return;
+        }
+        let html = '<table><tr><th>Name</th><th>Reason</th><th>Requested</th><th></th></tr>';
+        data.forEach(r => {
+          html += '<tr><td>' + esc(r.name) + '</td><td>' + esc(r.reason) +
+            '</td><td class="muted">' + esc(new Date(r.created_at).toLocaleString()) +
+            '</td><td><div class="row-actions">' +
+            '<button class="btn small" onclick="approveRequest(' + r.id + ', this)">Approve</button>' +
+            '<button class="btn small ghost" onclick="denyRequest(' + r.id + ', this)">Deny</button>' +
+            '</div></td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p class="muted">Failed to load requests.</p>';
+      }
+    }
+
+    function randomKey() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+      const bytes = crypto.getRandomValues(new Uint8Array(12));
+      let s = '';
+      bytes.forEach(b => { s += chars[b % chars.length]; });
+      return 'LIGHT-' + s.slice(0, 6) + '-' + s.slice(6);
+    }
+
+    async function approveRequest(id, btn) {
+      btn.disabled = true;
+      try {
+        const plaintext = randomKey();
+        const hash = await sha256hex(plaintext);
+        const { error: insErr } = await sb
+          .from('license_keys')
+          .insert({ key: hash, is_active: true, is_admin: false });
+        if (insErr) throw insErr;
+        const { error: updErr } = await sb
+          .from('key_requests')
+          .update({ status: 'approved' })
+          .eq('id', id);
+        if (updErr) throw updErr;
+        showKeyModal(plaintext);
+        loadRequests();
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        alert('Approve failed.');
+      }
+    }
+
+    // Plaintext keys are revealed once via modal and never stored.
+    function showKeyModal(plaintext) {
+      document.getElementById('keyModalText').textContent = plaintext;
+      document.getElementById('keyCopyBtn').textContent = 'Copy';
+      document.getElementById('keyOverlay').classList.add('show');
+    }
+
+    function closeKeyModal() {
+      document.getElementById('keyOverlay').classList.remove('show');
+      document.getElementById('keyModalText').textContent = '';
+    }
+
+    function copyRevealedKey() {
+      const text = document.getElementById('keyModalText').textContent;
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          document.getElementById('keyCopyBtn').textContent = 'Copied!';
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      document.getElementById('keyCopyBtn').textContent = 'Copied!';
+    }
+
+    // Standalone key creation (no prior request). Same hash + one-time
+    // reveal flow as the approve action.
+    async function generateStandaloneKey() {
+      const btn = document.getElementById('genKeyBtn');
+      const isAdmin = document.getElementById('genAdmin').checked;
+      btn.disabled = true;
+      try {
+        const plaintext = randomKey();
+        const hash = await sha256hex(plaintext);
+        const { error } = await sb
+          .from('license_keys')
+          .insert({ key: hash, is_active: true, is_admin: isAdmin });
+        if (error) throw error;
+        showKeyModal(plaintext);
+        loadKeys();
+      } catch (e) {
+        console.error(e);
+        alert('Generate failed.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function denyRequest(id, btn) {
+      btn.disabled = true;
+      try {
+        const { error } = await sb
+          .from('key_requests')
+          .update({ status: 'denied' })
+          .eq('id', id);
+        if (error) throw error;
+        loadRequests();
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        alert('Deny failed.');
+      }
+    }
+
+    /* ---------- manage keys ---------- */
+
+    function maskKey(hash) {
+      if (!hash) return '—';
+      return esc(String(hash).slice(0, 6)) + '…';
+    }
+
+    async function loadKeys() {
+      const box = document.getElementById('keyList');
+      try {
+        const { data, error } = await sb
+          .from('license_keys')
+          .select('id, key, used_by, is_active, is_admin, activated_at, created_at')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          box.innerHTML = '<p class="muted">No keys yet.</p>';
+          return;
+        }
+        let html = '<table><tr><th>Key (hash)</th><th>Used by</th><th>Status</th><th>Activated</th><th></th></tr>';
+        data.forEach(k => {
+          html += '<tr><td class="mono">' + maskKey(k.key) +
+            (k.is_admin ? ' <span class="pill on">admin</span>' : '') +
+            '</td><td>' + esc(k.used_by) + '</td>' +
+            '<td><span class="pill ' + (k.is_active ? 'on' : 'off') + '">' +
+            (k.is_active ? 'active' : 'off') + '</span></td>' +
+            '<td class="muted">' + (k.activated_at ? esc(new Date(k.activated_at).toLocaleString()) : '—') + '</td>' +
+            '<td><div class="row-actions">' +
+            '<button class="btn small ghost" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this)">' +
+            (k.is_active ? 'Disable' : 'Enable') + '</button>' +
+            '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this)">Reset</button>' +
+            '<button class="btn small danger" onclick="deleteKey(' + k.id + ', this)">Delete</button>' +
+            '</div></td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p class="muted">Failed to load keys.</p>';
+      }
+    }
+
+    async function toggleKey(id, next, btn) {
+      btn.disabled = true;
+      try {
+        const { error } = await sb
+          .from('license_keys')
+          .update({ is_active: next })
+          .eq('id', id);
+        if (error) throw error;
+        loadKeys();
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        alert('Toggle failed.');
+      }
+    }
+
+    async function resetKey(id, btn) {
+      if (!confirm('Reset this key so it can be redeemed again?')) return;
+      btn.disabled = true;
+      try {
+        const { error } = await sb
+          .from('license_keys')
+          .update({ used_by: null, session_token: null, activated_at: null })
+          .eq('id', id);
+        if (error) throw error;
+        loadKeys();
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        alert('Reset failed.');
+      }
+    }
+
+    async function deleteKey(id, btn) {
+      if (!confirm('Permanently delete this key? This cannot be undone.')) return;
+      btn.disabled = true;
+      try {
+        const { error } = await sb
+          .from('license_keys')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+        loadKeys();
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        alert('Delete failed.');
+      }
+    }
+
+    /* ---------- blacklist ---------- */
+
+    async function loadBlacklist() {
+      const box = document.getElementById('blList');
+      try {
+        const { data, error } = await sb
+          .from('blacklist')
+          .select('id, username, reason, created_at')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          box.innerHTML = '<p class="muted">Blacklist is empty.</p>';
+          return;
+        }
+        let html = '<table><tr><th>Username</th><th>Reason</th><th></th></tr>';
+        data.forEach(b => {
+          html += '<tr><td>' + esc(b.username) + '</td><td>' + esc(b.reason) +
+            '</td><td><button class="btn small danger" onclick="removeBlacklist(' +
+            b.id + ', this)">Remove</button></td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p class="muted">Failed to load blacklist.</p>';
+      }
+    }
+
+    async function addBlacklist() {
+      const username = document.getElementById('blUser').value.trim();
+      const reason = document.getElementById('blReason').value.trim();
+      if (!username) return;
+      try {
+        const { error } = await sb.from('blacklist').insert({ username, reason });
+        if (error) throw error;
+        document.getElementById('blUser').value = '';
+        document.getElementById('blReason').value = '';
+        loadBlacklist();
+      } catch (e) {
+        console.error(e);
+        alert('Add failed.');
+      }
+    }
+
+    async function removeBlacklist(id, btn) {
+      btn.disabled = true;
+      try {
+        const { error } = await sb.from('blacklist').delete().eq('id', id);
+        if (error) throw error;
+        loadBlacklist();
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        alert('Remove failed.');
+      }
+    }
+
+    /* ---------- messaging ---------- */
+
+    async function postAdminMessage() {
+      const input = document.getElementById('adminMsg');
+      const content = input.value.trim();
+      document.getElementById('msgError').textContent = '';
+      document.getElementById('msgOk').textContent = '';
+      if (!content) return;
+      try {
+        const { error } = await sb
+          .from('messages')
+          .insert({ username: 'admin', content: content.slice(0, 500) });
+        if (error) throw error;
+        input.value = '';
+        document.getElementById('msgOk').textContent = 'Posted to global chat.';
+        loadRecent();
+      } catch (e) {
+        console.error(e);
+        document.getElementById('msgError').textContent = 'Post failed.';
+      }
+    }
+
+    async function loadRecent() {
+      const box = document.getElementById('recentMsgs');
+      try {
+        const { data, error } = await sb
+          .from('messages')
+          .select('id, username, content, created_at')
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          box.innerHTML = '<p class="muted">No messages yet.</p>';
+          return;
+        }
+        let html = '<table><tr><th>User</th><th>Message</th><th>When</th><th></th></tr>';
+        data.forEach(m => {
+          html += '<tr><td>' + esc(m.username) + '</td><td>' + esc(m.content) +
+            '</td><td class="muted">' + esc(new Date(m.created_at).toLocaleString()) +
+            '</td><td><button class="btn small danger" onclick="deleteMessage(' +
+            m.id + ', this)">Delete</button></td></tr>';
+        });
+        box.innerHTML = html + '</table>';
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p class="muted">Failed to load messages.</p>';
+      }
+    }
+
+    async function deleteMessage(id, btn) {
+      btn.disabled = true;
+      try {
+        const { error } = await sb
+          .from('messages')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+        loadRecent();
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        alert('Delete failed.');
+      }
+    }
+  </script>
+
+</body>
+</html>
