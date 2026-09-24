@@ -910,6 +910,7 @@
           <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
         <p class="muted">Tap a TOGGLE card to switch it on/off instantly. Tap an INSTANT card to fire it once. Jumpscare uses the image picker above when toggled ON.</p>
+        <div id="activeNow" style="margin-top:12px"></div>
         <div class="error" id="trollErr"></div>
         <div class="ok" id="trollOk"></div>
       </div>
@@ -1329,6 +1330,8 @@
     // (including jumpscare) toggle on/off the moment their button is tapped.
     const INSTANT_TRICKS = ['confetti', 'popups', 'alert'];
     let trollStates = {}; // "type|scope" -> 'on' / 'off' / null (scope '*' = Everyone)
+    let trollStateRows = {}; // "type|scope" -> { type, scope } for the Active-now list
+    const TRICK_EMOJI = { jumpscare: '👻', shake: '📳', disconnect: '📡', flip: '🙃', ripples: '✨', invert: '🎨', loading: '⏳', alert: '🔔', popups: '💬', confetti: '🎉' };
 
     function currentScope() {
       if (trollMode === 'user') {
@@ -1352,6 +1355,51 @@
         b.classList.toggle('on', on);
         if (tag) tag.textContent = on ? 'ON' : 'OFF';
       });
+      renderActiveNow();
+    }
+
+    // Live summary of what's ON for EVERY scope (Everyone + each user),
+    // so per-person effects are visible without switching targets.
+    function renderActiveNow() {
+      const box = document.getElementById('activeNow');
+      if (!box) return;
+      const keys = Object.keys(trollStates).filter(k => trollStates[k] === 'on' && trollStateRows[k]);
+      if (keys.length === 0) {
+        box.innerHTML = '<p class="muted">Nothing active right now.</p>';
+        return;
+      }
+      let html = '<p class="muted" style="margin-bottom:8px">Active now — per person:</p>';
+      keys.forEach(k => {
+        const r = trollStateRows[k];
+        html += '<div class="keyrow"><span>' + (TRICK_EMOJI[r.type] || '⚡') + ' <b>' + esc(r.type) + '</b> → ' +
+          esc(r.scope === '*' ? 'Everyone' : r.scope) + '</span>' +
+          '<button class="btn small ghost" data-t="' + esc(r.type) + '" data-s="' + esc(r.scope) +
+          '" onclick="stopScopeBtn(this)">Stop</button></div>';
+      });
+      box.innerHTML = html;
+    }
+
+    function stopScopeBtn(btn) {
+      stopScope(btn.getAttribute('data-t'), btn.getAttribute('data-s'));
+    }
+
+    async function stopScope(type, scopeKey) {
+      if (!type) return;
+      const target = scopeKey === '*' ? null : scopeKey;
+      try {
+        const { data, error } = await sb.from('troll_events').insert({
+          target_username: target,
+          event_type: type,
+          payload: { state: 'off' }
+        }).select('id');
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Insert affected 0 rows.');
+        toast(type + ' OFF for ' + (target || 'Everyone'), 'ok');
+        refreshTrollStates();
+      } catch (e) {
+        console.error('stop trick failed:', e, { trick: type, scope: scopeKey });
+        toast('Stop failed', 'err');
+      }
     }
 
     // Most-recent state per event_type + target scope, so the tab
@@ -1365,11 +1413,17 @@
           .limit(200);
         if (error) throw error;
         const map = {};
+        const rows = {};
         (data || []).forEach(r => {
-          const k = r.event_type + '|' + (r.target_username || '*');
-          if (!(k in map)) map[k] = (r.payload && r.payload.state) || null;
+          const scope = r.target_username || '*';
+          const k = r.event_type + '|' + scope;
+          if (!(k in map)) {
+            map[k] = (r.payload && r.payload.state) || null;
+            rows[k] = { type: r.event_type, scope: scope };
+          }
         });
         trollStates = map;
+        trollStateRows = rows;
         paintTrickButtons();
       } catch (e) {
         console.error('troll states failed:', e);
@@ -1449,6 +1503,7 @@
         });
         if (error) throw error;
         trollStates[trick + '|' + scope.key] = next;
+        trollStateRows[trick + '|' + scope.key] = { type: trick, scope: scope.key };
         paintTrickButtons();
         okBox.textContent = trick + ' → ' + (scope.target || 'Everyone') + ': ' + next.toUpperCase() + ' ✓';
         toast(trick + ' ' + next.toUpperCase(), next === 'on' ? 'ok' : undefined);
@@ -1703,7 +1758,12 @@
         box.innerHTML = html;
       } catch (e) {
         console.error('load admin requests failed:', e);
-        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load admin requests.</div>';
+        if (first) {
+          const msg = /column/i.test((e && e.message) || '')
+            ? 'Admin requests need a database update — run the SQL migration, then reload.'
+            : 'Failed to load admin requests.';
+          box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>' + esc(msg) + '</div>';
+        }
       }
     }
 

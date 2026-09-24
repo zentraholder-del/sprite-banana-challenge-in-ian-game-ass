@@ -1932,6 +1932,7 @@
         }
       } catch (e) {
         console.error('admin request state failed:', e);
+        if (/column/i.test((e && e.message) || '')) adminReqState = 'unsupported';
       }
     }
 
@@ -1988,11 +1989,21 @@
       try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
       if (!token) return;
       try {
-        const { data, error } = await sb
+        let res = await sb
           .from('license_keys')
           .select('is_active, is_admin, rank, admin_request_status')
           .eq('session_token', token)
           .maybeSingle();
+        if (res.error && /column/i.test(res.error.message || '')) {
+          // admin_request_status column not migrated yet — rank polling
+          // still works without it.
+          res = await sb
+            .from('license_keys')
+            .select('is_active, is_admin, rank')
+            .eq('session_token', token)
+            .maybeSingle();
+        }
+        const { data, error } = res;
         if (error) throw error;
         if (!data || !data.is_active) { logout(); return; }
         const rank = data.rank || (data.is_admin ? 'admin' : 'user');
