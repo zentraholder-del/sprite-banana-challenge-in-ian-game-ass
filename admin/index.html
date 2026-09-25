@@ -16,8 +16,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <title>Lightspeed — Admin</title>
   <style>
+    /* ===== SHARED DESIGN TOKENS (identical in all 4 files — do not drift) ===== */
+    :root {
+      --bg-base: #08080c;
+      --surface: #111117;
+      --surface-2: #16161e;
+      --border-subtle: #1c1c26;
+      --border-strong: #7c3aed;
+      --text-primary: #f0f0f8;
+      --text-secondary: #9494ad;
+      --text-muted: #5c5c72;
+      --accent: #7c3aed;
+      --accent-hover: #6d28d9;
+      --accent-pressed: #5b21b6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --rank-owner: #f59e0b;
+      --rank-admin: #7c3aed;
+      --rank-mod: #10b981;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --t-micro: 0.15s;
+      --t-standard: 0.25s;
+      --t-entrance: 0.35s;
+    }
+    body { font-family: var(--font-sans) !important; }
+    h1, h2, h3 { letter-spacing: -0.02em; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -733,6 +777,156 @@
       40% { transform: scale(1.06); border-color: #7c3aed; }
       100% { transform: scale(1); }
     }
+    /* ===== SECTION 5: admin shell (sidebar + topbar + main) ===== */
+    .topbar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 12px 18px; margin-bottom: 16px; font-size: 13px; color: #6b6b8a;
+    }
+    .topbar .who { display: flex; align-items: center; gap: 8px; color: #e2e2f0; font-weight: 600; }
+    .ticker { display: flex; gap: 14px; margin-left: auto; flex-wrap: wrap; font-size: 12px; }
+    .ticker b { color: #e2e2f0; }
+    .icon-btn {
+      min-width: 44px; min-height: 44px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px;
+      color: #e2e2f0; font-size: 16px; cursor: pointer;
+      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .icon-btn:hover { border-color: #7c3aed; }
+    .admin-shell { display: flex; align-items: flex-start; gap: 16px; }
+    .admin-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0; }
+    .tabs.sidebar {
+      flex: 0 0 210px;
+      position: sticky; top: 16px;
+      flex-direction: column; align-items: stretch;
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 12px; margin-bottom: 0;
+    }
+    .tabs.sidebar button, .tabs.sidebar a.tablink {
+      text-align: left; justify-content: flex-start;
+      border-left: 3px solid transparent;
+      border-radius: 10px;
+    }
+    .tabs.sidebar button.active {
+      border-left-color: #7c3aed;
+      background: #7c3aed;
+    }
+    .dash-preview { margin-top: 18px; border-top: 1px solid #1e1e2e; padding-top: 14px; }
+    .dash-preview h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .mini-row { display: flex; gap: 8px; align-items: baseline; font-size: 12px; color: #6b6b8a; padding: 5px 0; border-bottom: 1px solid #1e1e2e; }
+    .mini-row:last-child { border-bottom: none; }
+    .linklike { background: none; border: none; color: #7c3aed; font-size: 12px; font-weight: 600; cursor: pointer; padding: 8px 0; min-height: 44px; }
+    .req-card {
+      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 10px;
+      animation: pageIn 0.25s ease-out backwards;
+    }
+    .req-card.flash { border-color: #7c3aed; animation: cardFlash 1.2s ease-out; }
+    @keyframes cardFlash {
+      0% { border-color: #7c3aed; background: #1e1b2e; }
+      100% { border-color: #2a2a3d; background: #1a1a24; }
+    }
+    .req-card .rname { font-size: 14px; font-weight: 700; color: #e2e2f0; }
+    .req-card .rmeta { font-size: 11px; color: #6b6b8a; margin: 4px 0 6px; }
+    .req-card .rreason { font-size: 13px; color: #e2e2f0; line-height: 1.5; margin-bottom: 10px; }
+    .deny-box { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .deny-box input {
+      flex: 1; min-width: 160px; background: #0a0a0f; border: 1.5px solid #2a2a3d;
+      border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #e2e2f0; outline: none; min-height: 44px;
+    }
+    .deny-box input:focus { border-color: #7c3aed; }
+    .keys-table-wrap { overflow-x: auto; }
+    table.keys-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+    table.keys-table th.sortable:hover { color: #e2e2f0; }
+    thead th { position: sticky; top: 0; background: #13131a; z-index: 1; }
+    .rankpills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .rankpills button {
+      min-height: 44px; padding: 8px 14px; border-radius: 20px;
+      background: #1a1a24; border: 1.5px solid #2a2a3d; color: #6b6b8a;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .rankpills button.active { border-color: #7c3aed; color: #fff; background: #7c3aed; }
+    .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+    .user-card {
+      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 12px;
+      padding: 14px; animation: pageIn 0.25s ease-out backwards;
+    }
+    .user-card.stale { opacity: 0.55; }
+    .user-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .avatar {
+      width: 44px; height: 44px; border-radius: 12px; flex: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: #fff;
+    }
+    .user-top .un { font-size: 14px; font-weight: 700; color: #e2e2f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-meta { font-size: 12px; color: #6b6b8a; margin-bottom: 4px; }
+    .user-card .row-actions { margin-top: 10px; }
+    .dm-layout { display: flex; gap: 12px; margin-top: 20px; border-top: 1px solid #1e1e2e; padding-top: 20px; }
+    .dm-contacts {
+      flex: 0 0 200px; display: flex; flex-direction: column; gap: 6px;
+      max-height: 300px; overflow-y: auto;
+    }
+    .dm-contact {
+      text-align: left; background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px;
+      padding: 10px 12px; font-size: 13px; font-weight: 600; color: #e2e2f0; cursor: pointer;
+      min-height: 44px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .dm-contact:hover { border-color: #7c3aed; }
+    .dm-contact.active { border-color: #7c3aed; background: #1e1b2e; }
+    .dm-threadpane { flex: 1; min-width: 0; }
+    .timeline { position: relative; padding-left: 26px; }
+    .timeline::before {
+      content: ''; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px;
+      background: #2a2a3d; border-radius: 2px;
+    }
+    .tl-item { position: relative; padding: 0 0 16px; animation: pageIn 0.25s ease-out backwards; }
+    .tl-dot {
+      position: absolute; left: -24px; top: 2px; width: 12px; height: 12px; border-radius: 50%;
+      background: #7c3aed; border: 2px solid #13131a;
+    }
+    .tl-item .tt { font-size: 13px; color: #e2e2f0; line-height: 1.5; }
+    .tl-item .tw { font-size: 11px; color: #6b6b8a; margin-top: 2px; }
+    .active-strip {
+      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 12px;
+      padding: 12px 14px; margin-bottom: 14px; font-size: 13px;
+    }
+    .active-strip:empty { display: none; }
+    @media (max-width: 860px) {
+      .admin-shell { flex-direction: column; }
+      .tabs.sidebar {
+        position: sticky; top: 0; z-index: 20;
+        flex: none; width: 100%;
+        flex-direction: row; overflow-x: auto; padding: 8px;
+      }
+      .tabs.sidebar button, .tabs.sidebar a.tablink {
+        white-space: nowrap; border-left: none; border-bottom: 3px solid transparent;
+      }
+      .tabs.sidebar button.active { border-bottom-color: #7c3aed; }
+      .dm-layout { flex-direction: column; }
+      .dm-contacts { flex: none; max-height: 160px; }
+    }
+    @media (max-width: 768px) {
+      .tabs.sidebar {
+        position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+        border-radius: 0; border-left: none; border-right: none; border-bottom: none;
+        border-top: 1px solid #1e1e2e;
+        background: #13131a;
+        padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+      }
+      .wrap { padding-bottom: 96px; }
+      .tabs.sidebar a.tablink { display: none; }
+    }
+    @media (max-width: 640px) {
+      .overlay { align-items: flex-end; padding: 0; }
+      .overlay .modal {
+        max-width: 100%; width: 100%;
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+        max-height: 92vh; overflow-y: auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -757,31 +951,47 @@
 
     <!-- DASHBOARD -->
     <div id="dash" style="display:none">
-      <div class="tabs">
-        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">Dashboard</button>
-        <button data-tab="requests" onclick="showTab('requests', this)">Key requests</button>
-        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">Admin requests</button>
-        <button data-tab="keys" onclick="showTab('keys', this)">Manage keys</button>
-        <button data-tab="blacklist" onclick="showTab('blacklist', this)">Blacklist</button>
-        <button data-tab="messages" onclick="showTab('messages', this)">Messaging</button>
-        <button data-tab="users" onclick="showTab('users', this)">Users</button>
-        <button data-tab="playerdms" onclick="showTab('playerdms', this)">Player DMs</button>
-        <button data-tab="reports" onclick="showTab('reports', this)">Reports</button>
-        <button data-tab="troll" onclick="showTab('troll', this)">Troll</button>
-        <button data-tab="activity" onclick="showTab('activity', this)">Activity</button>
+      <div class="topbar">
+        <span class="who" id="topbarUser">Admin</span>
+        <button class="icon-btn" onclick="openRankGuide()" aria-label="Rank guide" title="What can each rank do?">?</button>
+        <div class="ticker" aria-live="polite">
+          <span>Keys <b id="tickKeys">…</b></span>
+          <span>Requests <b id="tickPending">…</b></span>
+          <span>Online <b id="tickOnline">…</b></span>
+        </div>
+      </div>
+      <div class="admin-shell">
+      <div class="tabs sidebar">
+        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">📊 Dashboard</button>
+        <button data-tab="requests" onclick="showTab('requests', this)">📥 Key requests</button>
+        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">🛡️ Admin requests</button>
+        <button data-tab="keys" onclick="showTab('keys', this)">🔑 Manage keys</button>
+        <button data-tab="blacklist" onclick="showTab('blacklist', this)">🚫 Blacklist</button>
+        <button data-tab="messages" onclick="showTab('messages', this)">💬 Messaging</button>
+        <button data-tab="users" onclick="showTab('users', this)">👥 Users</button>
+        <button data-tab="playerdms" onclick="showTab('playerdms', this)">✉️ Player DMs</button>
+        <button data-tab="reports" onclick="showTab('reports', this)">🚩 Reports</button>
+        <button data-tab="troll" onclick="showTab('troll', this)">👻 Troll</button>
+        <button data-tab="activity" onclick="showTab('activity', this)">📜 Activity</button>
         <a class="tablink" href="../games/play/">▶ Play Games</a>
       </div>
+      <div class="admin-main">
       <p class="muted" id="rankNote" style="margin-bottom:12px"></p>
 
       <div class="card section active" id="sec-dashboard">
         <h2>Overview</h2>
-        <p class="sub">Read-only snapshot. Refreshes every time this tab opens.</p>
+        <p class="sub">Live snapshot — stats refresh every 3 seconds, counts animate only the change.</p>
         <div class="stat-grid" id="statGrid">
           <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Active keys</div></div>
           <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Users activated</div></div>
           <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Online now</div></div>
           <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Pending requests</div></div>
           <div class="stat-card"><div class="stat-num">100</div><div class="stat-label">Games available</div></div>
+        </div>
+        <div class="dash-preview">
+          <h3>Recent activity</h3>
+          <div id="dashPreview"><p class="muted">Loading…</p></div>
+          <button class="linklike" onclick="showTab('activity', document.querySelector('.tabs button[data-tab=&quot;activity&quot;]'))">View full log →</button>
         </div>
       </div>
 
@@ -815,12 +1025,17 @@
           <label class="check cx"><input type="checkbox" id="genAdmin" class="cx-input" /><span class="cx-box"><svg viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1"/></svg></span> make this an admin key</label>
         </div>
         <div class="inline-form" style="align-items:center">
-          <input id="bulkCount" type="number" inputmode="numeric" min="1" max="20" value="5" style="flex:0 0 90px; min-width:90px" aria-label="Number of keys to generate" />
-          <button class="btn small" id="bulkGenBtn" onclick="generateBulkKeys()">Generate keys</button>
-          <label class="check cx"><input type="checkbox" id="bulkAdmin" class="cx-input" /><span class="cx-box"><svg viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1"/></svg></span> admin keys</label>
+          <button class="btn small" onclick="openBulkModal()">Bulk generate</button>
+        </div>
+        <div class="rankpills" id="keyRankPills">
+          <button class="active" onclick="setKeyRankFilter('all', this)">All</button>
+          <button onclick="setKeyRankFilter('user', this)">user</button>
+          <button onclick="setKeyRankFilter('mod', this)">mod</button>
+          <button onclick="setKeyRankFilter('admin', this)">admin</button>
+          <button onclick="setKeyRankFilter('owner', this)">owner</button>
         </div>
         <div class="inline-form">
-          <input id="keySearch" placeholder="Filter by username…" maxlength="32" oninput="filterTable('keyList', this.value)" aria-label="Filter keys by username" />
+          <input id="keySearch" placeholder="Filter by username…" maxlength="32" oninput="renderKeys()" aria-label="Filter keys by username" />
         </div>
         <div id="keyList"><p class="muted">Loading…</p></div>
       </div>
@@ -861,7 +1076,7 @@
         <h2>Active users</h2>
         <p class="sub">Live from active_sessions, most recent first. "Stale" means no heartbeat for 90+ seconds.</p>
         <div class="inline-form">
-          <input id="userSearch" placeholder="Filter by username…" maxlength="32" oninput="filterTable('userList', this.value)" aria-label="Filter users by username" />
+          <input id="userSearch" placeholder="Filter by username…" maxlength="32" oninput="renderUsers()" aria-label="Filter users by username" />
         </div>
         <div class="inline-form" id="xpGrantPanel" style="align-items:center;display:none">
           <input id="xpGrantAmount" type="number" inputmode="numeric" min="1" max="10000" value="100" style="flex:0 0 100px;min-width:100px" aria-label="XP amount" />
@@ -870,12 +1085,18 @@
           <span class="muted">Owner-only XP grants</span>
         </div>
         <div id="userList"><p class="muted">Loading…</p></div>
-        <div id="dmThread" style="display:none; margin-top:20px; border-top:1px solid rgba(255,255,255,0.07); padding-top:20px;">
-          <h2>DM with <span id="dmUser"></span></h2>
-          <div class="dm-hist" id="dmHistory"></div>
-          <div class="inline-form" style="margin-top:12px">
-            <input id="dmInput" placeholder="Message as admin…" maxlength="500" />
-            <button class="btn small" onclick="sendDm()">Send</button>
+        <div class="dm-layout" id="dmThread" style="display:none">
+          <div>
+            <div class="sec-label">Conversations</div>
+            <div class="dm-contacts" id="dmContacts"></div>
+          </div>
+          <div class="dm-threadpane">
+            <h2>DM with <span id="dmUser"></span></h2>
+            <div class="dm-hist" id="dmHistory"></div>
+            <div class="inline-form" style="margin-top:12px">
+              <input id="dmInput" placeholder="Message as admin…" maxlength="500" />
+              <button class="btn small" onclick="sendDm()">Send</button>
+            </div>
           </div>
         </div>
       </div>
@@ -927,6 +1148,7 @@
           <label>Message (iOS alert &amp; popup spam)</label>
           <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing 🎉" maxlength="200" />
         </div>
+        <div class="active-strip" id="activeNow" aria-live="polite"></div>
         <div class="trick-grid" id="trickGrid">
           <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tpill"></em><em class="tstate">OFF</em></button>
           <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span><em class="tpill"></em><em class="tstate">OFF</em></button>
@@ -940,7 +1162,6 @@
           <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
         <p class="muted">Tap a TOGGLE card to switch it on/off instantly. Tap an INSTANT card to fire it once. Jumpscare uses the image picker above when toggled ON.</p>
-        <div id="activeNow" style="margin-top:12px"></div>
         <div class="error" id="trollErr"></div>
         <div class="ok" id="trollOk"></div>
       </div>
@@ -950,14 +1171,55 @@
         <p class="sub">Recent activations, blacklist actions, and troll events sent. Read-only.</p>
         <div id="activityList"><p class="muted">Loading…</p></div>
       </div>
+      </div><!-- /.admin-main -->
+      </div><!-- /.admin-shell -->
     </div>
 
   </div>
 
+  <!-- BULK GENERATE -->
+  <div class="overlay" id="bulkOverlay" onclick="if(event.target===this)closeBulkModal()">
+    <div class="modal" style="text-align:left;max-width:460px">
+      <h2 style="text-align:center">Bulk generate</h2>
+      <p class="sub" style="text-align:center">Up to 20 keys — set a count, or paste one custom key per line.</p>
+      <div class="field">
+        <label>Count (1–20)</label>
+        <input id="bulkCountM" type="number" inputmode="numeric" min="1" max="20" value="5" />
+      </div>
+      <div class="field">
+        <label>Rank</label>
+        <select id="bulkRankM" aria-label="Bulk rank">
+          <option value="user">user</option>
+          <option value="mod">mod</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Custom keys (one per line, optional)</label>
+        <textarea id="bulkKeysM" placeholder="LIGHT-ABC123&#10;LIGHT-XYZ789" style="height:90px"></textarea>
+      </div>
+      <div class="error" id="bulkErr"></div>
+      <button class="btn block" id="bulkGoBtn" onclick="confirmBulkGenerate()">Generate</button>
+      <button class="btn block ghost" style="margin-top:8px" onclick="closeBulkModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- RANK GUIDE (static) -->
+  <div class="overlay" id="rankOverlay" onclick="if(event.target===this)closeRankGuide()">
+    <div class="modal" style="text-align:left;max-width:460px">
+      <h2 style="text-align:center">What can each rank do?</h2>
+      <p class="sub" style="text-align:center">Owner outranks admin outranks mod outranks user.</p>
+      <div class="mini-row"><span><span class="pill rank-owner">owner</span></span><span>Everything. Only one owner key exists — it can never be deleted or edited from this site.</span></div>
+      <div class="mini-row"><span><span class="pill rank-admin">admin</span></span><span>Everything except owner-only actions. Can only modify <b>user</b> keys — never admin, mod, or owner keys.</span></div>
+      <div class="mini-row"><span><span class="pill rank-mod">mod</span></span><span>Blacklist, chat/mod messages, view users. No keys, requests, troll, or activity tabs.</span></div>
+      <div class="mini-row"><span><span class="pill rank-user">user</span></span><span>Plays games. No admin access at all.</span></div>
+      <button class="btn block" style="margin-top:16px" onclick="closeRankGuide()">Got it</button>
+    </div>
+  </div>
+
   <footer>LIGHTSPEED &copy; 2026</footer>
 
-  <!-- ONE-TIME KEY REVEAL (plaintext is never stored) -->
-  <div class="overlay" id="keyOverlay" onclick="if(event.target===this)closeKeyModal()">
+  <!-- ONE-TIME KEY REVEAL (plaintext is never stored) -->  <div class="overlay" id="keyOverlay" onclick="if(event.target===this)closeKeyModal()">
     <div class="modal">
       <h2>New key created</h2>
       <p class="sub">Send this to the requester now — it is shown only once.</p>
@@ -1144,6 +1406,15 @@
       document.getElementById('gate').style.display = 'none';
       document.getElementById('dash').style.display = 'block';
       document.getElementById('adminLogout').style.display = 'inline-block';
+      try {
+        const nm = localStorage.getItem(LS_USER) || 'admin';
+        const tu = document.getElementById('topbarUser');
+        tu.innerHTML = 'Signed in as <strong></strong> ';
+        tu.querySelector('strong').textContent = nm;
+        const rp = document.createElement('span');
+        rp.innerHTML = rankPill(myRank);
+        tu.appendChild(rp);
+      } catch (e) { console.error('topbar user failed:', e); }
       applyRankGating();
       initDropdowns();
       // Mods land on a tab they can actually use. showTab starts that
@@ -1200,37 +1471,47 @@
       if (name === 'activity') startPoller('activity', loadActivity, 5000);
     }
 
-    // Client-side text filter for rendered admin tables (header row kept).
-    function filterTable(containerId, q) {
-      const box = document.getElementById(containerId);
-      if (!box) return;
-      const needle = (q || '').trim().toLowerCase();
-      const rows = box.querySelectorAll('table tr');
-      rows.forEach((tr, i) => {
-        if (i === 0) return; // header
-        tr.style.display = (!needle || tr.textContent.toLowerCase().includes(needle)) ? '' : 'none';
-      });
-    }
-
-    function reapplyFilter(inputId, containerId) {
-      const input = document.getElementById(inputId);
-      if (input && input.value) filterTable(containerId, input.value);
-    }
-
     /* ---------- dashboard ---------- */
 
     let dashLoaded = false;
+    const dashPrev = [0, 0, 0, 0];
+
+    function setStat(el, i, val) {
+      const n = parseInt(val, 10);
+      if (isNaN(n) || String(n) !== String(val)) { el.textContent = val; return; }
+      const from = dashLoaded ? (dashPrev[i] || 0) : 0;
+      dashPrev[i] = n;
+      countUpFrom(el, from, n);
+    }
+
+    function countUpFrom(el, from, target) {
+      if (from === target) { el.textContent = String(target); return; }
+      let done = false;
+      const finish = () => { if (!done) { done = true; el.textContent = String(target); } };
+      // Watchdog: rAF stalls in background tabs — never leave a stale number.
+      const watchdog = setTimeout(finish, 1200);
+      const dur = 800;
+      let t0 = null;
+      function frame(t) {
+        if (done) return;
+        if (t0 === null) t0 = t;
+        const p = Math.min(1, (t - t0) / dur);
+        el.textContent = String(Math.round(from + (target - from) * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) requestAnimationFrame(frame);
+        else { done = true; clearTimeout(watchdog); }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function setTick(id, v) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (v == null ? '—' : String(v));
+    }
 
     async function loadDashboard() {
       const grid = document.getElementById('statGrid');
       if (!grid) return;
       const cards = grid.querySelectorAll('.stat-num');
-      const setAll = vals => cards.forEach((el, i) => {
-        const n = parseInt(vals[i], 10);
-        if (!isNaN(n) && String(n) === String(vals[i])) countUp(el, n);
-        else el.textContent = vals[i];
-      });
-      // Numbers count up from 0 on load.
       try {
         const cutoff = new Date(Date.now() - 90000).toISOString();
         const [keys, used, online, pending] = await Promise.all([
@@ -1240,73 +1521,148 @@
           sb.from('key_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
         ]);
         [keys, used, online, pending].forEach(r => { if (r.error) throw r.error; });
-        dashLoaded = true;
-        setAll([
+        const vals = [
           String(keys.count != null ? keys.count : '—'),
           String(used.count != null ? used.count : '—'),
           String(online.count != null ? online.count : '—'),
           String(pending.count != null ? pending.count : '—'),
           '100'
-        ]);
+        ];
+        cards.forEach((el, i) => setStat(el, i, vals[i]));
+        setTick('tickKeys', keys.count);
+        setTick('tickPending', pending.count);
+        setTick('tickOnline', online.count);
+        dashLoaded = true;
+        renderDashPreview();
       } catch (e) {
         console.error('dashboard stats failed:', e);
-        if (!dashLoaded) setAll(['!', '!', '!', '!', '100']);
+        if (!dashLoaded) {
+          ['!', '!', '!', '!', '100'].forEach((v, i) => { if (cards[i]) cards[i].textContent = v; });
+        }
       }
     }
 
-    function countUp(el, target) {
-      const dur = 800;
-      let t0 = null;
-      function frame(t) {
-        if (t0 === null) t0 = t;
-        const p = Math.min(1, (t - t0) / dur);
-        el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
-        if (p < 1) requestAnimationFrame(frame);
-      }
-      requestAnimationFrame(frame);
-    }
-
-    /* ---------- activity log (read-only) ---------- */
-
-    async function loadActivity() {
-      const box = document.getElementById('activityList');
-      const firstAct = !box.querySelector('table') && !box.querySelector('.empty-state');
-      if (firstAct) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+    async function renderDashPreview() {
+      const box = document.getElementById('dashPreview');
+      if (!box) return;
       try {
-        const [acts, bans, trolls] = await Promise.all([
-          sb.from('license_keys').select('used_by, activated_at').not('used_by', 'is', null)
-            .order('activated_at', { ascending: false }).limit(20),
-          sb.from('blacklist').select('username, reason, created_at')
-            .order('created_at', { ascending: false }).limit(15),
-          sb.from('troll_events').select('target_username, event_type, created_at')
-            .order('created_at', { ascending: false }).limit(15)
-        ]);
-        [acts, bans, trolls].forEach(r => { if (r.error) throw r.error; });
-        const rows = [];
-        (acts.data || []).forEach(k => rows.push({
-          when: k.activated_at, kind: 'activation',
-          detail: (k.used_by || 'unknown') + ' activated a key'
-        }));
-        (bans.data || []).forEach(b => rows.push({
-          when: b.created_at, kind: 'blacklist',
-          detail: (b.username || 'unknown') + ' blacklisted' + (b.reason ? ' — ' + b.reason : '')
-        }));
-        (trolls.data || []).forEach(t => rows.push({
-          when: t.created_at, kind: 'troll: ' + (t.event_type || '?'),
-          detail: '→ ' + (t.target_username || 'Everyone')
-        }));
-        rows.sort((a, b) => new Date(b.when) - new Date(a.when));
-        const top = rows.slice(0, 50);
+        const rows = await fetchActivityRows();
+        const top = rows.slice(0, 5);
         if (top.length === 0) {
           box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
           return;
         }
-        let html = '<table><tr><th>When</th><th>Type</th><th>Detail</th></tr>';
-        top.forEach((r, ai) => {
-          html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td class="muted">' + esc(r.when ? new Date(r.when).toLocaleString() : '—') +
-            '</td><td>' + esc(r.kind) + '</td><td>' + esc(r.detail) + '</td></tr>';
+        let html = '';
+        top.forEach(r => {
+          html += '<div class="mini-row"><span>' + activityIcon(r.kind) + '</span><span>' +
+            esc(r.detail) + '</span></div>';
         });
-        box.innerHTML = html + '</table>';
+        box.innerHTML = html;
+      } catch (e) {
+        console.error('dashboard preview failed:', e);
+      }
+    }
+
+    function activityIcon(kind) {
+      if (!kind) return '•';
+      if (kind.indexOf('activation') !== -1) return '🔑';
+      if (kind.indexOf('blacklist') !== -1) return '🚫';
+      if (kind.indexOf('troll') !== -1) return '👻';
+      if (kind.indexOf('approved') !== -1) return '✅';
+      if (kind.indexOf('denied') !== -1) return '❌';
+      return '•';
+    }
+
+    function activityWhen(when) {
+      if (!when) return '—';
+      try {
+        const s = Math.max(0, Math.floor((Date.now() - new Date(when).getTime()) / 1000));
+        if (s < 10) return 'just now';
+        if (s < 60) return s + 's ago';
+        const m = Math.floor(s / 60);
+        if (m < 60) return m + 'm ago';
+        const h = Math.floor(m / 60);
+        if (h < 24) return h + 'h ago';
+        return new Date(when).toLocaleString();
+      } catch (e) { return '—'; }
+    }
+
+    /* ---------- activity log (read-only) ---------- */
+
+    let activityRows = [];
+    let activityShown = 0;
+    const ACTIVITY_PAGE = 20;
+
+    async function fetchActivityRows() {
+      const [acts, bans, trolls, reqs] = await Promise.all([
+        sb.from('license_keys').select('used_by, activated_at').not('used_by', 'is', null)
+          .order('activated_at', { ascending: false }).limit(30),
+        sb.from('blacklist').select('username, reason, created_at')
+          .order('created_at', { ascending: false }).limit(20),
+        sb.from('troll_events').select('target_username, event_type, created_at')
+          .order('created_at', { ascending: false }).limit(20),
+        sb.from('key_requests').select('name, status, status_updated_at')
+          .in('status', ['approved', 'denied'])
+          .order('status_updated_at', { ascending: false }).limit(10)
+      ]);
+      [acts, bans, trolls, reqs].forEach(r => { if (r.error) throw r.error; });
+      const rows = [];
+      (acts.data || []).forEach(k => rows.push({
+        when: k.activated_at, kind: 'activation',
+        detail: (k.used_by || 'unknown') + ' activated a key'
+      }));
+      (bans.data || []).forEach(b => rows.push({
+        when: b.created_at, kind: 'blacklist',
+        detail: (b.username || 'unknown') + ' blacklisted' + (b.reason ? ' — ' + b.reason : '')
+      }));
+      (trolls.data || []).forEach(t => rows.push({
+        when: t.created_at, kind: 'troll: ' + (t.event_type || '?'),
+        detail: '→ ' + (t.target_username || 'Everyone')
+      }));
+      (reqs.data || []).forEach(r => rows.push({
+        when: r.status_updated_at, kind: 'request ' + (r.status || '?'),
+        detail: (r.name || 'unknown') + ' — request ' + (r.status || '?')
+      }));
+      rows.sort((a, b) => new Date(b.when) - new Date(a.when));
+      return rows;
+    }
+
+    function renderActivityRows() {
+      const box = document.getElementById('activityList');
+      const top = activityRows.slice(0, activityShown);
+      if (top.length === 0) {
+        box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
+        return;
+      }
+      let html = '<div class="timeline">';
+      top.forEach((r, ai) => {
+        html += '<div class="tl-item" style="animation-delay:' + Math.min(ai, 10) * 40 + 'ms">' +
+          '<span class="tl-dot"></span>' +
+          '<div class="tt">' + activityIcon(r.kind) + ' ' + esc(r.detail) + '</div>' +
+          '<div class="tw">' + esc(r.kind) + ' · ' + esc(activityWhen(r.when)) + '</div></div>';
+      });
+      html += '</div>';
+      if (activityShown < activityRows.length) {
+        html += '<button class="btn ghost block" style="margin-top:12px" onclick="activityMore()">Load more (' +
+          (activityRows.length - activityShown) + ' left)</button>';
+      }
+      box.innerHTML = html;
+    }
+
+    function activityMore() {
+      activityShown += ACTIVITY_PAGE;
+      renderActivityRows();
+    }
+
+    async function loadActivity() {
+      const box = document.getElementById('activityList');
+      const firstAct = activityRows.length === 0 && !box.querySelector('.timeline') && !box.querySelector('.empty-state');
+      if (firstAct) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      try {
+        activityRows = await fetchActivityRows();
+        if (activityShown === 0) activityShown = ACTIVITY_PAGE;
+        activityShown = Math.min(activityShown, Math.max(activityRows.length, ACTIVITY_PAGE));
+        renderActivityRows();
       } catch (e) {
         console.error('activity log failed:', e);
         if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load activity.</div>';
@@ -1399,10 +1755,10 @@
       if (!box) return;
       const keys = Object.keys(trollStates).filter(k => trollStates[k] === 'on' && trollStateRows[k]);
       if (keys.length === 0) {
-        box.innerHTML = '<p class="muted">Nothing active right now.</p>';
+        box.innerHTML = '';
         return;
       }
-      let html = '<p class="muted" style="margin-bottom:8px">Active now — per person:</p>';
+      let html = '<div class="muted" style="margin-bottom:8px">Live now — tap Stop to kill one:</div>';
       keys.forEach(k => {
         const r = trollStateRows[k];
         html += '<div class="keyrow"><span>' + (TRICK_EMOJI[r.type] || '⚡') + ' <b>' + esc(r.type) + '</b> → ' +
@@ -1607,22 +1963,48 @@
 
     /* ---------- bulk key generation ---------- */
 
-    async function generateBulkKeys() {
-      const btn = document.getElementById('bulkGenBtn');
+    function openBulkModal() {
       if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
-      const countInput = document.getElementById('bulkCount');
-      const isAdmin = document.getElementById('bulkAdmin').checked;
-      const rank = isAdmin ? 'admin' : 'user';
-      let n = parseInt(countInput.value, 10);
-      if (isNaN(n) || n < 1) n = 1;
-      if (n > 20) n = 20;
-      countInput.value = n;
+      document.getElementById('bulkErr').textContent = '';
+      document.getElementById('bulkOverlay').classList.add('show');
+    }
+    function closeBulkModal() {
+      const ov = document.getElementById('bulkOverlay');
+      ov.classList.add('closing');
+      setTimeout(() => { ov.classList.remove('show', 'closing'); }, 200);
+    }
+
+    async function confirmBulkGenerate() {
+      const btn = document.getElementById('bulkGoBtn');
+      const errBox = document.getElementById('bulkErr');
+      if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
+      errBox.textContent = '';
+      const rankSel = document.getElementById('bulkRankM');
+      const rank = rankSel ? rankSel.value : 'user';
+      const isAdmin = rank === 'admin';
+      const rawLines = document.getElementById('bulkKeysM').value.split('\n')
+        .map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 20);
+      for (const line of rawLines) {
+        if (!/^[A-Za-z0-9-]{4,64}$/.test(line)) {
+          errBox.textContent = 'Bad custom key: ' + line + ' (letters, numbers, dashes, 4–64 chars).';
+          return;
+        }
+      }
+      let customs = rawLines;
+      if (customs.length === 0) {
+        let n = parseInt(document.getElementById('bulkCountM').value, 10);
+        if (isNaN(n) || n < 1) n = 1;
+        if (n > 20) n = 20;
+        document.getElementById('bulkCountM').value = n;
+        customs = [];
+        for (let i = 0; i < n; i++) customs.push(randomKey());
+      }
       setBtnLoading(btn, true);
       try {
         const made = [];
         const ids = [];
-        for (let i = 0; i < n; i++) {
-          const plaintext = randomKey();
+        for (let i = 0; i < customs.length; i++) {
+          const plaintext = customs[i];
           const { data: created, error } = await sb
             .from('license_keys')
             .insert({ key: plaintext, is_active: true, is_admin: isAdmin, rank: rank, plaintext_reveal: plaintext })
@@ -1633,6 +2015,8 @@
           made.push(plaintext);
         }
         lastCreatedIds = ids;
+        document.getElementById('bulkKeysM').value = '';
+        closeBulkModal();
         showKeysModal(made);
         toast(made.length + ' keys created', 'ok');
         loadKeys();
@@ -1640,7 +2024,7 @@
         console.error('bulk generate failed:', e);
         toast('Bulk generate failed partway — some keys may have been created.', 'err');
       } finally {
-        setBtnLoading(btn, false, 'Generate keys');
+        setBtnLoading(btn, false, 'Generate');
       }
     }
 
@@ -1699,13 +2083,22 @@
       document.body.removeChild(ta);
     }
 
+    window.addEventListener('pagehide', () => {
+      try {
+        stopAllPollers();
+        sb.getChannels().forEach(ch => { try { sb.removeChannel(ch); } catch (e) {} });
+      } catch (e) {}
+    });
+
     validateAdmin();
 
     /* ---------- key requests ---------- */
 
+    let knownReqIds = {};
+
     async function loadRequests() {
       const box = document.getElementById('reqList');
-      const firstReq = !box.querySelector('table') && !box.querySelector('.empty-state');
+      const firstReq = !box.querySelector('.req-card') && !box.querySelector('.empty-state');
       if (firstReq) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         let res = await sb
@@ -1725,22 +2118,56 @@
         if (error) throw error;
         if (!data || data.length === 0) {
           box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending requests.</div>';
+          knownReqIds = {};
           return;
         }
-        let html = '<table><tr><th>Name</th><th>School</th><th>Reason</th><th>Requested</th><th></th></tr>';
+        const isFirst = Object.keys(knownReqIds).length === 0;
+        let html = '';
         data.forEach((r, ri) => {
-          html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.name) + '</td><td>' + esc(r.school || '—') + '</td><td>' + esc(r.reason) +
-            '</td><td class="muted">' + esc(new Date(r.created_at).toLocaleString()) +
-            '</td><td><div class="row-actions">' +
+          const isNew = !isFirst && !knownReqIds[r.id];
+          knownReqIds[r.id] = true;
+          html += '<div class="req-card' + (isNew ? ' flash' : '') + '" style="animation-delay:' + Math.min(ri, 8) * 40 + 'ms">' +
+            '<div class="rname">' + esc(r.name) + '</div>' +
+            '<div class="rmeta">' + esc(r.school || '—') + ' · ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '—') + '</div>' +
+            '<div class="rreason">' + esc(r.reason || '(no reason given)') + '</div>' +
+            '<div class="row-actions">' +
             '<button class="btn small" onclick="approveRequest(' + r.id + ', this)">Approve</button>' +
-            '<button class="btn small ghost" onclick="denyRequest(' + r.id + ', this)">Deny</button>' +
-            '</div></td></tr>';
+            '<button class="btn small ghost" onclick="askDeny(' + r.id + ', this)">Deny</button>' +
+            '</div></div>';
         });
-        box.innerHTML = html + '</table>';
+        // Drop ids that are no longer pending so a re-request flashes again.
+        Object.keys(knownReqIds).forEach(id => {
+          if (!data.some(r => String(r.id) === String(id))) delete knownReqIds[id];
+        });
+        box.innerHTML = html;
       } catch (e) {
         console.error(e);
         if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
       }
+    }
+
+    function askDeny(id, btn) {
+      const card = btn.closest ? btn.closest('.req-card') : null;
+      if (!card) { denyRequest(id, btn, ''); return; }
+      const actions = card.querySelector('.row-actions');
+      if (!actions) return;
+      actions.innerHTML = '';
+      const inp = document.createElement('input');
+      inp.placeholder = 'Deny reason (optional)';
+      inp.maxLength = 200;
+      inp.setAttribute('aria-label', 'Deny reason');
+      const ok = document.createElement('button');
+      ok.className = 'btn small danger';
+      ok.textContent = 'Confirm deny';
+      ok.onclick = () => denyRequest(id, ok, inp.value.trim());
+      const cancel = document.createElement('button');
+      cancel.className = 'btn small ghost';
+      cancel.textContent = 'Cancel';
+      cancel.onclick = () => loadRequests();
+      actions.appendChild(inp);
+      actions.appendChild(ok);
+      actions.appendChild(cancel);
+      inp.focus();
     }
 
     /* ---------- admin rank-upgrade requests (owner + admin review) ---------- */
@@ -1896,11 +2323,23 @@
           const rq = await sb.from('key_requests').select('school').eq('id', pendingApproveId).maybeSingle();
           if (!rq.error && rq.data) reqSchool = rq.data.school || null;
         } catch (e) { console.error('approve school lookup failed:', e); }
-        const { data: created, error: insErr } = await sb
+        const insPayload = { key: plaintext, is_active: true, is_admin: false, rank: 'user', plaintext_reveal: plaintext, request_id: pendingApproveId, school: reqSchool };
+        let ins = await sb
           .from('license_keys')
-          .insert({ key: plaintext, is_active: true, is_admin: false, rank: 'user', plaintext_reveal: plaintext, request_id: pendingApproveId, school: reqSchool })
+          .insert(insPayload)
           .select('id')
           .maybeSingle();
+        if (ins.error && /column/i.test(ins.error.message || '')) {
+          // school column not migrated yet — retry without it rather than failing the approve
+          delete insPayload.school;
+          console.error('approve retrying without school column');
+          ins = await sb
+            .from('license_keys')
+            .insert(insPayload)
+            .select('id')
+            .maybeSingle();
+        }
+        const { data: created, error: insErr } = ins;
         if (insErr) throw insErr;
         lastCreatedIds = created && created.id ? [created.id] : [];
         const { error: updErr } = await sb
@@ -2022,12 +2461,14 @@
       }
     }
 
-    async function denyRequest(id, btn) {
+    async function denyRequest(id, btn, reason) {
       setBtnLoading(btn, true);
       try {
+        const patch = { status: 'denied', status_updated_at: new Date().toISOString() };
+        if (reason) patch.deny_reason = String(reason).slice(0, 200);
         const { error } = await sb
           .from('key_requests')
-          .update({ status: 'denied', status_updated_at: new Date().toISOString() })
+          .update(patch)
           .eq('id', id);
         if (error) throw error;
         toast('Request denied', 'ok');
@@ -2046,6 +2487,28 @@
       return esc(String(hash).slice(0, 6)) + '…';
     }
 
+    let lastKeys = [];
+    let keySort = { col: 'created', dir: -1 };
+    let keyRankFilter = 'all';
+
+    function setKeySort(col) {
+      if (keySort.col === col) keySort.dir = -keySort.dir;
+      else keySort = { col: col, dir: 1 };
+      renderKeys();
+    }
+    function setKeyRankFilter(rank, btn) {
+      keyRankFilter = rank;
+      document.querySelectorAll('#keyRankPills button').forEach(b => b.classList.toggle('active', b === btn));
+      renderKeys();
+    }
+    function keySortVal(k, col) {
+      if (col === 'username') return (k.used_by || '').toLowerCase();
+      if (col === 'rank') return rankOf(k);
+      if (col === 'status') return k.is_active ? 'active' : 'off';
+      if (col === 'created') return k.created_at || '';
+      return '';
+    }
+
     async function loadKeys() {
       const box = document.getElementById('keyList');
       const firstKeys = !box.querySelector('table') && !box.querySelector('.empty-state');
@@ -2057,36 +2520,61 @@
           .order('created_at', { ascending: false })
           .limit(200);
         if (error) throw error;
-        if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">🔑</div>No keys yet — generate one above.</div>';
-          return;
-        }
-        let html = '<table><tr><th>Key (hash)</th><th>Used by</th><th>Rank</th><th>Status</th><th>Activated</th><th></th></tr>';
-        data.forEach((k, ki) => {
-          const trank = rankOf(k);
-          const editable = canModify(trank);
-          const isOwner = trank === 'owner';
-          html += '<tr class="arow" style="animation-delay:' + (ki * 40) + 'ms"><td class="mono">' + maskKey(k.key) +
-            '</td><td>' + esc(k.used_by) + '</td><td>' + rankPill(trank) + '</td>' +
-            '<td><span class="pill ' + (k.is_active ? 'on' : 'off') + '">' +
-            (k.is_active ? 'active' : 'off') + '</span></td>' +
-            '<td class="muted">' + (k.activated_at ? esc(new Date(k.activated_at).toLocaleString()) : '—') + '</td>' +
-            '<td><div class="row-actions">' +
-            (editable
-              ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active — tap to disable' : 'Inactive — tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +
-                '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this, \'' + esc(trank) + '\')">Reset</button>'
-              : '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Locked</button>') +
-            (!isOwner && editable
-              ? '<button class="btn small danger" onclick="deleteKey(' + k.id + ', this, \'' + esc(trank) + '\')">Delete</button>'
-              : '') +
-            '</div></td></tr>';
-        });
-        box.innerHTML = html + '</table>';
-        reapplyFilter('keySearch', 'keyList');
+        lastKeys = data || [];
+        renderKeys();
       } catch (e) {
         console.error(e);
         if (firstKeys) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load keys.</div>';
       }
+    }
+
+    function renderKeys() {
+      const box = document.getElementById('keyList');
+      if (!box) return;
+      const q = ((document.getElementById('keySearch') || {}).value || '').trim().toLowerCase();
+      let rows = lastKeys.filter(k => {
+        if (keyRankFilter !== 'all' && rankOf(k) !== keyRankFilter) return false;
+        if (q && (k.used_by || '').toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+      rows = rows.slice().sort((a, b) => {
+        const va = keySortVal(a, keySort.col);
+        const vb = keySortVal(b, keySort.col);
+        if (va < vb) return -1 * keySort.dir;
+        if (va > vb) return 1 * keySort.dir;
+        return 0;
+      });
+      if (rows.length === 0) {
+        box.innerHTML = '<div class="empty-state"><div class="big">🔑</div>' +
+          (lastKeys.length === 0 ? 'No keys yet — generate one above.' : 'No keys match the current filters.') + '</div>';
+        return;
+      }
+      const arrow = col => keySort.col === col ? (keySort.dir === 1 ? ' ▲' : ' ▼') : '';
+      let html = '<div class="keys-table-wrap"><table class="keys-table"><tr><th>Key</th>' +
+        '<th class="sortable" onclick="setKeySort(\'username\')">User' + arrow('username') + '</th>' +
+        '<th class="sortable" onclick="setKeySort(\'rank\')">Rank' + arrow('rank') + '</th>' +
+        '<th class="sortable" onclick="setKeySort(\'status\')">Status' + arrow('status') + '</th>' +
+        '<th class="sortable" onclick="setKeySort(\'created\')">Created' + arrow('created') + '</th><th></th></tr>';
+      rows.forEach((k, ki) => {
+        const trank = rankOf(k);
+        const editable = canModify(trank);
+        const isOwner = trank === 'owner';
+        html += '<tr class="arow" style="animation-delay:' + Math.min(ki, 10) * 40 + 'ms"><td class="mono">' + maskKey(k.key) +
+          '</td><td>' + esc(k.used_by) + '</td><td>' + rankPill(trank) + '</td>' +
+          '<td><span class="pill ' + (k.is_active ? 'on' : 'off') + '">' +
+          (k.is_active ? 'active' : 'off') + '</span></td>' +
+          '<td class="muted">' + (k.created_at ? esc(new Date(k.created_at).toLocaleString()) : '—') + '</td>' +
+          '<td><div class="row-actions">' +
+          (editable
+            ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active — tap to disable' : 'Inactive — tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +
+              '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this, \'' + esc(trank) + '\')">Reset</button>'
+            : '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Locked</button>') +
+          (!isOwner && editable
+            ? '<button class="btn small danger" onclick="deleteKey(' + k.id + ', this, \'' + esc(trank) + '\')">Delete</button>'
+            : '') +
+          '</div></td></tr>';
+      });
+      box.innerHTML = html + '</table></div>';
     }
 
     async function toggleKey(id, next, btn, targetRank) {
@@ -2270,8 +2758,9 @@
           html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td>' + esc(a.content) +
             '</td><td>' + esc(a.posted_by) + ' ' + rankPill(a.rank || 'user') +
             '</td><td class="muted">' + esc(new Date(a.created_at).toLocaleString()) +
-            '</td><td><button class="btn small danger" onclick="deleteAnnouncement(' +
-            a.id + ', this)">Delete</button></td></tr>';
+            '</td><td>' + (myRank === 'mod'
+              ? '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Delete</button>'
+              : '<button class="btn small danger" onclick="deleteAnnouncement(' + a.id + ', this)">Delete</button>') + '</td></tr>';
         });
         box.innerHTML = html + '</table>';
       } catch (e) {
@@ -2322,6 +2811,7 @@
     }
 
     async function deleteAnnouncement(id, btn) {
+      if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const { data, error } = await sb
@@ -2414,10 +2904,19 @@
         (stale ? 'stale' : 'active') + '</span>';
     }
 
+    let lastUsers = { rows: [], rankMap: {}, warnCounts: {}, mutedMap: {}, myName: '' };
+
+    function avatarFor(username) {
+      const ch = (username || '?').trim().charAt(0).toUpperCase() || '?';
+      let h = 0;
+      for (let i = 0; i < String(username).length; i++) h = (h * 31 + String(username).charCodeAt(i)) % 360;
+      return { ch: ch, bg: 'linear-gradient(135deg, hsl(' + h + ', 60%, 42%), hsl(' + ((h + 50) % 360) + ', 60%, 30%))' };
+    }
+
     async function loadUsers() {
       const box = document.getElementById('userList');
       if (document.querySelector('.urank.open')) return; // poll: don't nuke an open rank picker
-      const firstUsers = !box.querySelector('table') && !box.querySelector('.empty-state');
+      const firstUsers = !box.querySelector('.user-grid') && !box.querySelector('.empty-state');
       if (firstUsers) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
         const { data, error } = await sb
@@ -2427,6 +2926,7 @@
           .limit(100);
         if (error) throw error;
         if (!data || data.length === 0) {
+          lastUsers.rows = [];
           box.innerHTML = '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>';
           return;
         }
@@ -2452,49 +2952,68 @@
         } catch (e) { console.error('mutes map failed:', e); }
         let myName = '';
         try { myName = localStorage.getItem(LS_USER) || ''; } catch (e) {}
-        let html = '<table><tr><th>User</th><th>Rank</th><th>Playing</th><th>Last seen</th><th></th></tr>';
-        data.forEach((u, ui) => {
-          const urank = rankMap[u.username] || 'user';
-          const isMe = u.username !== '' && u.username === myName;
-          let rankCell;
-          if (myRank === 'owner' && !isMe && urank !== 'owner') {
-            rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>';
-          } else {
-            rankCell = rankPill(urank) + (isMe ? ' <span class="muted">you</span>' : '');
-          }
-          const wc = warnCounts[u.username] || 0;
-          // Staff can only moderate down: owner hits anyone but fellow owners
-          // and self; admin/mod only hit plain users.
-          const canMod = !isMe && urank !== 'owner' && (myRank === 'owner' || urank === 'user');
-          const warnBtn = canMod
-            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="warnUser(this)">Warn' + (wc > 0 ? ' (' + wc + ')' : '') + '</button>'
-            : (wc > 0 ? '<span class="pill rank-user">⚠ ' + wc + '</span>' : '');
-          const muteBtn = !canMod ? '' : (mutedMap[u.username]
-            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="unmuteUser(this)" title="Muted until ' + esc(mutedMap[u.username]) + '">Unmute</button>'
-            : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>');
-          const banBtns = (canMod && wc >= 3)
-            ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 5)">Ban 5m</button>' +
-              '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
-              '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 60)">Ban 1h</button>'
-            : '';
-          const xpBtn = (myRank === 'owner' && !isMe && urank !== 'owner')
-            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">＋XP</button>'
-            : '';
-          html += '<tr class="arow" style="animation-delay:' + (ui * 40) + 'ms"><td>' + esc(u.username) + ' ' + presencePill(u.last_seen) +
-            '</td><td>' + rankCell +
-            '</td><td>' + esc(u.current_game || 'Browsing') +
-            '</td><td class="muted">' + esc(new Date(u.last_seen).toLocaleString()) +
-            '</td><td><div class="row-actions">' +
-            '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
-            warnBtn + muteBtn + banBtns + xpBtn +
-            '</div></td></tr>';
-        });
-        box.innerHTML = html + '</table>';
-        reapplyFilter('userSearch', 'userList');
+        lastUsers = { rows: data, rankMap: rankMap, warnCounts: warnCounts, mutedMap: mutedMap, myName: myName };
+        renderUsers();
       } catch (e) {
         console.error(e);
         if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load users.</div>';
       }
+    }
+
+    function renderUsers() {
+      const box = document.getElementById('userList');
+      if (!box) return;
+      const q = ((document.getElementById('userSearch') || {}).value || '').trim().toLowerCase();
+      const rows = lastUsers.rows.filter(u => !q || (u.username || '').toLowerCase().indexOf(q) !== -1);
+      if (rows.length === 0) {
+        box.innerHTML = '<div class="empty-state"><div class="big">👥</div>' +
+          (lastUsers.rows.length === 0 ? 'No active sessions.' : 'No users match.') + '</div>';
+        return;
+      }
+      const rankMap = lastUsers.rankMap, warnCounts = lastUsers.warnCounts,
+        mutedMap = lastUsers.mutedMap, myName = lastUsers.myName;
+      let html = '<div class="user-grid">';
+      rows.forEach((u, ui) => {
+        const urank = rankMap[u.username] || 'user';
+        const isMe = u.username !== '' && u.username === myName;
+        const stale = (() => { try { return isNaN(Date.now() - new Date(u.last_seen).getTime()) || (Date.now() - new Date(u.last_seen).getTime() > 90000); } catch (e) { return true; } })();
+        const av = avatarFor(u.username);
+        let rankCell;
+        if (myRank === 'owner' && !isMe && urank !== 'owner') {
+          rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>';
+        } else {
+          rankCell = rankPill(urank) + (isMe ? ' <span class="muted">you</span>' : '');
+        }
+        const wc = warnCounts[u.username] || 0;
+        // Staff can only moderate down: owner hits anyone but fellow owners
+        // and self; admin/mod only hit plain users.
+        const canMod = !isMe && urank !== 'owner' && (myRank === 'owner' || urank === 'user');
+        const warnBtn = canMod
+          ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="warnUser(this)">Warn' + (wc > 0 ? ' (' + wc + ')' : '') + '</button>'
+          : (wc > 0 ? '<span class="pill rank-user">⚠ ' + wc + '</span>' : '');
+        const muteBtn = !canMod ? '' : (mutedMap[u.username]
+          ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="unmuteUser(this)" title="Muted until ' + esc(mutedMap[u.username]) + '">Unmute</button>'
+          : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>');
+        const banBtns = (canMod && wc >= 3)
+          ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 5)">Ban 5m</button>' +
+            '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
+            '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 60)">Ban 1h</button>'
+          : '';
+        const xpBtn = (myRank === 'owner' && !isMe && urank !== 'owner')
+          ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">＋XP</button>'
+          : '';
+        html += '<div class="user-card' + (stale ? ' stale' : '') + '" style="animation-delay:' + Math.min(ui, 8) * 40 + 'ms">' +
+          '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
+          '<span class="un">' + esc(u.username) + '</span>' + presencePill(u.last_seen) + '</div>' +
+          '<div class="user-meta">' + rankCell + '</div>' +
+          '<div class="user-meta">🎮 ' + esc(u.current_game || 'Browsing') + '</div>' +
+          '<div class="user-meta">🕐 ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '—') + '</div>' +
+          '<div class="row-actions">' +
+          '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
+          warnBtn + muteBtn + banBtns + xpBtn +
+          '</div></div>';
+      });
+      box.innerHTML = html + '</div>';
     }
 
     /* ---------- per-user rank editing (owner only) ----------
@@ -2928,11 +3447,52 @@
     }
 
     function openDm(btn) {
-      dmTarget = btn.getAttribute('data-user');
+      openDmByName(btn.getAttribute('data-user'));
+    }
+    function openDmByName(name) {
+      if (!name) return;
+      dmTarget = name;
       document.getElementById('dmUser').textContent = dmTarget;
-      document.getElementById('dmThread').style.display = 'block';
+      document.getElementById('dmThread').style.display = 'flex';
       document.getElementById('dmHistory').innerHTML = '<p class="muted">Loading…</p>';
+      loadDmContacts();
       loadDmHistory();
+    }
+    async function loadDmContacts() {
+      const box = document.getElementById('dmContacts');
+      if (!box) return;
+      try {
+        const [a, b] = await Promise.all([
+          sb.from('direct_messages').select('from_username, created_at').eq('to_username', 'admin').order('created_at', { ascending: false }).limit(50),
+          sb.from('direct_messages').select('to_username, created_at').eq('from_username', 'admin').order('created_at', { ascending: false }).limit(50)
+        ]);
+        if (a.error) throw a.error;
+        if (b.error) throw b.error;
+        const seen = {};
+        const names = [];
+        (a.data || []).forEach(m => {
+          if (m.from_username && m.from_username !== 'admin' && !seen[m.from_username]) { seen[m.from_username] = true; names.push(m.from_username); }
+        });
+        (b.data || []).forEach(m => {
+          if (m.to_username && m.to_username !== 'admin' && !seen[m.to_username]) { seen[m.to_username] = true; names.push(m.to_username); }
+        });
+        if (dmTarget && !seen[dmTarget]) names.unshift(dmTarget);
+        box.innerHTML = '';
+        if (names.length === 0) {
+          box.innerHTML = '<p class="muted" style="font-size:12px">No conversations yet.</p>';
+          return;
+        }
+        names.slice(0, 30).forEach(u => {
+          const btn = document.createElement('button');
+          btn.className = 'dm-contact' + (u === dmTarget ? ' active' : '');
+          btn.textContent = u;
+          btn.onclick = () => openDmByName(u);
+          box.appendChild(btn);
+        });
+      } catch (e) {
+        console.error('dm contacts failed:', e);
+        if (!box.querySelector('.dm-contact')) box.innerHTML = '<p class="muted" style="font-size:12px">Could not load conversations.</p>';
+      }
     }
 
     async function loadDmHistory(background) {
@@ -3001,7 +3561,7 @@
             const relevant =
               (m.from_username === dmTarget && m.to_username === 'admin') ||
               (m.from_username === 'admin' && m.to_username === dmTarget);
-            if (relevant) loadDmHistory(true);
+            if (relevant) { loadDmHistory(true); loadDmContacts(); }
           })
         .subscribe();
     }
@@ -3017,6 +3577,7 @@
           .insert({ from_username: 'admin', to_username: dmTarget, content: content.slice(0, 500) });
         if (error) throw error;
         loadDmHistory();
+        loadDmContacts();
       } catch (e) {
         console.error(e);
         input.value = content;
@@ -3024,11 +3585,22 @@
       }
     }
 
+    function openRankGuide() {
+      document.getElementById('rankOverlay').classList.add('show');
+    }
+    function closeRankGuide() {
+      const ov = document.getElementById('rankOverlay');
+      ov.classList.add('closing');
+      setTimeout(() => { ov.classList.remove('show', 'closing'); }, 200);
+    }
+
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open'));
         closeKeyModal();
         closeApproveModal();
+        closeBulkModal();
+        closeRankGuide();
       }
     });
 

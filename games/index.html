@@ -3,8 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <title>Lightspeed</title>
   <style>
+    /* ===== SHARED DESIGN TOKENS (identical in all 4 files — do not drift) ===== */
+    :root {
+      --bg-base: #08080c;
+      --surface: #111117;
+      --surface-2: #16161e;
+      --border-subtle: #1c1c26;
+      --border-strong: #7c3aed;
+      --text-primary: #f0f0f8;
+      --text-secondary: #9494ad;
+      --text-muted: #5c5c72;
+      --accent: #7c3aed;
+      --accent-hover: #6d28d9;
+      --accent-pressed: #5b21b6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --rank-owner: #f59e0b;
+      --rank-admin: #7c3aed;
+      --rank-mod: #10b981;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --t-micro: 0.15s;
+      --t-standard: 0.25s;
+      --t-entrance: 0.35s;
+    }
+    body { font-family: var(--font-sans) !important; }
+    h1, h2, h3 { letter-spacing: -0.02em; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -46,7 +90,7 @@
       border-radius: 24px;
       padding: 44px 40px;
       width: 100%;
-      max-width: 400px;
+      max-width: 440px;
       backdrop-filter: blur(32px) saturate(1.5);
       -webkit-backdrop-filter: blur(32px) saturate(1.5);
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.5), 0 32px 96px rgba(0,0,0,0.3),
@@ -476,62 +520,152 @@
     .dd-opt.sel { color: #7c3aed; font-weight: 600; }
     .dd-opt .tick { visibility: hidden; }
     .dd-opt.sel .tick { visibility: visible; }
+
+    /* ===== SECTION 3: two-tab auth + mesh background ===== */
+    .mesh {
+      position: fixed;
+      inset: -10%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.5;
+      background:
+        radial-gradient(420px 420px at 20% 25%, rgba(124,58,237,0.16), transparent 70%),
+        radial-gradient(520px 520px at 80% 70%, rgba(37,99,235,0.12), transparent 70%),
+        radial-gradient(360px 360px at 60% 10%, rgba(167,139,250,0.1), transparent 70%);
+      animation: meshDrift 26s ease-in-out infinite alternate;
+    }
+    @keyframes meshDrift {
+      from { transform: translate3d(-2%, -1%, 0) scale(1); }
+      to { transform: translate3d(2%, 2%, 0) scale(1.06); }
+    }
+    .authtabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+    .authtab {
+      flex: 1;
+      min-height: 48px;
+      background: #1a1a24;
+      border: 1.5px solid #2a2a3d;
+      border-radius: 12px;
+      color: #6b6b8a;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1), border-color 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      touch-action: manipulation;
+    }
+    .authtab:hover { color: #e2e2f0; }
+    .authtab:active { transform: scale(0.97); }
+    .authtab.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    .pane { display: none; }
+    .pane.active { display: block; animation: paneIn 0.25s ease-out; }
+    @keyframes paneIn {
+      from { opacity: 0; transform: translateX(14px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .btn .spin {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      margin-right: 8px;
+      vertical-align: -2px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      animation: btnSpin 0.7s linear infinite;
+    }
+    @keyframes btnSpin { to { transform: rotate(360deg); } }
+    .input-wrap input.error-input { border-color: #ef4444 !important; }
+    @keyframes shakeX {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-7px); }
+      75% { transform: translateX(7px); }
+    }
+    .shake { animation: shakeX 0.25s ease-out; }
+    .char-count { font-size: 11px; color: #6b6b8a; text-align: right; margin-top: 6px; }
+    #requestStatusView.pane-in { animation: paneIn 0.25s ease-out; }
+    #paneRequest .field input,
+    #paneRequest .field textarea {
+      width: 100%;
+      background: #1a1a24;
+      border: 1.5px solid #2a2a3d;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #e2e2f0;
+      outline: none;
+      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      letter-spacing: 0;
+    }
+    #paneRequest .field input:focus,
+    #paneRequest .field textarea:focus { border-color: #7c3aed; }
+    #paneRequest .field input::placeholder,
+    #paneRequest .field textarea::placeholder { color: #6b6b8a; }
+    #paneRequest .field input.error-input { border-color: #ef4444; }
+    #paneRequest .field textarea { resize: none; height: 90px; }
+    .btn.ghost { background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important; }
+    .btn.ghost:hover { background: #2a2a3d !important; }
+    @media (max-width: 480px) {
+      .card { padding: 32px 24px; }
+    }
+    @media (max-width: 640px) {
+      .overlay { align-items: flex-end; padding: 0; }
+      .overlay .modal {
+        max-width: 100%; width: 100%;
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+        max-height: 92vh; overflow-y: auto;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <div class="bg">
+  <div class="bg" style="display:none">
     <div class="blob blob1"></div>
     <div class="blob blob2"></div>
     <div class="blob blob3"></div>
   </div>
+  <div class="mesh" aria-hidden="true"></div>
 
-  <div class="card">
+  <div class="card" id="authCard">
     <div class="logo">
       <div class="logo-icon">⚡</div>
       <h1>Lightspeed</h1>
-      <p>Enter your access key to continue</p>
+      <p id="logoSub">Enter your access key to continue</p>
     </div>
 
-    <div class="field">
-      <label>Username</label>
-      <div class="input-wrap">
-        <input type="text" id="usernameInput" placeholder="Pick a username" autocomplete="username" maxlength="32" />
+    <div class="authtabs" role="tablist">
+      <button class="authtab active" id="tabLogin" role="tab" onclick="switchAuthTab('login')">Log In</button>
+      <button class="authtab" id="tabRequest" role="tab" onclick="switchAuthTab('request')">Request Access</button>
+    </div>
+
+    <div class="pane active" id="paneLogin" role="tabpanel">
+      <div class="field">
+        <label>Username</label>
+        <div class="input-wrap">
+          <input type="text" id="usernameInput" placeholder="Pick a username" autocomplete="username" maxlength="32" />
+        </div>
       </div>
-    </div>
 
-    <div class="field">
-      <label>Access Key</label>
-      <div class="input-wrap">
-        <input type="password" id="keyInput" class="mono" placeholder="Enter your key" autocomplete="off" />
+      <div class="field">
+        <label>Access Key</label>
+        <div class="input-wrap">
+          <input type="password" id="keyInput" class="mono" placeholder="Enter your key" autocomplete="off" />
+        </div>
       </div>
+
+      <button class="btn" id="loginBtn" onclick="tryLogin()">Continue</button>
+      <div class="error-msg" id="error"></div>
+      <div class="status-msg" id="status"></div>
     </div>
 
-    <button class="btn" id="loginBtn" onclick="tryLogin()">Continue</button>
-    <div class="error-msg" id="error"></div>
-    <div class="status-msg" id="status"></div>
-
-    <div class="divider"><span>or</span></div>
-
-    <div class="request-link">
-      Don't have a key? <button onclick="openModal()">Request access</button>
-    </div>
-  </div>
-
-  <div id="reqStatusWrap" aria-live="polite"></div>
-
-  <footer>LIGHTSPEED &copy; 2026</footer>
-  <div id="toastWrap" aria-live="polite"></div>
-
-  <!-- REQUEST MODAL -->
-  <div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
-    <div class="modal" id="modal">
-      <button class="modal-close" onclick="closeModal()">✕</button>
-
-      <div id="formState">
-        <h2>Request Access</h2>
-        <p>Fill in your details and we'll review your request.</p>
-
+    <div class="pane" id="paneRequest" role="tabpanel">
+      <div id="requestFormView">
         <div class="field">
           <label>Your Name</label>
           <input type="text" id="reqName" placeholder="Enter your name" maxlength="64" />
@@ -551,18 +685,23 @@
         <div class="field" style="margin-top:10px">
           <label>Reason</label>
           <textarea id="reqMsg" placeholder="Why do you want access?" maxlength="500"></textarea>
+          <div class="char-count" id="charCount">0/500</div>
         </div>
         <button class="btn" id="reqBtn" style="margin-top:14px" onclick="submitRequest()">Send Request</button>
         <div class="error-msg" id="reqError"></div>
       </div>
 
-      <div class="success-state" id="successState">
-        <div class="tick">✅</div>
-        <h3>Request sent!</h3>
-        <p>We'll review it and get back to you with a key.</p>
+      <div id="requestStatusView" style="display:none">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Request status</h2>
+        <p style="font-size:13px;color:#6b6b8a;margin-bottom:16px;line-height:1.5">Live updates — no need to refresh.</p>
+        <div id="reqStatusWrap" aria-live="polite"></div>
+        <button class="btn ghost" style="margin-top:14px" onclick="showRequestForm()">Back to form</button>
       </div>
     </div>
   </div>
+
+  <footer>LIGHTSPEED &copy; 2026</footer>
+  <div id="toastWrap" aria-live="polite"></div>
 
   <!-- APPROVED MODAL (pops like the request form) -->
   <div class="overlay" id="approvedOverlay" onclick="if(event.target===this)closeApprovedModal()">
@@ -620,6 +759,51 @@
       document.getElementById('error').textContent = '';
       document.getElementById('status').textContent = '';
       document.getElementById('keyInput').classList.remove('error-input');
+      document.getElementById('usernameInput').classList.remove('error-input');
+    }
+
+    function switchAuthTab(which) {
+      const login = which === 'login';
+      document.getElementById('tabLogin').classList.toggle('active', login);
+      document.getElementById('tabRequest').classList.toggle('active', !login);
+      const pl = document.getElementById('paneLogin');
+      const pr = document.getElementById('paneRequest');
+      pl.classList.remove('active');
+      pr.classList.remove('active');
+      const next = login ? pl : pr;
+      void next.offsetWidth; // restart the cross-fade/slide animation
+      next.classList.add('active');
+      document.getElementById('logoSub').textContent = login
+        ? 'Enter your access key to continue'
+        : 'Request an access key from staff';
+    }
+
+    function authShake() {
+      const card = document.getElementById('authCard');
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
+      setTimeout(() => card.classList.remove('shake'), 300);
+    }
+
+    function setLoginBusy(busy) {
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = busy;
+      btn.innerHTML = busy ? '<span class="spin"></span>Verifying…' : 'Continue';
+    }
+
+    function showRequestForm() {
+      document.getElementById('requestFormView').style.display = 'block';
+      document.getElementById('requestStatusView').style.display = 'none';
+    }
+
+    function showRequestStatus() {
+      document.getElementById('requestFormView').style.display = 'none';
+      const sv = document.getElementById('requestStatusView');
+      sv.style.display = 'block';
+      sv.classList.remove('pane-in');
+      void sv.offsetWidth;
+      sv.classList.add('pane-in');
     }
 
     // Auto-redirect if a valid session token is already stored.
@@ -659,14 +843,20 @@
       const input = document.getElementById('keyInput');
       const btn = document.getElementById('loginBtn');
 
-      if (!username) { showError('Enter a username first.'); return; }
+      if (!username) {
+        showError('Enter a username first.');
+        document.getElementById('usernameInput').classList.add('error-input');
+        authShake();
+        return;
+      }
       if (!rawKey) {
         showError('Enter your access key.');
         input.classList.add('error-input');
+        authShake();
         return;
       }
 
-      btn.disabled = true;
+      setLoginBusy(true);
       showStatus('Verifying…');
 
       try {
@@ -679,7 +869,7 @@
         if (banErr) throw banErr;
         if (banned && banned.length > 0) {
           showError('This username is blacklisted.');
-          btn.disabled = false;
+          setLoginBusy(false);
           return;
         }
 
@@ -694,17 +884,19 @@
         if (!row) {
           showError('Invalid key — request access below.');
           input.classList.add('error-input');
-          btn.disabled = false;
+          toast('Key not found or already in use.', 'err');
+          authShake();
+          setLoginBusy(false);
           return;
         }
         if (!row.is_active) {
           showError('This key has been deactivated.');
-          btn.disabled = false;
+          setLoginBusy(false);
           return;
         }
         if (row.session_token) {
           showError('This key has already been activated on another device.');
-          btn.disabled = false;
+          setLoginBusy(false);
           return;
         }
 
@@ -732,7 +924,8 @@
       } catch (e) {
         console.error(e);
         showError('Login failed. Check your connection and try again.');
-        btn.disabled = false;
+        toast('Login failed. Check your connection.', 'err');
+        setLoginBusy(false);
       }
     }
 
@@ -743,40 +936,23 @@
       if (e.key === 'Enter') tryLogin();
     });
     document.getElementById('keyInput').addEventListener('input', () => {
-      document.getElementById('keyInput').classList.remove('error-input');
+      const el = document.getElementById('keyInput');
+      const pos = el.selectionStart;
+      el.value = el.value.toUpperCase(); // auto-uppercase as typed (paste included)
+      try { el.setSelectionRange(pos, pos); } catch (e) {}
+      el.classList.remove('error-input');
       document.getElementById('error').textContent = '';
     });
+    document.getElementById('usernameInput').addEventListener('input', () => {
+      document.getElementById('usernameInput').classList.remove('error-input');
+      document.getElementById('error').textContent = '';
+    });
+    document.getElementById('reqMsg').addEventListener('input', () => {
+      const len = document.getElementById('reqMsg').value.length;
+      document.getElementById('charCount').textContent = len + '/500';
+    });
 
-    function openModal() {
-      const overlay = document.getElementById('overlay');
-      overlay.style.display = 'flex';
-      requestAnimationFrame(() => {
-        overlay.classList.add('show');
-        requestAnimationFrame(() => overlay.classList.add('visible'));
-      });
-    }
-
-    function closeModal() {
-      const overlay = document.getElementById('overlay');
-      overlay.classList.remove('visible');
-      setTimeout(() => {
-        overlay.classList.remove('show');
-        overlay.style.display = 'none';
-        // reset
-        document.getElementById('formState').style.display = 'block';
-        document.getElementById('successState').style.display = 'none';
-        document.getElementById('reqName').value = '';
-        document.getElementById('reqMsg').value = '';
-        document.getElementById('reqSchool').value = '';
-        syncSchoolDD();
-        document.getElementById('reqError').textContent = '';
-        document.getElementById('reqBtn').disabled = false;
-      }, 250);
-    }
-
-    function handleOverlayClick(e) {
-      if (e.target === document.getElementById('overlay')) closeModal();
-    }
+    /* ---------- request form (inline tab, no modal) ---------- */
 
     /* ---------- school dropdown (mirrors hidden native select) ---------- */
 
@@ -834,8 +1010,8 @@
       const errBox = document.getElementById('reqError');
       const btn = document.getElementById('reqBtn');
       errBox.textContent = '';
-      if (!name) { errBox.textContent = 'Enter your name.'; return; }
-      if (!school) { errBox.textContent = 'Select your school.'; return; }
+      if (!name) { errBox.textContent = 'Enter your name.'; authShake(); return; }
+      if (!school) { errBox.textContent = 'Select your school.'; authShake(); return; }
       btn.disabled = true;
       btn.textContent = 'Sending…';
       try {
@@ -844,8 +1020,12 @@
           .insert({ name, reason, school, status: 'pending' });
         if (error) throw error;
         try { localStorage.setItem('pending_request_name', name); } catch (e) {}
-        document.getElementById('formState').style.display = 'none';
-        document.getElementById('successState').style.display = 'block';
+        document.getElementById('reqName').value = '';
+        document.getElementById('reqMsg').value = '';
+        document.getElementById('charCount').textContent = '0/500';
+        document.getElementById('reqSchool').value = '';
+        syncSchoolDD();
+        showRequestStatus();
         toast('Request sent', 'ok');
         checkRequestStatus();
         subscribeRequestStatus(); // live approved/denied updates, no refresh needed
@@ -860,12 +1040,6 @@
     }
 
     /* ---------- key request status (realtime, shown to requester) ---------- */
-
-    function escReq(s) {
-      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[c]));
-    }
 
     async function checkRequestStatus() {
       const wrap = document.getElementById('reqStatusWrap');
@@ -921,6 +1095,9 @@
         }
       } catch (e) {
         console.error('request status failed:', e);
+        if (wrap && !wrap.innerHTML) {
+          wrap.innerHTML = '<div class="req-banner muted-note">Could not check status — check your connection. <button class="mini-btn ghost" onclick="checkRequestStatus()">Retry</button></div>';
+        }
       }
     }
 
@@ -1006,17 +1183,25 @@
       if (e.key === 'Escape') {
         const sdd = document.getElementById('dd-school');
         if (sdd) sdd.classList.remove('open');
-        const overlay = document.getElementById('overlay');
-        if (overlay && overlay.classList.contains('visible')) closeModal();
         const approved = document.getElementById('approvedOverlay');
         if (approved && approved.classList.contains('visible')) closeApprovedModal();
       }
+    });
+
+    window.addEventListener('pagehide', () => {
+      try { sb.getChannels().forEach(ch => { try { sb.removeChannel(ch); } catch (e) {} }); } catch (e) {}
     });
 
     checkExistingSession();
     checkRequestStatus();
     subscribeRequestStatus();
     syncSchoolDD();
+    try {
+      if (localStorage.getItem('pending_request_name')) {
+        switchAuthTab('request');
+        showRequestStatus();
+      }
+    } catch (e) {}
   </script>
 
 </body>

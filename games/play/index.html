@@ -3,8 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <title>Lightspeed — Games</title>
   <style>
+    /* ===== SHARED DESIGN TOKENS (identical in all 4 files — do not drift) ===== */
+    :root {
+      --bg-base: #08080c;
+      --surface: #111117;
+      --surface-2: #16161e;
+      --border-subtle: #1c1c26;
+      --border-strong: #7c3aed;
+      --text-primary: #f0f0f8;
+      --text-secondary: #9494ad;
+      --text-muted: #5c5c72;
+      --accent: #7c3aed;
+      --accent-hover: #6d28d9;
+      --accent-pressed: #5b21b6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --rank-owner: #f59e0b;
+      --rank-admin: #7c3aed;
+      --rank-mod: #10b981;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --t-micro: 0.15s;
+      --t-standard: 0.25s;
+      --t-entrance: 0.35s;
+    }
+    body { font-family: var(--font-sans) !important; }
+    h1, h2, h3 { letter-spacing: -0.02em; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -229,7 +273,7 @@
     .friend-row .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .mini-act {
       background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 8px; color: #e2e2f0;
-      font-size: 11px; padding: 8px 10px; cursor: pointer; min-height: 36px;
+      font-size: 11px; padding: 8px 10px; cursor: pointer; min-height: 44px;
     }
     .mini-act:hover { border-color: #7c3aed; }
     .sec-label { font-size: 11px; font-weight: 700; color: #6b6b8a; text-transform: uppercase; letter-spacing: 0.6px; padding: 10px 12px 4px; }
@@ -617,6 +661,132 @@
       position: absolute;
       z-index: 30;
     }
+    /* ===== SECTION 4: hub shell (sidebar + main + chat side panel) ===== */
+    .shell {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 24px 24px 40px;
+    }
+    .shell .main { flex: 1; min-width: 0; max-width: 100%; margin: 0; padding: 0; }
+    .sidebar {
+      flex: 0 0 240px;
+      position: sticky;
+      top: 84px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .profile-card {
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 16px;
+    }
+    .profile-row { display: flex; align-items: center; gap: 10px; }
+    .online-dot-lg { width: 10px; height: 10px; border-radius: 50%; background: #10b981; flex: none; }
+    .profile-card .nav-user { font-size: 13px; color: #6b6b8a; }
+    .profile-card .nav-user strong { color: #e2e2f0; }
+    .profile-sub { font-size: 12px; color: #6b6b8a; margin-top: 8px; }
+    .side-nav { display: flex; flex-direction: column; gap: 8px; }
+    .side-link {
+      display: flex; align-items: center; gap: 10px;
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 12px;
+      padding: 12px 14px; font-size: 14px; font-weight: 600; color: #e2e2f0;
+      cursor: pointer; min-height: 48px; font-family: inherit; text-align: left;
+      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      touch-action: manipulation;
+    }
+    .side-link:hover { border-color: #7c3aed; }
+    .side-link:active { transform: scale(0.97); }
+    .side-link.chat-only { display: none; }
+    .side-stat {
+      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      padding: 14px 16px; font-size: 13px; color: #6b6b8a;
+    }
+    .side-stat b { color: #e2e2f0; }
+    .side-stat .logout-btn { width: 100%; margin-top: 10px; }
+    #chatSide { flex: 0 0 360px; position: sticky; top: 84px; min-width: 0; }
+    #chatSide #chatPanel {
+      position: relative; width: 100%; max-height: none;
+      height: calc(100vh - 170px); min-height: 420px; max-height: 760px;
+      display: flex;
+    }
+    #hamBtn, #sideBackdrop { display: none; }
+    .chat-count {
+      position: absolute; top: -6px; right: -6px;
+      min-width: 22px; height: 22px; padding: 0 6px;
+      background: #ef4444; border-radius: 12px; color: #fff;
+      font-size: 11px; font-weight: 800;
+      display: none; align-items: center; justify-content: center;
+    }
+    .chat-count.show { display: inline-flex; }
+    .new-msg-pill {
+      position: absolute; left: 50%; bottom: 78px; transform: translateX(-50%);
+      display: none; background: #7c3aed; border: none; border-radius: 20px;
+      color: #fff; font-size: 12px; font-weight: 600; padding: 10px 16px;
+      cursor: pointer; min-height: 40px; white-space: nowrap; z-index: 2;
+      animation: pageIn 0.2s ease-out;
+    }
+    .new-msg-pill.show { display: block; }
+    .chat-form textarea {
+      flex: 1; background: #1a1a24; border: 1.5px solid #2a2a3d;
+      border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #e2e2f0;
+      outline: none; resize: none; min-height: 44px; max-height: 120px;
+      font-family: inherit; line-height: 1.4;
+      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .chat-form textarea:focus { border-color: #7c3aed; }
+    #chatAnnounce { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px 0; }
+    #chatAnnounce:empty { display: none; }
+    .pinned {
+      background: #1a1a2e; border: 1px solid #1e1e2e; border-left: 4px solid #7c3aed;
+      border-radius: 12px; padding: 10px 12px; font-size: 12px; color: #e2e2f0; line-height: 1.5;
+      animation: pageIn 0.2s ease-out;
+    }
+    .pinned .ahead { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; font-size: 11px; color: #6b6b8a; }
+    .pinned .ahead button { margin-left: auto; background: none; border: none; color: #6b6b8a; font-size: 14px; cursor: pointer; min-width: 44px; min-height: 44px; }
+    .pinned .ahead button:hover { color: #e2e2f0; }
+    .games-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    @media (min-width: 1150px) {
+      .games-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (min-width: 1500px) {
+      .games-grid { grid-template-columns: repeat(5, 1fr); }
+    }
+    @media (max-width: 1080px) {
+      #chatSide { display: contents; }
+      #chatSide #chatPanel {
+        position: fixed; right: 22px; bottom: 86px; z-index: 120;
+        width: min(360px, calc(100vw - 44px)); height: auto; max-height: 70vh;
+        display: none;
+      }
+      #chatSide #chatPanel.open { display: flex; }
+    }
+    @media (max-width: 820px) {
+      .shell { padding: 16px 16px 32px; }
+      #sidebar {
+        position: fixed; left: 0; top: 0; bottom: 0; z-index: 110;
+        width: 280px; padding: 20px 16px; background: #13131a;
+        border-right: 1px solid #1e1e2e; border-radius: 0;
+        transform: translateX(-105%);
+        transition: transform 0.25s cubic-bezier(0.22,1,0.36,1);
+      }
+      #sidebar.open { transform: none; }
+      #hamBtn { display: inline-flex; align-items: center; justify-content: center; }
+      #sideBackdrop {
+        display: block; position: fixed; inset: 0; z-index: 105;
+        background: rgba(0,0,0,0.6); opacity: 0; pointer-events: none;
+        transition: opacity 0.25s cubic-bezier(0.22,1,0.36,1);
+      }
+      #sideBackdrop.show { opacity: 1; pointer-events: auto; }
+      .side-link.chat-only { display: flex; }
+    }
+    @media (max-width: 640px) {
+      .games-grid { grid-template-columns: repeat(2, 1fr); }
+    }
     /* GAME MODAL (games play in-page; hub listeners keep running) */
     #gameModal {
       display: none;
@@ -1000,26 +1170,6 @@
     @keyframes itemIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .chat-msg { animation: itemIn 0.3s ease-out backwards; }
     .chat-fab, .dm-fab, .reply-btn, .chat-form button { touch-action: manipulation; }
-    /* PINNED ANNOUNCEMENTS (separate from chat, above the games) */
-    #announceBar {
-      position: relative; z-index: 1; max-width: 1100px;
-      margin: 16px auto 0; padding: 0 24px;
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .announce {
-      background: #1a1a2e; border: 1px solid #1e1e2e; border-left: 4px solid #7c3aed;
-      border-radius: 16px; padding: 12px 16px; font-size: 13px; color: #e2e2f0; line-height: 1.5;
-      animation: pageIn 0.2s ease-out;
-    }
-    .announce .ahead {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
-      font-size: 11px; color: #6b6b8a;
-    }
-    .announce .ahead button {
-      margin-left: auto; background: none; border: none; color: #6b6b8a;
-      font-size: 14px; cursor: pointer; min-width: 44px; min-height: 44px;
-    }
-    .announce .ahead button:hover { color: #e2e2f0; }
   </style>
 </head>
 <body>
@@ -1030,17 +1180,34 @@
   </div>
 
   <nav>
-    <div class="nav-logo">⚡ Lightspeed</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="logout-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+      <div class="nav-logo">⚡ Lightspeed</div>
+    </div>
     <div class="nav-right">
-      <span class="nav-user" id="navUser"></span>
-      <span id="adminReqWrap"></span>
       <span class="xp-chip" id="xpChip" title="Your XP">⭐ <span id="xpBal">0</span></span>
       <button class="mini-btn" onclick="openShop()">🛒 Shop</button>
-      <button class="logout-btn" onclick="logout()">Sign out</button>
     </div>
   </nav>
 
-  <div id="announceBar" style="display:none" aria-live="polite"></div>
+  <div id="sideBackdrop" onclick="toggleSidebar(false)"></div>
+
+  <div class="shell">
+    <aside id="sidebar" aria-label="Sidebar">
+      <div class="profile-card">
+        <div class="profile-row">
+          <span class="online-dot-lg"></span>
+          <span class="nav-user" id="navUser"></span>
+        </div>
+        <div class="profile-sub" id="adminReqWrap"></div>
+      </div>
+      <div class="side-nav">
+        <button class="side-link" onclick="goGames()">🎮 Games</button>
+        <button class="side-link chat-only" onclick="toggleChat(true)">💬 Chat</button>
+      </div>
+      <div class="side-stat">🟢 <b><span id="onlineCount">…</span></b> online</div>
+      <div class="side-stat"><button class="logout-btn" onclick="logout()">Sign out</button></div>
+    </aside>
 
   <div class="main">
     <div id="reqBanner" aria-live="polite"></div>
@@ -1056,13 +1223,12 @@
     <div class="page-header">
       <h1>Games</h1>
       <p>Pick a game and get playing.</p>
-      <p class="online-line"><span class="online-dot"></span><span id="onlineCount">…</span>&nbsp;online</p>
       <div class="search-wrap">
         <input id="search" type="text" placeholder="Search games..." oninput="filterGames()" />
       </div>
     </div>
 
-    <div class="staff-bar" id="staffBar"></div>
+    <div class="staff-bar" id="staffBar"><span>Checking staff…</span></div>
 
     <div class="leader-card" id="leaderCard">
       <h3>🏆 Most played today</h3>
@@ -1099,21 +1265,26 @@
     </div>
   </div>
 
+  </div><!-- /.shell -->
+
   <footer>LIGHTSPEED &copy; 2026</footer>
 
   <!-- ADMIN (shown only when the logged-in user is_admin) -->
   <a class="admin-fab" id="adminFab" href="../../admin/index.html">⚙ Admin Panel</a>
 
   <!-- GLOBAL CHAT -->
-  <button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Global chat">💬</button>
+  <button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Global chat">💬<span class="chat-count" id="chatCount"></span></button>
+  <aside id="chatSide" aria-label="Chat">
   <div class="chat-panel" id="chatPanel">
     <div class="chat-head">
       <span>Global Chat</span>
       <small id="chatStatus">connecting…</small>
     </div>
+    <div id="chatAnnounce" aria-live="polite"></div>
     <div class="chat-msgs" id="chatMsgs">
       <div class="chat-empty">Loading messages…</div>
     </div>
+    <button class="new-msg-pill" id="newMsgPill" onclick="jumpToLatest()">↓ New messages</button>
     <div class="trivia-box" id="triviaBox" style="display:none"></div>
     <div id="shoutBox"></div>
     <div class="typing-line" id="typingLine"></div>
@@ -1122,10 +1293,11 @@
       <button onclick="cancelReply()" aria-label="Cancel reply">✕</button>
     </div>
     <form class="chat-form" onsubmit="return sendChat(event)">
-      <input id="chatInput" type="text" placeholder="Say something…" maxlength="500" autocomplete="off" />
+      <textarea id="chatInput" rows="1" placeholder="Say something…" maxlength="500" autocomplete="off"></textarea>
       <button type="submit">Send</button>
     </form>
   </div>
+  </aside>
 
   <!-- DIRECT MESSAGES (admin ↔ you, separate from global chat) -->
   <button class="dm-fab" id="dmFab" onclick="toggleDm()" title="Messages from admin">✉️<span class="dm-dot" id="dmDot"></span></button>
@@ -1307,7 +1479,20 @@
       } catch (e) { return ''; }
     }
 
-    function appendMessage(msg, delayMs) {
+    function timeAgo(iso) {
+      try {
+        const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+        if (s < 10) return 'just now';
+        if (s < 60) return s + 's ago';
+        const m = Math.floor(s / 60);
+        if (m < 60) return m + 'm ago';
+        const h = Math.floor(m / 60);
+        if (h < 24) return h + 'h ago';
+        return formatTime(iso);
+      } catch (e) { return ''; }
+    }
+
+    function appendMessage(msg, delayMs, isLive) {
       const box = document.getElementById('chatMsgs');
       const empty = box.querySelector('.chat-empty');
       if (empty) empty.remove();
@@ -1328,7 +1513,10 @@
       badgeSpan.innerHTML = rankBadgeHtml(msg.rank);
       meta.appendChild(badgeSpan);
       const time = document.createElement('span');
-      time.textContent = (msg.created_at ? ' · ' + formatTime(msg.created_at) : '');
+      if (msg.created_at) {
+        time.textContent = ' · ' + timeAgo(msg.created_at);
+        time.title = formatTime(msg.created_at);
+      }
       meta.appendChild(time);
       const replyBtn = document.createElement('button');
       replyBtn.className = 'reply-btn';
@@ -1369,7 +1557,45 @@
       bubble.textContent = msg.content || '';
       div.appendChild(bubble);
       box.appendChild(div);
-      box.scrollTop = box.scrollHeight;
+      onChatAppended(isLive);
+    }
+
+    let chatAtBottom = true;
+    let chatUnread = 0;
+
+    function chatPanelVisible() {
+      const panel = document.getElementById('chatPanel');
+      if (!panel) return false;
+      if (window.innerWidth > 1080) return true; // docked sidebar panel
+      return panel.classList.contains('open');
+    }
+
+    function onChatAppended(isLive) {
+      const box = document.getElementById('chatMsgs');
+      const pill = document.getElementById('newMsgPill');
+      if (chatAtBottom || !isLive) {
+        box.scrollTop = box.scrollHeight;
+        if (pill) pill.classList.remove('show');
+      } else if (pill) {
+        pill.textContent = '↓ New messages';
+        pill.classList.add('show');
+      }
+      if (isLive && !chatPanelVisible()) {
+        chatUnread++;
+        const badge = document.getElementById('chatCount');
+        if (badge) {
+          badge.textContent = chatUnread > 99 ? '99+' : String(chatUnread);
+          badge.classList.add('show');
+        }
+      }
+    }
+
+    function jumpToLatest() {
+      const box = document.getElementById('chatMsgs');
+      if (box) box.scrollTop = box.scrollHeight;
+      chatAtBottom = true;
+      const pill = document.getElementById('newMsgPill');
+      if (pill) pill.classList.remove('show');
     }
 
     function startReply(id, username, content) {
@@ -1428,12 +1654,34 @@
       sb.channel('ls-messages')
         .on('postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'messages' },
-          payload => { appendMessage(payload.new); noteShout(payload.new); })
+          payload => { appendMessage(payload.new, 0, true); noteShout(payload.new); })
         .subscribe();
     }
 
-    function toggleChat() {
-      document.getElementById('chatPanel').classList.toggle('open');
+    function toggleChat(force) {
+      const panel = document.getElementById('chatPanel');
+      if (typeof force === 'boolean') panel.classList.toggle('open', force);
+      else panel.classList.toggle('open');
+      chatUnread = 0;
+      const badge = document.getElementById('chatCount');
+      if (badge) badge.classList.remove('show');
+      if (window.innerWidth <= 820) toggleSidebar(false);
+    }
+
+    function toggleSidebar(force) {
+      const side = document.getElementById('sidebar');
+      if (!side) return;
+      const bd = document.getElementById('sideBackdrop');
+      const open = typeof force === 'boolean' ? force : !side.classList.contains('open');
+      side.classList.toggle('open', open);
+      if (bd) bd.classList.toggle('show', open);
+    }
+
+    function goGames() {
+      toggleSidebar(false);
+      if (typeof gameModalOpen !== 'undefined' && gameModalOpen) closeGame();
+      const g = document.getElementById('gamesGrid');
+      if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     async function sendChat(e) {
@@ -2769,60 +3017,68 @@
 
     /* ---------- Announcements (pinned banner, separate from chat) ---------- */
 
-    let announceSeenMax = 0;
-    let announceHidden = false;
-
-    function dismissAnnouncements() {
-      announceHidden = true;
-      const bar = document.getElementById('announceBar');
-      if (bar) bar.style.display = 'none';
+    function dismissedAnnounceIds() {
+      try { return JSON.parse(sessionStorage.getItem('dismissedAnnounce') || '[]'); }
+      catch (e) { return []; }
+    }
+    function dismissAnnounce(id) {
+      try {
+        const arr = dismissedAnnounceIds();
+        if (arr.indexOf(id) === -1) arr.push(id);
+        sessionStorage.setItem('dismissedAnnounce', JSON.stringify(arr));
+      } catch (e) {}
+      loadAnnouncements();
     }
 
     async function loadAnnouncements() {
-      const bar = document.getElementById('announceBar');
-      if (!bar) return;
+      const box = document.getElementById('chatAnnounce');
+      if (!box) return;
+      const firstAnn = !box.querySelector('.pinned');
+      if (firstAnn) box.innerHTML = '<div class="skel" style="height:40px"></div>';
       try {
         const { data, error } = await sb
           .from('announcements')
           .select('id, content, posted_by, rank, created_at')
           .order('created_at', { ascending: false })
-          .limit(3);
+          .limit(2);
         if (error) throw error;
-        const rows = data || [];
-        if (rows.length === 0) { bar.style.display = 'none'; return; }
-        const maxId = Math.max.apply(null, rows.map(r => r.id));
-        if (announceHidden && maxId <= announceSeenMax) return; // stays dismissed
-        announceHidden = false;
-        announceSeenMax = Math.max(announceSeenMax, maxId);
-        bar.innerHTML = '';
+        const hidden = dismissedAnnounceIds();
+        const rows = (data || []).filter(a => hidden.indexOf(a.id) === -1);
+        box.innerHTML = '';
+        if (rows.length === 0) return;
         rows.forEach(a => {
           const card = document.createElement('div');
-          card.className = 'announce';
+          card.className = 'pinned';
           const head = document.createElement('div');
           head.className = 'ahead';
           const who = document.createElement('strong');
-          who.textContent = '📢 ' + (a.posted_by || 'admin');
+          who.textContent = '📌 ' + (a.posted_by || 'admin');
           head.appendChild(who);
           const badge = document.createElement('span');
           badge.innerHTML = rankBadgeHtml(a.rank);
           head.appendChild(badge);
           const when = document.createElement('span');
-          when.textContent = a.created_at ? formatTime(a.created_at) : '';
+          if (a.created_at) {
+            when.textContent = timeAgo(a.created_at);
+            when.title = formatTime(a.created_at);
+          }
           head.appendChild(when);
           const x = document.createElement('button');
           x.textContent = '✕';
-          x.setAttribute('aria-label', 'Dismiss announcements');
-          x.onclick = dismissAnnouncements;
+          x.setAttribute('aria-label', 'Dismiss announcement');
+          x.onclick = () => dismissAnnounce(a.id);
           head.appendChild(x);
           const body = document.createElement('div');
           body.textContent = a.content || '';
           card.appendChild(head);
           card.appendChild(body);
-          bar.appendChild(card);
+          box.appendChild(card);
         });
-        bar.style.display = 'flex';
       } catch (e) {
         console.error('announcements failed:', e);
+        if (box.querySelector('.skel')) {
+          box.innerHTML = '<div class="pinned">Could not load announcements. <button class="mini-btn ghost" onclick="loadAnnouncements()">Retry</button></div>';
+        }
       }
     }
 
@@ -3380,7 +3636,12 @@
         '<div class="meta"><strong></strong> · <span></span></div>' +
         '<div class="bubble"></div>';
       div.querySelector('strong').textContent = msg.from_username || 'admin';
-      div.querySelector('.meta span').textContent = msg.created_at ? formatTime(msg.created_at) : '';
+      if (msg.created_at) {
+        div.querySelector('.meta span').textContent = timeAgo(msg.created_at);
+        div.querySelector('.meta span').title = formatTime(msg.created_at);
+      } else {
+        div.querySelector('.meta span').textContent = '';
+      }
       div.querySelector('.bubble').textContent = msg.content || '';
       box.appendChild(div);
       box.scrollTop = box.scrollHeight;
@@ -3962,11 +4223,47 @@
       renderTrivia();
       armPanicLogo();
     })();
+    window.addEventListener('pagehide', () => {
+      try {
+        Object.keys(pollers).forEach(stopPoller);
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        sb.getChannels().forEach(ch => { try { sb.removeChannel(ch); } catch (e) {} });
+      } catch (e) {}
+    });
     (function () {
       const ci = document.getElementById('chatInput');
       if (ci) ci.addEventListener('input', () => sendTyping('global'));
       const di = document.getElementById('dmInput');
       if (di) di.addEventListener('input', () => sendTyping(dmPairKey(meName(), (typeof dmPeer !== 'undefined' ? dmPeer : 'admin'))));
+    })();
+
+    // Chat textarea: Enter sends, Shift+Enter newline, autogrow.
+    (function () {
+      const el = document.getElementById('chatInput');
+      if (!el) return;
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendChat({ preventDefault() {} });
+        }
+      });
+      el.addEventListener('input', () => {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+      });
+    })();
+
+    // Chat scroll position drives the new-message pill.
+    (function () {
+      const box = document.getElementById('chatMsgs');
+      if (!box) return;
+      box.addEventListener('scroll', () => {
+        chatAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+        if (chatAtBottom) {
+          const pill = document.getElementById('newMsgPill');
+          if (pill) pill.classList.remove('show');
+        }
+      });
     })();
     registerTrollUnlock();
     subscribeTrolls();
