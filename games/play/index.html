@@ -756,6 +756,21 @@
     #announceBar { position: sticky; top: 0; z-index: 95; }
     #announceBar:empty { display: none; }
     #announceBar .pinned { border-radius: 0; border-left: none; border-right: none; border-top: none; }
+    #schedAlertModal {
+      position: fixed; inset: 0; z-index: 400; display: none;
+      align-items: center; justify-content: center; padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+    }
+    .sched-alert-card {
+      background: #13131a; border: 1px solid #7c3aed; border-radius: 16px;
+      padding: 28px 24px; max-width: 420px; width: 100%; text-align: center;
+      display: flex; flex-direction: column; gap: 12px; align-items: center;
+      animation: pageIn 0.25s ease-out;
+    }
+    .sched-alert-card h2 { font-size: 18px; }
+    .sched-alert-card p { font-size: 15px; line-height: 1.5; }
+    .sched-alert-card .muted { color: #6b6b8a; font-size: 13px; }
+    .sched-alert-card button { min-height: 48px; min-width: 140px; font-size: 15px; }
     .games-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
     @media (min-width: 1150px) {
       .games-grid { grid-template-columns: repeat(4, 1fr); }
@@ -1364,6 +1379,17 @@
         <button class="gm-btn" onclick="closeGame()" aria-label="Close game">✕</button>
       </div>
       <div class="game-frame-wrap" id="gameFrameWrap"></div>
+    </div>
+  </div>
+
+  <!-- SCHEDULED-ANNOUNCEMENT ALERT (one-time modal per user) -->
+  <div id="schedAlertModal" role="dialog" aria-label="Announcement" style="display:none">
+    <div class="sched-alert-card">
+      <div style="font-size:40px">📅</div>
+      <h2>Scheduled announcement</h2>
+      <p id="schedAlertBody"></p>
+      <p class="muted" id="schedAlertWhen"></p>
+      <button class="mini-btn" onclick="ackSchedAlert()">Got it</button>
     </div>
   </div>
 
@@ -3049,12 +3075,12 @@
       try {
         const { data, error } = await sb
           .from('announcements')
-          .select('id, content, posted_by, rank, created_at')
+          .select('id, content, posted_by, rank, created_at, pinned, scheduled_for')
           .order('created_at', { ascending: false })
           .limit(2);
         if (error) throw error;
         const hidden = dismissedAnnounceIds();
-        const rows = (data || []).filter(a => hidden.indexOf(a.id) === -1);
+        const rows = (data || []).filter(a => hidden.indexOf(a.id) === -1 && schedVisible(a));
         if (rows.length === 0) {
           // Nothing visible: clear both slots (also wipes the first-load
           // skeleton) instead of returning early and leaving stale cards.
@@ -3086,7 +3112,7 @@
           x.textContent = '✕';
           x.setAttribute('aria-label', 'Dismiss announcement');
           x.onclick = () => dismissAnnounce(a.id);
-          head.appendChild(x);
+          if (!a.pinned) head.appendChild(x);
           const body = document.createElement('div');
           body.textContent = a.content || '';
           card.appendChild(head);
@@ -3094,6 +3120,7 @@
           box.appendChild(card);
         });
         renderAnnounceBar(rows);
+        maybeAlertScheduled(rows);
       } catch (e) {
         console.error('announcements failed:', e);
         if (box.querySelector('.skel')) {
@@ -3132,12 +3159,85 @@
       x.textContent = '✕';
       x.setAttribute('aria-label', 'Dismiss announcement');
       x.onclick = () => dismissAnnounce(top.id);
-      head.appendChild(x);
+      if (!top.pinned) head.appendChild(x);
       const body = document.createElement('div');
       body.textContent = top.content || '';
       card.appendChild(head);
       card.appendChild(body);
       bar.appendChild(card);
+    }
+
+    /* Scheduled announcements: hidden until 5 minutes before their time,
+       then a one-time modal alert per user (tracked in announcement_alerts
+       so offline returners get it once, and nobody gets it twice). */
+    const SCHED_WINDOW_MS = 5 * 60 * 1000;
+
+    function schedVisible(a) {
+      if (!a || !a.scheduled_for) return true;
+      const t = new Date(a.scheduled_for).getTime();
+      if (isNaN(t)) return true;
+      return Date.now() >= t - SCHED_WINDOW_MS;
+    }
+
+    function schedCountdown(a) {
+      const t = new Date(a.scheduled_for).getTime();
+      const mins = Math.max(0, Math.ceil((t - Date.now()) / 60000));
+      return mins <= 0 ? 'starting now!' : ('starts in ~' + mins + ' min');
+    }
+
+    let schedQueue = [];
+    let schedShowing = false;
+
+    function showSchedAlert(a) {
+      schedQueue.push(a);
+      pumpSchedQueue();
+    }
+
+    function pumpSchedQueue() {
+      if (schedShowing) return;
+      const a = schedQueue.shift();
+      if (!a) return;
+      schedShowing = true;
+      const m = document.getElementById('schedAlertModal');
+      if (!m) { schedShowing = false; return; }
+      document.getElementById('schedAlertBody').textContent = a.content || '';
+      document.getElementById('schedAlertWhen').textContent = '⏰ ' + schedCountdown(a) +
+        (a.posted_by ? ' — ' + a.posted_by : '');
+      m.style.display = 'flex';
+    }
+
+    function ackSchedAlert() {
+      const m = document.getElementById('schedAlertModal');
+      if (m) m.style.display = 'none';
+      schedShowing = false;
+      pumpSchedQueue();
+    }
+
+    async function maybeAlertScheduled(rows) {
+      const me = meName();
+      if (!me || me === 'anon' || !rows || !rows.length) return;
+      const now = Date.now();
+      for (const a of rows) {
+        if (!a.scheduled_for) continue;
+        const t = new Date(a.scheduled_for).getTime();
+        if (isNaN(t) || now < t - SCHED_WINDOW_MS) continue;
+        const skey = 'schedAlert:' + a.id;
+        let done = false;
+        try { done = sessionStorage.getItem(skey) === '1'; } catch (e) {}
+        if (done) continue;
+        try { sessionStorage.setItem(skey, '1'); } catch (e) {}
+        try {
+          const r = await sb.from('announcement_alerts')
+            .select('announcement_id')
+            .eq('announcement_id', a.id)
+            .eq('username', me)
+            .limit(1);
+          if (!r.error && r.data && r.data.length > 0) continue;
+          showSchedAlert(a);
+          await sb.from('announcement_alerts').insert({ announcement_id: a.id, username: me });
+          sb.from('announcements').update({ reminded: true }).eq('id', a.id).then(() => {});
+        } catch (e) { console.error('sched alert failed:', e); }
+      }
     }
 
     function subscribeAnnouncements() {

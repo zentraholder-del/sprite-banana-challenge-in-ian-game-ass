@@ -703,6 +703,17 @@
   <footer>LIGHTSPEED &copy; 2026</footer>
   <div id="toastWrap" aria-live="polite"></div>
 
+  <!-- MISSED SCHEDULED ALERTS (offline returners catch up here, then continue) -->
+  <div class="overlay" id="missedAlertModal">
+    <div class="modal">
+      <div style="font-size:40px">📅</div>
+      <h2>You missed an announcement</h2>
+      <p id="missedAlertBody"></p>
+      <p class="muted" id="missedAlertWhen"></p>
+      <button class="btn" style="margin-top:14px" id="missedAlertBtn">Got it</button>
+    </div>
+  </div>
+
   <!-- APPROVED MODAL (pops like the request form) -->
   <div class="overlay" id="approvedOverlay" onclick="if(event.target===this)closeApprovedModal()">
     <div class="modal" id="approvedModal">
@@ -1363,7 +1374,71 @@
       try { sb.getChannels().forEach(ch => { try { sb.removeChannel(ch); } catch (e) {} }); } catch (e) {}
     });
 
-    checkExistingSession();
+    /* Missed scheduled announcements: users who were offline when the
+       5-minute alert fired catch up here on the login screen, exactly once
+       each (tracked in announcement_alerts). Auto-redirect waits until the
+       queue is acknowledged. */
+    async function checkMissedAlerts() {
+      let me = null;
+      try { me = localStorage.getItem(LS_USER); } catch (e) {}
+      if (!me) return;
+      try {
+        const now = Date.now();
+        const r = await sb.from('announcements')
+          .select('id, content, posted_by, scheduled_for')
+          .not('scheduled_for', 'is', null)
+          .lte('scheduled_for', new Date(now + 300000).toISOString())
+          .order('scheduled_for', { ascending: true })
+          .limit(10);
+        if (r.error || !r.data || !r.data.length) return;
+        const due = r.data.filter(a => {
+          const t = new Date(a.scheduled_for).getTime();
+          return !isNaN(t) && now >= t - 300000;
+        });
+        if (!due.length) return;
+        const ids = due.map(a => a.id);
+        const seen = await sb.from('announcement_alerts')
+          .select('announcement_id')
+          .eq('username', me)
+          .in('announcement_id', ids);
+        const seenIds = (!seen.error && seen.data) ? seen.data.map(x => x.announcement_id) : [];
+        const missed = due.filter(a => seenIds.indexOf(a.id) === -1);
+        if (!missed.length) return;
+        await showMissedAlertQueue(me, missed);
+      } catch (e) { console.error('missed alerts failed:', e); }
+    }
+
+    function showMissedAlertQueue(me, items) {
+      return new Promise(resolve => {
+        let i = 0;
+        const m = document.getElementById('missedAlertModal');
+        const body = document.getElementById('missedAlertBody');
+        const when = document.getElementById('missedAlertWhen');
+        const btn = document.getElementById('missedAlertBtn');
+        function render() {
+          const a = items[i];
+          body.textContent = a.content || '';
+          let label = '';
+          try { label = new Date(a.scheduled_for).toLocaleString(); } catch (e) {}
+          when.textContent = '⏰ ' + label + (a.posted_by ? ' — ' + a.posted_by : '');
+          btn.textContent = (i === items.length - 1) ? 'Continue' : 'Got it (' + (i + 1) + '/' + items.length + ')';
+        }
+        btn.onclick = async () => {
+          const a = items[i];
+          try { await sb.from('announcement_alerts').insert({ announcement_id: a.id, username: me }); } catch (e) {}
+          i++;
+          if (i >= items.length) {
+            m.classList.remove('visible');
+            resolve();
+          } else render();
+        };
+        render();
+        m.classList.add('visible');
+      });
+    }
+
+    // Missed scheduled alerts first (returners catch up), then auto-redirect.
+    (async () => { try { await checkMissedAlerts(); } catch (e) {} checkExistingSession(); })();
     checkRequestStatus();
     subscribeRequestStatus();
     syncSchoolDD();

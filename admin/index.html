@@ -1058,6 +1058,14 @@
           <button class="btn small" onclick="postAdminMessage()">Post</button>
         </div>
         <div class="inline-form" style="align-items:center;margin-top:12px">
+          <select id="adminMsgType" aria-label="Announcement type" style="flex:0 0 170px" onchange="document.getElementById('adminMsgWhen').style.display = this.value === 'scheduled' ? '' : 'none'">
+            <option value="normal">Normal (dismissible)</option>
+            <option value="sticky">Sticky (no dismiss)</option>
+            <option value="scheduled">Scheduled</option>
+          </select>
+          <input id="adminMsgWhen" type="datetime-local" aria-label="Scheduled time" style="display:none;flex:1;min-width:0" />
+        </div>
+        <div class="inline-form" style="align-items:center;margin-top:12px">
           <input id="slowSecs" type="number" inputmode="numeric" min="0" max="300" value="0" style="flex:0 0 90px;min-width:90px" aria-label="Slowmode seconds" />
           <button class="btn small" onclick="setSlowmode()">Set slowmode</button>
           <button class="btn small ghost" onclick="setSlowmodeOff()">Off</button>
@@ -2741,9 +2749,17 @@
       let postedBy = 'admin';
       try { postedBy = localStorage.getItem(LS_USER) || 'admin'; } catch (e) {}
       try {
+        const typeEl = document.getElementById('adminMsgType');
+        const whenEl = document.getElementById('adminMsgWhen');
+        const type = typeEl ? typeEl.value : 'normal';
+        let schedISO = null;
+        if (type === 'scheduled') {
+          if (!whenEl || !whenEl.value) { document.getElementById('msgError').textContent = 'Pick a date and time for the scheduled announcement.'; return; }
+          schedISO = new Date(whenEl.value).toISOString();
+        }
         const { data, error } = await sb
           .from('announcements')
-          .insert({ content: content.slice(0, 500), posted_by: postedBy, rank: myRank })
+          .insert({ content: content.slice(0, 500), posted_by: postedBy, rank: myRank, pinned: type === 'sticky', scheduled_for: schedISO })
           .select('id');
         if (error) throw error;
         if (!data || data.length === 0) {
@@ -2767,7 +2783,7 @@
       try {
         const { data, error } = await sb
           .from('announcements')
-          .select('id, content, posted_by, rank, created_at')
+          .select('id, content, posted_by, rank, created_at, pinned, scheduled_for, reminded')
           .order('created_at', { ascending: false })
           .limit(10);
         if (error) throw error;
@@ -2777,7 +2793,15 @@
         }
         let html = '<table><tr><th>Announcement</th><th>By</th><th>When</th><th></th></tr>';
         data.forEach((a, ai) => {
-          html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td>' + esc(a.content) +
+          let tag = '';
+          if (a.pinned) tag = '<div class="muted">📌 sticky — stays until deleted</div>';
+          else if (a.scheduled_for) {
+            const t = new Date(a.scheduled_for).getTime();
+            tag = '<div class="muted">⏰ ' + esc(new Date(a.scheduled_for).toLocaleString());
+            tag += (Date.now() >= t - 300000) ? (a.reminded ? ' • alerted' : ' • live') : ' • upcoming';
+            tag += '</div>';
+          }
+          html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td>' + esc(a.content) + tag +
             '</td><td>' + esc(a.posted_by) + ' ' + rankPill(a.rank || 'user') +
             '</td><td class="muted">' + esc(new Date(a.created_at).toLocaleString()) +
             '</td><td>' + (myRank === 'mod'
