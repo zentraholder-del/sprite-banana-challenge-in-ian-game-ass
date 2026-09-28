@@ -2351,11 +2351,12 @@
       try {
         const plaintext = resolvePlaintext(custom);
         let reqSchool = null;
+        let reqName = null;
         try {
-          const rq = await sb.from('key_requests').select('school').eq('id', pendingApproveId).maybeSingle();
-          if (!rq.error && rq.data) reqSchool = rq.data.school || null;
+          const rq = await sb.from('key_requests').select('school, name').eq('id', pendingApproveId).maybeSingle();
+          if (!rq.error && rq.data) { reqSchool = rq.data.school || null; reqName = rq.data.name || null; }
         } catch (e) { console.error('approve school lookup failed:', e); }
-        const insPayload = { key: plaintext, is_active: true, is_admin: false, rank: 'user', plaintext_reveal: plaintext, request_id: pendingApproveId, school: reqSchool };
+        const insPayload = { key: plaintext, is_active: true, is_admin: false, rank: 'user', plaintext_reveal: plaintext, request_id: pendingApproveId, school: reqSchool, used_by: reqName };
         let ins = await sb
           .from('license_keys')
           .insert(insPayload)

@@ -991,6 +991,7 @@
           const rank = data.rank || (data.is_admin ? 'admin' : 'user');
           try { localStorage.setItem(LS_RANK, rank); } catch (e) {}
           const elevated = rank === 'owner' || rank === 'admin' || rank === 'mod' || data.is_admin;
+          clearRequestState();
           window.location.href = elevated ? '../admin/index.html' : 'play/';
         } else {
           localStorage.removeItem(LS_TOKEN);
@@ -1002,6 +1003,24 @@
         // Stay on login; surface only config-like errors, not the token itself
         document.getElementById('status').textContent = '';
       }
+    }
+
+    /* Request state: a pending_request_name left in storage would keep
+       showing the approved banner/modal forever — even after the key is in
+       hand. Any successful auth clears it. */
+    function clearRequestState() {
+      try {
+        const n = localStorage.getItem('pending_request_name');
+        if (n) localStorage.removeItem('request_dismissed_' + n);
+        localStorage.removeItem('pending_request_name');
+      } catch (e) {}
+      try { approvedKey = ''; approvedShown = false; } catch (e) {}
+    }
+
+    function resetRequestState() {
+      clearRequestState();
+      showRequestForm();
+      checkRequestStatus();
     }
 
     async function tryLogin() {
@@ -1062,6 +1081,14 @@
           setLoginBusy(false);
           return;
         }
+        // 2a. Username lock: a key belongs to one account name — the name it
+        // was requested with (stamped at approve) or first logged in with.
+        // Same device + same key + different name is rejected.
+        if (row.used_by && row.used_by.toLowerCase() !== username.toLowerCase()) {
+          showError('This key belongs to "' + row.used_by + '". Use that name, or ask staff to reset the key.');
+          setLoginBusy(false);
+          return;
+        }
         // 2b. Device fingerprint: same device rotates back in, any other
         // device on an active key is rejected. Legacy keys without a
         // recorded fingerprint adopt the first device that logs in.
@@ -1085,7 +1112,7 @@
           .from('license_keys')
           .update({
             session_token: token,
-            used_by: username,
+            used_by: row.used_by || username,
             activated_at: new Date().toISOString(),
             device_fp: fp
           })
@@ -1094,6 +1121,7 @@
 
         localStorage.setItem(LS_TOKEN, token);
         localStorage.setItem(LS_USER, username);
+        clearRequestState();
         const myRank = row.rank || (row.is_admin ? 'admin' : 'user');
         try { localStorage.setItem(LS_RANK, myRank); } catch (e) {}
         // Drop legacy stub flag if present
@@ -1188,6 +1216,41 @@
       }
     });
 
+    /* Key requests: one pending at a time per name, plus a 24h cooldown
+       between requests. Fail-open on lookup errors so outages never trap
+       legitimate requesters. */
+    const REQUEST_COOLDOWN_MS = 24 * 3600 * 1000;
+
+    async function latestRequestFor(name) {
+      try {
+        const r = await sb.from('key_requests')
+          .select('id, status, created_at')
+          .eq('name', name)
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!r.error) return r.data || null;
+        if (!/column/i.test(r.error.message || '')) throw r.error;
+      } catch (e) { console.error('request lookup failed:', e); return null; }
+      try {
+        const r2 = await sb.from('key_requests')
+          .select('id, status')
+          .eq('name', name)
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!r2.error) return r2.data || null;
+      } catch (e) {}
+      return null;
+    }
+
+    function fmtWait(ms) {
+      const h = Math.floor(ms / 3600000);
+      const m = Math.ceil((ms % 3600000) / 60000);
+      if (h > 0) return h + 'h ' + m + 'm';
+      return Math.max(1, m) + 'm';
+    }
+
     async function submitRequest() {
       const name = document.getElementById('reqName').value.trim();
       const reason = document.getElementById('reqMsg').value.trim();
@@ -1200,6 +1263,18 @@
       btn.disabled = true;
       btn.textContent = 'Sending…';
       try {
+        const prev = await latestRequestFor(name);
+        if (prev && prev.status === 'pending') {
+          errBox.textContent = 'You already have a pending request — check its status below.';
+          return;
+        }
+        if (prev && prev.created_at) {
+          const wait = REQUEST_COOLDOWN_MS - (Date.now() - new Date(prev.created_at).getTime());
+          if (wait > 0) {
+            errBox.textContent = 'You can request again in ' + fmtWait(wait) + '.';
+            return;
+          }
+        }
         const { error } = await sb
           .from('key_requests')
           .insert({ name, reason, school, status: 'pending' });
@@ -1273,8 +1348,11 @@
               openApprovedModal();
             }
           } else {
-            html = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
-              '<div class="muted-note" style="margin-top:8px">Key is being prepared — check back shortly.</div></div>';
+            // Approved but no key row: the key was deleted (or never created).
+            // Never show "being prepared" here — say so and offer a fresh request.
+            html = '<div class="req-banner denied"><strong>Your key was removed by staff.</strong>' +
+              '<div class="muted-note" style="margin-top:8px">That approval no longer has a key attached.</div>' +
+              '<div style="margin-top:10px"><button class="mini-btn" onclick="resetRequestState()">Request a new key</button></div></div>';
           }
         } else {
           html = '';

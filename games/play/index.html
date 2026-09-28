@@ -2899,6 +2899,20 @@
 
     /* ---------- Key request status banner (same as login page) ---------- */
 
+    /* A stale pending_request_name would resurrect the approved banner on
+       every visit. Successful auth wipes it; a deleted key gets an honest
+       "removed" state with a fresh-request path instead of "preparing". */
+    function resetPlayRequest() {
+      try {
+        const n = localStorage.getItem('pending_request_name');
+        if (n) localStorage.removeItem('request_dismissed_' + n);
+        localStorage.removeItem('pending_request_name');
+      } catch (e) {}
+      try { playApprovedKey = ''; playApprovedShown = false; } catch (e) {}
+      const wrap = document.getElementById('reqBanner');
+      if (wrap) setHTMLifChanged(wrap, '');
+    }
+
     async function checkPlayRequestStatus() {
       const wrap = document.getElementById('reqBanner');
       if (!wrap) return;
@@ -2943,8 +2957,9 @@
               openApprovedModal();
             }
           } else {
-            html = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
-              '<div style="margin-top:8px;color:#6b6b8a">Key is being prepared — check back shortly.</div></div>';
+            html = '<div class="req-banner denied"><strong>Your key was removed by staff.</strong>' +
+              '<div style="margin-top:8px;color:#6b6b8a">That approval no longer has a key attached.</div>' +
+              '<div style="margin-top:10px"><button class="mini-btn" onclick="resetPlayRequest()">Request a new key</button></div></div>';
           }
         } else {
           html = '';
@@ -4379,6 +4394,7 @@
         myName = (localStorage.getItem(LS_USER) || me.used_by || me.username || 'anon').slice(0, 32);
         await trackPresence('Browsing');
         startHeartbeat();
+        resetPlayRequest();
         await loadDms();
         subscribeDms();
       }
