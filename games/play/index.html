@@ -2602,26 +2602,18 @@
       return customScareURL;
     }
 
-    async function jumpscareLoop(imageSrc) {
+    // Solid jumpscare: image goes on at full opacity and STAYS there until
+    // stopJumpscare — no fade in/out cycle. contain (not cover) so custom
+    // uploads of any shape show fully instead of being cropped.
+    function jumpscareLoop(imageSrc) {
       if (!jumpscareActive) return;
+      if (jumpscareImg) jumpscareImg.remove();
       jumpscareImg = document.createElement('img');
       jumpscareImg.src = imageSrc;
-      jumpscareImg.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:99999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      jumpscareImg.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:99999;opacity:1;pointer-events:none;';
       jumpscareImg.onerror = () => console.error('jumpscare image failed to load:', imageSrc);
       trollLayer().appendChild(jumpscareImg);
       scareSound();
-      await sleep(50);
-      if (!jumpscareActive) { jumpscareImg?.remove(); jumpscareImg = null; return; }
-      jumpscareImg.style.opacity = '1';
-      await sleep(1500);
-      if (!jumpscareActive) { jumpscareImg?.remove(); jumpscareImg = null; return; }
-      jumpscareImg.style.opacity = '0';
-      await sleep(500);
-      jumpscareImg?.remove();
-      jumpscareImg = null;
-      if (!jumpscareActive) return;
-      await sleep(8000 + Math.random() * 7000);
-      jumpscareLoop(imageSrc);
     }
 
     function startJumpscare(imageSrc) {
