@@ -973,6 +973,7 @@
         <button data-tab="reports" onclick="showTab('reports', this)">🚩 Reports</button>
         <button data-tab="troll" onclick="showTab('troll', this)">👻 Troll</button>
         <button data-tab="activity" onclick="showTab('activity', this)">📜 Activity</button>
+        <button data-tab="perms" onclick="showTab('perms', this)">🔐 Permissions</button>
         <a class="tablink" href="../games/play/">▶ Play Games</a>
       </div>
       <div class="admin-main">
@@ -1155,7 +1156,18 @@
             <option value="scare1.jpg">scare1.jpg</option>
             <option value="scare2.jpg">scare2.jpg</option>
             <option value="scare3.jpg">scare3.jpg</option>
+            <option value="custom">Custom upload</option>
           </select>
+        </div>
+        <div class="field" id="customScareWrap" style="display:none">
+          <label>Custom jumpscare image</label>
+          <img id="customScarePreview" alt="Custom scare preview" style="display:none;max-width:220px;border-radius:12px;border:1px solid #1e1e2e" />
+          <div class="inline-form" style="margin-top:8px">
+            <input id="customScareFile" type="file" accept="image/*" aria-label="Upload custom scare image" />
+            <button class="btn small" onclick="uploadCustomScare()">Upload</button>
+            <button class="btn small ghost" onclick="removeCustomScare()">Remove</button>
+          </div>
+          <span class="muted" id="customScareStatus"></span>
         </div>
         <div class="field">
           <label>Message (iOS alert &amp; popup spam)</label>
@@ -1183,6 +1195,16 @@
         <h2>Activity log</h2>
         <p class="sub">Recent activations, blacklist actions, and troll events sent. Read-only.</p>
         <div id="activityList"><p class="muted">Loading…</p></div>
+      </div>
+      <div class="card section" id="sec-perms">
+        <h2>Rank permissions</h2>
+        <p class="sub">Owner-only. Tick what each rank may do — applies instantly on save. Your own owner powers can never be restricted.</p>
+        <div id="permsMatrix"><p class="muted">Loading…</p></div>
+        <div class="inline-form" style="margin-top:12px">
+          <button class="btn small" onclick="savePerms()">Save permissions</button>
+          <button class="btn small ghost" onclick="resetPerms()">Reset to defaults</button>
+          <span class="muted" id="permsStatus"></span>
+        </div>
       </div>
       </div><!-- /.admin-main -->
       </div><!-- /.admin-shell -->
@@ -1334,8 +1356,81 @@
     // Only user-rank keys can be touched by admin/mod. Owner can touch all.
     function canModify(targetRank) {
       if (myRank === 'owner') return true;
-      if (myRank === 'admin' || myRank === 'mod') return targetRank === 'user';
-      return false;
+      if ((targetRank || 'user') === 'user') return can('keys.modify_user');
+      return can('keys.modify_staff');
+    }
+
+    /* ---------- customizable rank permissions ----------
+       Owner edits the matrix on the Permissions tab (stored in rank_perms).
+       Owner always bypasses (so the panel can never be bricked); everyone
+       else falls back to DEFAULT_PERMS when no DB row exists yet. */
+    const PERM_DEFS = [
+      { group: 'Tabs', id: 'tab.dashboard', label: 'Dashboard tab' },
+      { group: 'Tabs', id: 'tab.requests', label: 'Key requests tab' },
+      { group: 'Tabs', id: 'tab.adminreqs', label: 'Admin requests tab' },
+      { group: 'Tabs', id: 'tab.keys', label: 'Manage keys tab' },
+      { group: 'Tabs', id: 'tab.blacklist', label: 'Blacklist tab' },
+      { group: 'Tabs', id: 'tab.messages', label: 'Messaging tab' },
+      { group: 'Tabs', id: 'tab.users', label: 'Users tab' },
+      { group: 'Tabs', id: 'tab.playerdms', label: 'Player DMs tab' },
+      { group: 'Tabs', id: 'tab.reports', label: 'Reports tab' },
+      { group: 'Tabs', id: 'tab.troll', label: 'Troll tab' },
+      { group: 'Tabs', id: 'tab.activity', label: 'Activity tab' },
+      { group: 'Keys', id: 'keys.create', label: 'Create keys (bulk + single)' },
+      { group: 'Keys', id: 'keys.modify_user', label: 'Toggle / reset / delete USER keys' },
+      { group: 'Keys', id: 'keys.modify_staff', label: 'Toggle / reset / delete STAFF keys' },
+      { group: 'Keys', id: 'requests.decide', label: 'Approve / deny key requests' },
+      { group: 'Keys', id: 'adminreqs.decide', label: 'Approve / deny admin requests' },
+      { group: 'Users', id: 'users.set_rank', label: 'Change ranks' },
+      { group: 'Users', id: 'users.give_xp', label: 'Grant XP (panel + buttons)' },
+      { group: 'Users', id: 'users.watch', label: 'Watch screen' },
+      { group: 'Users', id: 'users.moderate_user', label: 'Warn / mute / ban USERs' },
+      { group: 'Users', id: 'users.moderate_staff', label: 'Warn / mute / ban STAFF' },
+      { group: 'Content', id: 'announce.post', label: 'Post announcements' },
+      { group: 'Content', id: 'announce.delete', label: 'Delete announcements' },
+      { group: 'Content', id: 'chat.delete', label: 'Delete chat messages' },
+      { group: 'Content', id: 'blacklist.manage', label: 'Manage blacklist' },
+      { group: 'Troll', id: 'troll.fire', label: 'Fire troll effects' },
+      { group: 'Troll', id: 'troll.custom_image', label: 'Upload custom jumpscare image' }
+    ];
+    const DEFAULT_PERMS = {
+      admin: { 'tab.dashboard': 1, 'tab.requests': 1, 'tab.adminreqs': 1, 'tab.keys': 1, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 1, 'tab.reports': 1, 'tab.troll': 1, 'tab.activity': 1, 'keys.create': 1, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 1, 'adminreqs.decide': 1, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 1, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 1, 'troll.custom_image': 0 },
+      mod: { 'tab.dashboard': 1, 'tab.requests': 0, 'tab.adminreqs': 0, 'tab.keys': 0, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 0, 'tab.reports': 1, 'tab.troll': 0, 'tab.activity': 0, 'keys.create': 0, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 0, 'adminreqs.decide': 0, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 0, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 0, 'troll.custom_image': 0 }
+    };
+    let permCache = {};
+    async function loadPerms() {
+      try {
+        const r = await sb.from('rank_perms').select('rank, perms');
+        if (r.error) throw r.error;
+        const next = {};
+        (r.data || []).forEach(row => { if (row && row.rank) next[row.rank] = row.perms || {}; });
+        permCache = next;
+      } catch (e) { console.error('perms load failed (using defaults):', e); }
+    }
+    function effPerm(rank, perm) {
+      const table = permCache[rank];
+      if (table && typeof table[perm] !== 'undefined') return !!table[perm];
+      const d = DEFAULT_PERMS[rank];
+      return !!(d && d[perm]);
+    }
+    function can(perm) {
+      if (myRank === 'owner') return true;
+      return effPerm(myRank, perm);
+    }
+    function targetRankOf(username) {
+      try {
+        const m = (lastUsers && lastUsers.rankMap) || {};
+        return m[username] || 'user';
+      } catch (e) { return 'user'; }
+    }
+    function canModerateTarget(username) {
+      if (!username) return false;
+      try { if (lastUsers && username === lastUsers.myName) return false; } catch (e) {}
+      const ur = targetRankOf(username);
+      if (ur === 'owner') return false;
+      if (myRank === 'owner') return true;
+      if (ur === 'user') return can('users.moderate_user');
+      return can('users.moderate_staff');
     }
 
     function rankPill(rank) {
@@ -1346,23 +1441,75 @@
     // Hide tabs the current rank may not use; note restrictions.
     function applyRankGating() {
       const note = document.getElementById('rankNote');
-      const hideForMod = ['requests', 'adminreqs', 'keys', 'troll', 'activity', 'playerdms'];
       document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
         const tab = b.getAttribute('data-tab');
-        if (myRank === 'mod' && hideForMod.indexOf(tab) !== -1) {
+        if (tab === 'perms') {
+          b.style.display = myRank === 'owner' ? '' : 'none';
+        } else if (!can('tab.' + tab)) {
           b.style.display = 'none';
         } else {
           b.style.display = '';
         }
       });
       if (note) {
-        if (myRank === 'owner') note.textContent = 'Signed in as OWNER — full access.';
-        else if (myRank === 'admin') note.textContent = 'Signed in as ADMIN — you can only modify user keys.';
-        else if (myRank === 'mod') note.textContent = 'Signed in as MOD — blacklist, messages and users only.';
+        if (myRank === 'owner') note.textContent = 'Signed in as OWNER — full access. Your powers cannot be restricted.';
+        else if (myRank === 'admin') note.textContent = 'Signed in as ADMIN — your access is set by the owner on the Permissions tab.';
+        else if (myRank === 'mod') note.textContent = 'Signed in as MOD — your access is set by the owner on the Permissions tab.';
         else note.textContent = '';
       }
       const xpPanel = document.getElementById('xpGrantPanel');
-      if (xpPanel) xpPanel.style.display = myRank === 'owner' ? '' : 'none';
+      if (xpPanel) xpPanel.style.display = can('users.give_xp') ? '' : 'none';
+    }
+
+    /* Owner permission matrix: render / save / reset. */
+    function renderPermsMatrix() {
+      const box = document.getElementById('permsMatrix');
+      if (!box) return;
+      let html = '<table><tr><th>Permission</th><th>Admin</th><th>Mod</th></tr>';
+      let lastGroup = '';
+      PERM_DEFS.forEach(p => {
+        if (p.group !== lastGroup) {
+          lastGroup = p.group;
+          html += '<tr><td colspan="3" class="muted"><strong>' + esc(p.group) + '</strong></td></tr>';
+        }
+        const a = effPerm('admin', p.id), m = effPerm('mod', p.id);
+        html += '<tr><td>' + esc(p.label) + '<div class="muted mono">' + esc(p.id) + '</div></td>' +
+          '<td><input type="checkbox" data-rank="admin" data-perm="' + esc(p.id) + '"' + (a ? ' checked' : '') + ' aria-label="admin ' + esc(p.id) + '"></td>' +
+          '<td><input type="checkbox" data-rank="mod" data-perm="' + esc(p.id) + '"' + (m ? ' checked' : '') + ' aria-label="mod ' + esc(p.id) + '"></td></tr>';
+      });
+      setHTMLifChanged(box, html + '</table>');
+    }
+    async function savePerms() {
+      const st = document.getElementById('permsStatus');
+      if (st) st.textContent = 'Saving…';
+      try {
+        const perms = { admin: {}, mod: {} };
+        document.querySelectorAll('#permsMatrix input[type="checkbox"]').forEach(cb => {
+          perms[cb.getAttribute('data-rank')][cb.getAttribute('data-perm')] = cb.checked;
+        });
+        for (const rank of ['admin', 'mod']) {
+          const { error } = await sb.from('rank_perms').upsert({ rank: rank, perms: perms[rank] });
+          if (error) throw error;
+        }
+        await loadPerms();
+        applyRankGating();
+        renderPermsMatrix();
+        if (st) st.textContent = 'Saved ✓';
+        toast('Permissions saved', 'ok');
+      } catch (e) { console.error('save perms failed:', e); if (st) st.textContent = 'Save failed.'; toast('Save failed', 'err'); }
+    }
+    async function resetPerms() {
+      if (!confirm('Reset admin/mod permissions to defaults?')) return;
+      try {
+        for (const rank of ['admin', 'mod']) {
+          const { error } = await sb.from('rank_perms').delete().eq('rank', rank);
+          if (error) throw error;
+        }
+        await loadPerms();
+        applyRankGating();
+        renderPermsMatrix();
+        toast('Permissions reset', 'ok');
+      } catch (e) { console.error('reset perms failed:', e); toast('Reset failed', 'err'); }
     }
 
     // Keys are stored as plaintext uppercase (no hashing anywhere).
@@ -1433,7 +1580,7 @@
       window.location.href = '../games/index.html';
     }
 
-    function openDash() {
+    async function openDash() {
       document.getElementById('gate').style.display = 'none';
       document.getElementById('dash').style.display = 'block';
       document.getElementById('adminLogout').style.display = 'inline-block';
@@ -1446,15 +1593,19 @@
         rp.innerHTML = rankPill(myRank);
         tu.appendChild(rp);
       } catch (e) { console.error('topbar user failed:', e); }
+      await loadPerms();
       applyRankGating();
       initDropdowns();
-      // Mods land on a tab they can actually use. showTab starts that
+      // Land on the first tab this rank can actually use. showTab starts that
       // tab's heartbeat pollers.
-      if (myRank === 'mod') {
-        showTab('blacklist', document.querySelector('.tabs button[data-tab="blacklist"]'));
-      } else {
-        showTab('dashboard', document.querySelector('.tabs button[data-tab="dashboard"]'));
+      const firstTabs = myRank === 'owner' || myRank === 'admin'
+        ? ['dashboard', 'blacklist']
+        : ['dashboard', 'blacklist', 'messages', 'users', 'reports'];
+      let landed = 'blacklist';
+      for (const t of firstTabs) {
+        if (can('tab.' + t)) { landed = t; break; }
       }
+      showTab(landed, document.querySelector('.tabs button[data-tab="' + landed + '"]'));
       // Realtime setup must never abort dashboard init — guard each one.
       try {
         subscribeUsers();
@@ -1469,8 +1620,11 @@
     }
 
     function showTab(name, btn) {
-      const modBlocked = ['requests', 'adminreqs', 'keys', 'troll', 'activity', 'playerdms'];
-      if (myRank === 'mod' && modBlocked.indexOf(name) !== -1) {
+      if (name !== 'perms' && !can('tab.' + name)) {
+        toast('Insufficient rank', 'err');
+        return;
+      }
+      if (name === 'perms' && myRank !== 'owner') {
         toast('Insufficient rank', 'err');
         return;
       }
@@ -1498,8 +1652,9 @@
       if (name === 'users') { startPoller('users', loadUsers, 3000); startPoller('dms', pollDms, 3000); startPoller('watch', loadWatch, 3000); }
       if (name === 'playerdms') startPoller('spydms', loadDmSpy, 3000);
       if (name === 'reports') startPoller('reports', loadReports, 3000);
-      if (name === 'troll') { loadTrollTargets(); startPoller('trollstates', refreshTrollStates, 10000); }
+      if (name === 'troll') { loadTrollTargets(); loadCustomScare(); startPoller('trollstates', refreshTrollStates, 10000); }
       if (name === 'activity') startPoller('activity', loadActivity, 5000);
+      if (name === 'perms') renderPermsMatrix();
     }
 
     /* ---------- dashboard ---------- */
@@ -1865,6 +2020,7 @@
     async function fireInstant(trick, btn) {
       const errBox = document.getElementById('trollErr');
       const okBox = document.getElementById('trollOk');
+      if (!can('troll.fire')) { errBox.textContent = 'Insufficient rank.'; return; }
       const scope = currentScope();
       if (trollMode === 'user' && !scope.target) {
         errBox.textContent = 'Pick a user first.';
@@ -1904,6 +2060,7 @@
     async function toggleTrick(trick) {
       const errBox = document.getElementById('trollErr');
       const okBox = document.getElementById('trollOk');
+      if (!can('troll.fire')) { errBox.textContent = 'Insufficient rank.'; return; }
       const scope = currentScope();
       if (trollMode === 'user' && !scope.target) {
         errBox.textContent = 'Pick a user first.';
@@ -1915,7 +2072,12 @@
       try {
         const payload = { state: next };
         if (trick === 'jumpscare' && next === 'on') {
-          payload.image = document.getElementById('scareImg').value || 'scare1.jpg';
+          const picked = document.getElementById('scareImg').value || 'scare1.jpg';
+          if (picked === 'custom' && !customScareReady) {
+            errBox.textContent = 'Upload a custom image first (or pick a built-in).';
+            return;
+          }
+          payload.image = picked;
         }
         const { error } = await sb.from('troll_events').insert({
           target_username: scope.target,
@@ -1933,6 +2095,86 @@
         errBox.textContent = 'Send failed. Try again.';
         toast('Send failed', 'err');
       }
+    }
+
+    /* ---------- custom jumpscare image (stored in troll_settings) ----------
+       Uploaded files are downscaled in-browser (max 800px, JPEG) so the
+       stored data-URL stays small. Firing with picker = "custom" sends
+       payload.image = "custom" and victims load this image. */
+    let customScareReady = false;
+    async function loadCustomScare() {
+      const wrap = document.getElementById('customScareWrap');
+      if (wrap) wrap.style.display = can('troll.custom_image') ? '' : 'none';
+      if (!can('troll.custom_image')) return;
+      try {
+        const r = await sb.from('troll_settings').select('jumpscare_image').eq('id', 1).maybeSingle();
+        const url = (!r.error && r.data && r.data.jumpscare_image) || null;
+        customScareReady = !!url;
+        const prev = document.getElementById('customScarePreview');
+        if (prev) {
+          if (url) { prev.src = url; prev.style.display = ''; }
+          else prev.style.display = 'none';
+        }
+        const st = document.getElementById('customScareStatus');
+        if (st && !st.textContent) st.textContent = url ? 'Custom image set — pick "Custom upload" above to use it.' : 'No custom image yet.';
+      } catch (e) { console.error('load custom scare failed:', e); }
+    }
+    function downscaleImage(file, maxDim) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+            const w = Math.max(1, Math.round(img.width * scale));
+            const h = Math.max(1, Math.round(img.height * scale));
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            URL.revokeObjectURL(url);
+            resolve(c.toDataURL('image/jpeg', 0.82));
+          } catch (e) { URL.revokeObjectURL(url); reject(e); }
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read that image.')); };
+        img.src = url;
+      });
+    }
+    async function uploadCustomScare() {
+      const st = document.getElementById('customScareStatus');
+      if (!can('troll.custom_image')) { if (st) st.textContent = 'Insufficient rank.'; toast('Insufficient rank', 'err'); return; }
+      const inp = document.getElementById('customScareFile');
+      const f = inp && inp.files && inp.files[0];
+      if (!f) { if (st) st.textContent = 'Choose an image file first.'; return; }
+      if (!/^image\//.test(f.type || '')) { if (st) st.textContent = 'That is not an image file.'; return; }
+      if (f.size > 8 * 1024 * 1024) { if (st) st.textContent = 'File too big (max 8MB).'; return; }
+      if (st) st.textContent = 'Uploading…';
+      try {
+        const dataUrl = await downscaleImage(f, 800);
+        if (dataUrl.length > 700000) { if (st) st.textContent = 'Still too big after shrinking — try a smaller image.'; return; }
+        const { error } = await sb.from('troll_settings').upsert({ id: 1, jumpscare_image: dataUrl });
+        if (error) throw error;
+        customScareReady = true;
+        const prev = document.getElementById('customScarePreview');
+        if (prev) { prev.src = dataUrl; prev.style.display = ''; }
+        if (st) st.textContent = 'Custom image saved ✓ — select "Custom upload" in the picker to fire it.';
+        toast('Custom scare saved', 'ok');
+      } catch (e) { console.error('upload custom scare failed:', e); if (st) st.textContent = 'Upload failed.'; toast('Upload failed', 'err'); }
+    }
+    async function removeCustomScare() {
+      const st = document.getElementById('customScareStatus');
+      if (!can('troll.custom_image')) { if (st) st.textContent = 'Insufficient rank.'; return; }
+      if (!confirm('Remove the custom jumpscare image?')) return;
+      try {
+        const { error } = await sb.from('troll_settings').upsert({ id: 1, jumpscare_image: null });
+        if (error) throw error;
+        customScareReady = false;
+        const prev = document.getElementById('customScarePreview');
+        if (prev) prev.style.display = 'none';
+        const inp = document.getElementById('customScareFile');
+        if (inp) inp.value = '';
+        if (st) st.textContent = 'Custom image removed.';
+        toast('Custom scare removed', 'ok');
+      } catch (e) { console.error('remove custom scare failed:', e); if (st) st.textContent = 'Remove failed.'; }
     }
 
     /* Send Trick button removed — cards fire directly via toggleTrick (toggles) and fireInstant (one-shots). */
@@ -1995,7 +2237,7 @@
     /* ---------- bulk key generation ---------- */
 
     function openBulkModal() {
-      if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
+      if (!can('keys.create')) { toast('Insufficient rank', 'err'); return; }
       document.getElementById('bulkErr').textContent = '';
       document.getElementById('bulkOverlay').classList.add('show');
     }
@@ -2008,7 +2250,7 @@
     async function confirmBulkGenerate() {
       const btn = document.getElementById('bulkGoBtn');
       const errBox = document.getElementById('bulkErr');
-      if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
+      if (!can('keys.create')) { toast('Insufficient rank', 'err'); return; }
       errBox.textContent = '';
       const rankSel = document.getElementById('bulkRankM');
       const rank = rankSel ? rankSel.value : 'user';
@@ -2261,7 +2503,7 @@
     }
 
     async function approveAdminRequest(id, btn) {
-      if (myRank !== 'owner' && myRank !== 'admin') { toast('Insufficient rank', 'err'); return; }
+      if (!can('adminreqs.decide')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const { data, error } = await sb
@@ -2281,7 +2523,7 @@
     }
 
     async function denyAdminRequest(id, btn) {
-      if (myRank !== 'owner' && myRank !== 'admin') { toast('Insufficient rank', 'err'); return; }
+      if (!can('adminreqs.decide')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const { data, error } = await sb
@@ -2341,6 +2583,7 @@
       const errBox = document.getElementById('approveErr');
       const btn = document.getElementById('approveConfirmBtn');
       errBox.textContent = '';
+      if (!can('requests.decide')) { errBox.textContent = 'Insufficient rank.'; return; }
       if (!pendingApproveId) { errBox.textContent = 'No request selected.'; return; }
       const custom = document.getElementById('approveCustomKey').value;
       if (custom.trim() && !/^[A-Za-z0-9-]{4,64}$/.test(custom.trim())) {
@@ -2437,7 +2680,7 @@
     // Standalone key creation (no prior request). Blank custom = auto.
     async function generateStandaloneKey() {
       const btn = document.getElementById('genKeyBtn');
-      if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
+      if (!can('keys.create')) { toast('Insufficient rank', 'err'); return; }
       const isAdminBox = document.getElementById('genAdmin').checked;
       const rankSel = document.getElementById('genRank');
       let rank = rankSel ? rankSel.value : 'user';
@@ -2489,6 +2732,7 @@
     }
 
     async function denyRequest(id, btn, reason) {
+      if (!can('requests.decide')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const patch = { status: 'denied', status_updated_at: new Date().toISOString() };
@@ -2711,6 +2955,7 @@
     async function addBlacklist() {
       const username = document.getElementById('blUser').value.trim();
       const reason = document.getElementById('blReason').value.trim();
+      if (!can('blacklist.manage')) { toast('Insufficient rank', 'err'); return; }
       if (!username) { toast('Enter a username first.', 'err'); return; }
       try {
         const { error } = await sb.from('blacklist').insert({ username, reason });
@@ -2726,6 +2971,7 @@
     }
 
     async function removeBlacklist(id, btn) {
+      if (!can('blacklist.manage')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const { error } = await sb.from('blacklist').delete().eq('id', id);
@@ -2746,6 +2992,7 @@
       const content = input.value.trim();
       document.getElementById('msgError').textContent = '';
       document.getElementById('msgOk').textContent = '';
+      if (!can('announce.post')) { document.getElementById('msgError').textContent = 'Insufficient rank.'; return; }
       if (!content) { document.getElementById('msgError').textContent = 'Type a message first.'; return; }
       let postedBy = 'admin';
       try { postedBy = localStorage.getItem(LS_USER) || 'admin'; } catch (e) {}
@@ -2805,7 +3052,7 @@
           html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td>' + esc(a.content) + tag +
             '</td><td>' + esc(a.posted_by) + ' ' + rankPill(a.rank || 'user') +
             '</td><td class="muted">' + esc(new Date(a.created_at).toLocaleString()) +
-            '</td><td>' + (myRank === 'mod'
+            '</td><td>' + (!can('announce.delete')
               ? '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Delete</button>'
               : '<button class="btn small danger" onclick="deleteAnnouncement(' + a.id + ', this)">Delete</button>') + '</td></tr>';
         });
@@ -2858,7 +3105,7 @@
     }
 
     async function deleteAnnouncement(id, btn) {
-      if (myRank === 'mod') { toast('Insufficient rank', 'err'); return; }
+      if (!can('announce.delete')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const { data, error } = await sb
@@ -2909,8 +3156,10 @@
           html += '<tr class="arow" style="animation-delay:' + (mi * 40) + 'ms"><td>' + esc(m.username) + (m.rank && m.rank !== 'user' ? ' ' + rankPill(m.rank) : '') +
             '</td><td>' + esc(m.content) +
             '</td><td class="muted">' + esc(new Date(m.created_at).toLocaleString()) +
-            '</td><td><button class="btn small danger" onclick="deleteChatMessage(' +
-            m.id + ', this)">Delete</button></td></tr>';
+            '</td><td>' + (!can('chat.delete')
+              ? '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Delete</button>'
+              : '<button class="btn small danger" onclick="deleteChatMessage(' +
+              m.id + ', this)">Delete</button>') + '</td></tr>';
         });
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
@@ -2920,6 +3169,7 @@
     }
 
     async function deleteChatMessage(id, btn) {
+      if (!can('chat.delete')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const { data, error } = await sb
@@ -2977,9 +3227,9 @@
           setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>');
           return;
         }
-        // Owner-only: map active usernames back to license_keys ranks.
-        let rankMap = {};
-        if (myRank === 'owner') {
+// Rank map for whoever can set ranks (owner by default).
+let rankMap = {};
+if (can('users.set_rank')) {
           try {
             const r = await sb.from('license_keys').select('used_by, rank');
             if (r.error) throw r.error;
@@ -3026,15 +3276,14 @@
         const stale = (() => { try { return isNaN(Date.now() - new Date(u.last_seen).getTime()) || (Date.now() - new Date(u.last_seen).getTime() > 90000); } catch (e) { return true; } })();
         const av = avatarFor(u.username);
         let rankCell;
-        if (myRank === 'owner' && !isMe && urank !== 'owner') {
+        if (can('users.set_rank') && !isMe && urank !== 'owner') {
           rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>';
         } else {
           rankCell = rankPill(urank) + (isMe ? ' <span class="muted">you</span>' : '');
         }
         const wc = warnCounts[u.username] || 0;
-        // Staff can only moderate down: owner hits anyone but fellow owners
-        // and self; admin/mod only hit plain users.
-        const canMod = !isMe && urank !== 'owner' && (myRank === 'owner' || urank === 'user');
+        // Staff can only moderate down unless the matrix grants staff targets.
+        const canMod = canModerateTarget(u.username);
         const warnBtn = canMod
           ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="warnUser(this)">Warn' + (wc > 0 ? ' (' + wc + ')' : '') + '</button>'
           : (wc > 0 ? '<span class="pill rank-user">⚠ ' + wc + '</span>' : '');
@@ -3046,10 +3295,10 @@
             '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
             '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 60)">Ban 1h</button>'
           : '';
-          const xpBtn = (myRank === 'owner' && !isMe && urank !== 'owner')
+          const xpBtn = (can('users.give_xp') && !isMe && urank !== 'owner')
             ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">＋XP</button>'
             : '';
-          const watchBtn = (myRank === 'owner' && !isMe)
+          const watchBtn = (can('users.watch') && !isMe)
             ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="openWatch(this.getAttribute(\'data-user\'))">👁 Watch</button>'
             : '';
         html += '<div class="user-card' + (stale ? ' stale' : '') + '" style="animation-delay:' + Math.min(ui, 8) * 40 + 'ms">' +
@@ -3106,7 +3355,7 @@
     });
 
     async function setUserRank(username, rank, dd) {
-      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return; }
+      if (!can('users.set_rank')) { toast('Insufficient rank', 'err'); return; }
       if (!username || URANK_OPTS.indexOf(rank) === -1) return;
       try {
         const { data, error } = await sb
@@ -3134,6 +3383,7 @@
     async function warnUser(btn) {
       const username = btn.getAttribute('data-user');
       if (!username) return;
+      if (!canModerateTarget(username)) { toast('Insufficient rank', 'err'); return; }
       const reason = prompt('Warn ' + username + ' — reason (optional):');
       if (reason === null) return;
       try {
@@ -3153,6 +3403,7 @@
 
     async function muteUser(username, minutes) {
       if (!username) return;
+      if (!canModerateTarget(username)) { toast('Insufficient rank', 'err'); return; }
       try {
         const until = new Date(Date.now() + minutes * 60000).toISOString();
         const { data, error } = await sb
@@ -3172,6 +3423,7 @@
     async function unmuteUser(btn) {
       const username = btn.getAttribute('data-user');
       if (!username) return;
+      if (!canModerateTarget(username)) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const { error } = await sb
@@ -3192,6 +3444,7 @@
     async function gameBan(btn, minutes) {
       const username = btn.getAttribute('data-user');
       if (!username) return;
+      if (!canModerateTarget(username)) { toast('Insufficient rank', 'err'); return; }
       if (!confirm('Ban ' + username + ' from games for ' + minutes + ' minutes? They stay logged in.')) return;
       setBtnLoading(btn, true);
       try {
@@ -3242,7 +3495,7 @@
     /* ---------- owner XP grants (owner only) ---------- */
 
     async function grantXp(username, amount) {
-      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return false; }
+      if (!can('users.give_xp')) { toast('Insufficient rank', 'err'); return false; }
       if (!username || !(amount > 0)) return false;
       try {
         const cur = await sb.from('xp_balances').select('balance, lifetime').eq('username', username).maybeSingle();
@@ -3272,7 +3525,7 @@
     }
 
     async function grantXpEveryone(which, btn) {
-      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return; }
+      if (!can('users.give_xp')) { toast('Insufficient rank', 'err'); return; }
       const inp = document.getElementById('xpGrantAmount');
       let amount = inp ? parseInt(inp.value, 10) : NaN;
       if (isNaN(amount) || amount <= 0 || amount > 10000) { toast('Enter 1–10000 XP.', 'err'); return; }
@@ -3407,7 +3660,7 @@
     async function loadDmSpy() {
       const box = document.getElementById('spyList');
       if (!box) return;
-      if (myRank !== 'owner' && myRank !== 'admin') {
+      if (!can('tab.playerdms')) {
         box.innerHTML = '<div class="empty-state"><div class="big">🔒</div>Insufficient rank.</div>';
         return;
       }
@@ -3449,7 +3702,7 @@
     }
 
     async function openSpyThread(btn) {
-      if (myRank !== 'owner' && myRank !== 'admin') { toast('Insufficient rank', 'err'); return; }
+      if (!can('tab.playerdms')) { toast('Insufficient rank', 'err'); return; }
       const a = btn.getAttribute('data-a');
       const b = btn.getAttribute('data-b');
       spyPair = [a, b];
@@ -3625,7 +3878,7 @@
     let watchTarget = null;
 
     function openWatch(username) {
-      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return; }
+      if (!can('users.watch')) { toast('Insufficient rank', 'err'); return; }
       if (!username) return;
       watchTarget = username;
       document.getElementById('watchName').textContent = username;
@@ -3642,7 +3895,7 @@
     async function loadWatch() {
       const body = document.getElementById('watchBody');
       if (!body || !watchTarget) return;
-      if (myRank !== 'owner') return;
+      if (!can('users.watch')) return;
       const u = watchTarget;
       try {
         const now = new Date().toISOString();

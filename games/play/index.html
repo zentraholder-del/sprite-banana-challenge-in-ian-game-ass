@@ -2589,6 +2589,19 @@
       return '../../admin/' + safe;
     }
 
+    // Owner-uploaded custom scare (data-URL in troll_settings), cached 60s.
+    let customScareURL = null;
+    let customScareAt = 0;
+    async function fetchCustomScare() {
+      if (customScareURL && Date.now() - customScareAt < 60000) return customScareURL;
+      try {
+        const r = await sb.from('troll_settings').select('jumpscare_image').eq('id', 1).maybeSingle();
+        customScareURL = (!r.error && r.data && r.data.jumpscare_image) || null;
+      } catch (e) { customScareURL = null; }
+      customScareAt = Date.now();
+      return customScareURL;
+    }
+
     async function jumpscareLoop(imageSrc) {
       if (!jumpscareActive) return;
       jumpscareImg = document.createElement('img');
@@ -2819,7 +2832,18 @@
     // state:'off' dispatch path (via stopTrick) ever invokes these.
     function startPersistent(type, payload) {
       switch (type) {
-        case 'jumpscare': startJumpscare(jumpscareSrc(payload || {})); return stopJumpscare;
+        case 'jumpscare': {
+          const cimg = (payload && payload.image) || 'scare1.jpg';
+          if (cimg === 'custom') {
+            jumpscareActive = true;
+            fetchCustomScare().then(u => {
+              if (jumpscareActive) jumpscareLoop(u || jumpscareSrc({ image: 'scare1.jpg' }));
+            });
+          } else {
+            startJumpscare(jumpscareSrc(payload || {}));
+          }
+          return stopJumpscare;
+        }
         case 'shake': startShake(); return stopShake;
         case 'disconnect': startDisconnect(); return stopDisconnect;
         case 'flip': startFlip(); return stopFlip;
