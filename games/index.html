@@ -754,6 +754,151 @@
       }, 3000);
     }
 
+    /* ---------- device fingerprint (anti key-sharing lock) ----------
+       ~15 independent signals hashed into one device id. Same device
+       returning gets back in (token rotates); any other device on an
+       active key stays blocked. No permissions needed, nothing uploaded
+       except the final hash stored on the key's own row. */
+
+    async function sha256hexFp(str) {
+      const data = new TextEncoder().encode(str);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function canvasFp() {
+      try {
+        const c = document.createElement('canvas');
+        c.width = 280; c.height = 60;
+        const x = c.getContext('2d');
+        x.textBaseline = 'top';
+        x.font = '14px Arial';
+        x.fillStyle = '#f60';
+        x.fillRect(10, 10, 60, 30);
+        x.fillStyle = '#069';
+        x.fillText('Lightspeed <fp> 123', 8, 8);
+        x.strokeStyle = '#000';
+        x.beginPath();
+        x.arc(200, 30, 20, 0, Math.PI * 2);
+        x.stroke();
+        const g = x.createLinearGradient(0, 0, 280, 0);
+        g.addColorStop(0, '#ff0000');
+        g.addColorStop(1, '#0000ff');
+        x.fillStyle = g;
+        x.fillRect(0, 50, 280, 10);
+        return c.toDataURL();
+      } catch (e) { return 'nocanvas'; }
+    }
+
+    function webglFp() {
+      try {
+        const c = document.createElement('canvas');
+        const gl = c.getContext('webgl2') || c.getContext('webgl');
+        if (!gl) return 'nowebgl';
+        const parts = [];
+        parts.push(gl.getParameter(gl.VERSION));
+        parts.push(gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
+        parts.push(gl.getParameter(gl.VENDOR));
+        parts.push(gl.getParameter(gl.RENDERER));
+        parts.push(gl.getParameter(gl.MAX_TEXTURE_SIZE));
+        parts.push(gl.getParameter(gl.MAX_VIEWPORT_DIMS));
+        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+        if (dbg) {
+          parts.push(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL));
+          parts.push(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
+        }
+        const exts = gl.getSupportedExtensions() || [];
+        parts.push(exts.slice().sort().join(','));
+        try {
+          const prec = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+          if (prec) parts.push([prec.precision, prec.rangeMin, prec.rangeMax].join('/'));
+        } catch (e) {}
+        parts.push(gl instanceof WebGL2RenderingContext ? 'webgl2' : 'webgl1');
+        return parts.join('~');
+      } catch (e) { return 'webgl-err'; }
+    }
+
+    function audioFp() {
+      // Offline-rendered oscillator fingerprint — no sound ever plays.
+      try {
+        const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!AC) return Promise.resolve('noaudioctx');
+        const ctx = new AC(1, 5000, 44100);
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = 1000;
+        const comp = ctx.createDynamicsCompressor();
+        osc.connect(comp);
+        comp.connect(ctx.destination);
+        osc.start(0);
+        return ctx.startRendering().then(buf => {
+          const d = buf.getChannelData(0);
+          let h = 0;
+          for (let i = 0; i < d.length; i += 7) {
+            h = ((h * 31) + Math.floor(d[i] * 100000)) | 0;
+          }
+          return 'audio:' + (h >>> 0).toString(16);
+        }).catch(() => 'audio-err');
+      } catch (e) { return Promise.resolve('audio-err'); }
+    }
+
+    function fontFp() {
+      try {
+        const base = ['monospace', 'sans-serif', 'serif'];
+        const test = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia',
+          'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Palatino', 'Garamond', 'Tahoma',
+          'Calibri', 'Cambria', 'Consolas', 'Segoe UI', 'Helvetica', 'Menlo',
+          'Roboto', 'Ubuntu', 'Lato', 'Open Sans', 'Noto Sans', 'Symbol', 'Webdings'];
+        const c = document.createElement('canvas');
+        const x = c.getContext('2d');
+        const probe = 'mmmmmmmmmmlli';
+        const widths = {};
+        base.forEach(b => { x.font = '72px ' + b; widths[b] = x.measureText(probe).width; });
+        const present = test.filter(f => base.some(b => {
+          x.font = '72px "' + f + '", ' + b;
+          return x.measureText(probe).width !== widths[b];
+        }));
+        // NOTE: document.fonts.size intentionally excluded — it changes as
+        // webfonts finish loading, which would destabilise the fingerprint.
+        return present.sort().join(',');
+      } catch (e) { return 'fonts-err'; }
+    }
+
+    async function getDeviceFingerprint() {
+      const nav = navigator;
+      const parts = [
+        'ua=' + (nav.userAgent || ''),
+        'plat=' + (nav.platform || ''),
+        'vendor=' + (nav.vendor || ''),
+        'lang=' + (nav.language || '') + '/' + ((nav.languages || []).join(',')),
+        'hw=' + (nav.hardwareConcurrency || '') + '/' + (nav.deviceMemory || ''),
+        'touch=' + (nav.maxTouchPoints || 0),
+        'dnt=' + (nav.doNotTrack || ''),
+        'webdriver=' + (!!nav.webdriver),
+        'scr=' + screen.width + 'x' + screen.height + 'x' + screen.colorDepth + '@' + (window.devicePixelRatio || 1),
+        'avail=' + (screen.availWidth || '') + 'x' + (screen.availHeight || ''),
+        'tz=' + new Date().getTimezoneOffset() + '/' + ((typeof Intl !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone) || ''),
+        'ck=' + (navigator.cookieEnabled ? 1 : 0),
+        'plugins=' + ((navigator.plugins && navigator.plugins.length) || 0),
+        'canvas=' + canvasFp(),
+        'webgl=' + webglFp(),
+        'fonts=' + fontFp()
+      ];
+      let audio = 'audio:skip';
+      // No timeout race here on purpose: a race can resolve differently on
+      // fast vs slow runs and would destabilise the fingerprint (same device,
+      // different hash = legit user locked out). Offline renders complete.
+      try { audio = await audioFp(); } catch (e) { audio = 'audio-err'; }
+      parts.push(audio);
+      const raw = parts.join('||');
+      try {
+        if (window.crypto && crypto.subtle) return await sha256hexFp(raw);
+      } catch (e) {}
+      let h1 = 0x811c9dc5;
+      for (let i = 0; i < raw.length; i++) { h1 ^= raw.charCodeAt(i); h1 = Math.imul(h1, 0x01000193) >>> 0; }
+      return 'fnv1a:' + h1.toString(16);
+    }
+
     function showError(msg) {
       const err = document.getElementById('error');
       err.textContent = msg;
@@ -887,7 +1032,7 @@
         const keyValue = rawKey.toUpperCase();
         const { data: row, error: keyErr } = await sb
           .from('license_keys')
-          .select('id, is_active, is_admin, rank, session_token, used_by')
+          .select('id, is_active, is_admin, rank, session_token, used_by, device_fp')
           .eq('key', keyValue)
           .maybeSingle();
         if (keyErr) throw keyErr;
@@ -904,20 +1049,32 @@
           setLoginBusy(false);
           return;
         }
+        // 2b. Device fingerprint: same device rotates back in, any other
+        // device on an active key is rejected. Legacy keys without a
+        // recorded fingerprint adopt the first device that logs in.
+        showStatus('Checking this device…');
+        const fp = await getDeviceFingerprint();
         if (row.session_token) {
-          showError('This key has already been activated on another device.');
-          setLoginBusy(false);
-          return;
+          const known = row.device_fp || null;
+          if (known && fp && fp !== known) {
+            showError('This key is already active on another device.');
+            setLoginBusy(false);
+            return;
+          }
+          showStatus('Welcome back — restoring your session…');
         }
 
-        // 3. First activation: claim the key with a fresh session token
+        // 3. Claim the key with a fresh session token, stamped with this
+        // device's fingerprint (first activation stores it, same-device
+        // restores adopt/keep it, other devices never reach this line).
         const token = crypto.randomUUID();
         const { error: updErr } = await sb
           .from('license_keys')
           .update({
             session_token: token,
             used_by: username,
-            activated_at: new Date().toISOString()
+            activated_at: new Date().toISOString(),
+            device_fp: fp
           })
           .eq('id', row.id);
         if (updErr) throw updErr;

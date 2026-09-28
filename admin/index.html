@@ -2628,7 +2628,7 @@
       try {
         const { data, error } = await sb
           .from('license_keys')
-          .update({ used_by: null, session_token: null, activated_at: null })
+          .update({ used_by: null, session_token: null, activated_at: null, device_fp: null })
           .eq('id', id)
           .select('id');
         if (error) throw error;
