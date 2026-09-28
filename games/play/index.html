@@ -751,6 +751,11 @@
     .pinned .ahead { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; font-size: 11px; color: #6b6b8a; }
     .pinned .ahead button { margin-left: auto; background: none; border: none; color: #6b6b8a; font-size: 14px; cursor: pointer; min-width: 44px; min-height: 44px; }
     .pinned .ahead button:hover { color: #e2e2f0; }
+    /* Sticky site-wide announcement bar: stays glued to the viewport top
+       while scrolling. Empty (no announcements) = hidden, no layout shift. */
+    #announceBar { position: sticky; top: 0; z-index: 95; }
+    #announceBar:empty { display: none; }
+    #announceBar .pinned { border-radius: 0; border-left: none; border-right: none; border-top: none; }
     .games-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
     @media (min-width: 1150px) {
       .games-grid { grid-template-columns: repeat(4, 1fr); }
@@ -1187,6 +1192,8 @@
       <button class="mini-btn" onclick="openShop()">🛒 Shop</button>
     </div>
   </nav>
+
+  <div id="announceBar" aria-live="polite"></div>
 
   <div id="sideBackdrop" onclick="toggleSidebar(false)"></div>
 
@@ -3048,10 +3055,16 @@
         if (error) throw error;
         const hidden = dismissedAnnounceIds();
         const rows = (data || []).filter(a => hidden.indexOf(a.id) === -1);
+        if (rows.length === 0) {
+          // Nothing visible: clear both slots (also wipes the first-load
+          // skeleton) instead of returning early and leaving stale cards.
+          box.innerHTML = '';
+          renderAnnounceBar(rows);
+          return;
+        }
         const asig = 'ann:' + rows.map(a => a.id + ':' + (a.created_at || '')).join(',');
         if (sameAsLast(box, asig)) return;
         box.innerHTML = '';
-        if (rows.length === 0) return;
         rows.forEach(a => {
           const card = document.createElement('div');
           card.className = 'pinned';
@@ -3080,12 +3093,51 @@
           card.appendChild(body);
           box.appendChild(card);
         });
+        renderAnnounceBar(rows);
       } catch (e) {
         console.error('announcements failed:', e);
         if (box.querySelector('.skel')) {
           box.innerHTML = '<div class="pinned">Could not load announcements. <button class="mini-btn ghost" onclick="loadAnnouncements()">Retry</button></div>';
         }
       }
+    }
+
+    /* Sticky top banner: mirrors the newest visible announcement. Shares
+       the same per-session dismiss store as the chat copies. */
+    function renderAnnounceBar(rows) {
+      const bar = document.getElementById('announceBar');
+      if (!bar) return;
+      const top = (rows && rows.length) ? rows[0] : null;
+      const sig = 'annbar:' + (top ? top.id + ':' + (top.created_at || '') : 'none');
+      if (sameAsLast(bar, sig)) return;
+      bar.innerHTML = '';
+      if (!top) return;
+      const card = document.createElement('div');
+      card.className = 'pinned';
+      const head = document.createElement('div');
+      head.className = 'ahead';
+      const who = document.createElement('strong');
+      who.textContent = '📌 ' + (top.posted_by || 'admin');
+      head.appendChild(who);
+      const badge = document.createElement('span');
+      badge.innerHTML = rankBadgeHtml(top.rank);
+      head.appendChild(badge);
+      const when = document.createElement('span');
+      if (top.created_at) {
+        when.textContent = timeAgo(top.created_at);
+        when.title = formatTime(top.created_at);
+      }
+      head.appendChild(when);
+      const x = document.createElement('button');
+      x.textContent = '✕';
+      x.setAttribute('aria-label', 'Dismiss announcement');
+      x.onclick = () => dismissAnnounce(top.id);
+      head.appendChild(x);
+      const body = document.createElement('div');
+      body.textContent = top.content || '';
+      card.appendChild(head);
+      card.appendChild(body);
+      bar.appendChild(card);
     }
 
     function subscribeAnnouncements() {
