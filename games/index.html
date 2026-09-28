@@ -730,6 +730,16 @@
     const LS_USER = 'ls_username';
     const LS_RANK = 'user_rank';
 
+    // Typing-safe rendering: only touch the DOM when the markup actually
+    // changed, so heartbeat polls never steal focus or reset scroll.
+    function setHTMLifChanged(el, html) {
+      if (!el) return false;
+      if (el._lastHtml === html) return false;
+      el._lastHtml = html;
+      el.innerHTML = html;
+      return true;
+    }
+
     function toast(msg, kind) {
       const wrap = document.getElementById('toastWrap');
       if (!wrap) return;
@@ -877,7 +887,7 @@
         const keyValue = rawKey.toUpperCase();
         const { data: row, error: keyErr } = await sb
           .from('license_keys')
-          .select('id, is_active, is_admin, rank, session_token')
+          .select('id, is_active, is_admin, rank, session_token, used_by')
           .eq('key', keyValue)
           .maybeSingle();
         if (keyErr) throw keyErr;
@@ -1046,7 +1056,7 @@
       if (!wrap) return;
       let name = null;
       try { name = localStorage.getItem('pending_request_name'); } catch (e) {}
-      if (!name) { wrap.innerHTML = ''; return; }
+      if (!name) { setHTMLifChanged(wrap, ''); return; }
       // A dismissed denial stays dismissed.
       let dismissed = null;
       try { dismissed = localStorage.getItem('request_dismissed_' + name); } catch (e) {}
@@ -1059,12 +1069,13 @@
           .limit(1)
           .maybeSingle();
         if (error) throw error;
-        if (!data) { wrap.innerHTML = ''; return; }
+        if (!data) { setHTMLifChanged(wrap, ''); return; }
+        let html = '';
         if (data.status === 'pending') {
-          wrap.innerHTML = '<div class="req-banner muted-note">Your request is pending review…</div>';
+          html = '<div class="req-banner muted-note">Your request is pending review…</div>';
         } else if (data.status === 'denied') {
-          if (dismissed) { wrap.innerHTML = ''; return; }
-          wrap.innerHTML = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
+          if (dismissed) { setHTMLifChanged(wrap, ''); return; }
+          html = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
             '<div style="margin-top:10px"><button class="mini-btn ghost" onclick="dismissRequestBanner()">Dismiss</button></div></div>';
         } else if (data.status === 'approved') {
           let keyText = '';
@@ -1080,19 +1091,20 @@
           } catch (e) {}
           approvedKey = keyText;
           if (keyText) {
-            wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
+            html = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
               '<div style="margin-top:10px"><button class="mini-btn" onclick="openApprovedModal()">View key</button></div></div>';
             if (!approvedShown) {
               approvedShown = true;
               openApprovedModal();
             }
           } else {
-            wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
+            html = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
               '<div class="muted-note" style="margin-top:8px">Key is being prepared — check back shortly.</div></div>';
           }
         } else {
-          wrap.innerHTML = '';
+          html = '';
         }
+        setHTMLifChanged(wrap, html);
       } catch (e) {
         console.error('request status failed:', e);
         if (wrap && !wrap.innerHTML) {
@@ -1107,7 +1119,7 @@
         if (name) localStorage.setItem('request_dismissed_' + name, '1');
       } catch (e) {}
       const wrap = document.getElementById('reqStatusWrap');
-      if (wrap) wrap.innerHTML = '';
+      if (wrap) setHTMLifChanged(wrap, '');
     }
 
     function copyApprovedKey() {

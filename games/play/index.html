@@ -709,11 +709,13 @@
     .side-stat b { color: #e2e2f0; }
     .side-stat .logout-btn { width: 100%; margin-top: 10px; }
     #chatSide { flex: 0 0 360px; position: sticky; top: 84px; min-width: 0; }
+    #chatSide { display: contents; }
     #chatSide #chatPanel {
-      position: relative; width: 100%; max-height: none;
-      height: calc(100vh - 170px); min-height: 420px; max-height: 760px;
-      display: flex;
+      position: fixed; right: 22px; bottom: 86px; z-index: 120;
+      width: min(360px, calc(100vw - 44px)); height: auto; max-height: 70vh;
+      display: none;
     }
+    #chatSide #chatPanel.open { display: flex; }
     #hamBtn, #sideBackdrop { display: none; }
     .chat-count {
       position: absolute; top: -6px; right: -6px;
@@ -757,13 +759,9 @@
       .games-grid { grid-template-columns: repeat(5, 1fr); }
     }
     @media (max-width: 1080px) {
-      #chatSide { display: contents; }
       #chatSide #chatPanel {
-        position: fixed; right: 22px; bottom: 86px; z-index: 120;
-        width: min(360px, calc(100vw - 44px)); height: auto; max-height: 70vh;
-        display: none;
+        width: min(360px, calc(100vw - 44px)); max-height: 70vh;
       }
-      #chatSide #chatPanel.open { display: flex; }
     }
     @media (max-width: 820px) {
       .shell { padding: 16px 16px 32px; }
@@ -1566,7 +1564,6 @@
     function chatPanelVisible() {
       const panel = document.getElementById('chatPanel');
       if (!panel) return false;
-      if (window.innerWidth > 1080) return true; // docked sidebar panel
       return panel.classList.contains('open');
     }
 
@@ -1866,6 +1863,8 @@
           if (r.error) throw r.error;
           rows = (r.data || []).map(x => ({ username: x.username, xp: x.lifetime || 0 }));
         }
+        const sig = 'xp:' + xpBoardMode + ':' + rows.map(r => (r.username || '') + '=' + (r.xp || 0)).join(',');
+        if (sameAsLast(box, sig)) return;
         box.innerHTML = '';
         if (rows.length === 0) {
           box.innerHTML = '<div style="font-size:13px;color:#6b6b8a">No XP yet — play games to earn!</div>';
@@ -2250,6 +2249,8 @@
           if (!c.error) (c.data || []).forEach(r => { claimed[r.quest_key] = true; });
         }
       } catch (e) { console.error('quest claims failed:', e); }
+      const sig = 'quests:' + ds + ':' + vals.join(',') + ':' + defs.map(q => claimed[q.key] ? '1' : '0').join('');
+      if (sameAsLast(box, sig)) return;
       box.innerHTML = '';
       defs.forEach((q, i) => {
         const v = Math.min(vals[i], q.goal);
@@ -2330,6 +2331,7 @@
     function renderTrivia() {
       const box = document.getElementById('triviaBox');
       if (!box) return;
+      if (sameAsLast(box, 'trivia:' + triviaHourId())) { box.style.display = 'block'; return; }
       const t = triviaNow();
       box.style.display = 'block';
       box.innerHTML = '';
@@ -2869,7 +2871,7 @@
       if (!wrap) return;
       let name = null;
       try { name = localStorage.getItem('pending_request_name'); } catch (e) {}
-      if (!name) { wrap.innerHTML = ''; return; }
+      if (!name) { setHTMLifChanged(wrap, ''); return; }
       let dismissed = null;
       try { dismissed = localStorage.getItem('request_dismissed_' + name); } catch (e) {}
       try {
@@ -2881,10 +2883,11 @@
           .limit(1)
           .maybeSingle();
         if (error) throw error;
-        if (!data) { wrap.innerHTML = ''; return; }
+        if (!data) { setHTMLifChanged(wrap, ''); return; }
+        let html = '';
         if (data.status === 'denied') {
-          if (dismissed) { wrap.innerHTML = ''; return; }
-          wrap.innerHTML = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
+          if (dismissed) { setHTMLifChanged(wrap, ''); return; }
+          html = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
             '<div style="margin-top:10px"><button class="mini-btn ghost" onclick="dismissPlayBanner()">Dismiss</button></div></div>';
         } else if (data.status === 'approved') {
           let keyText = '';
@@ -2900,19 +2903,20 @@
           } catch (e) {}
           playApprovedKey = keyText;
           if (keyText) {
-            wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
+            html = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
               '<div style="margin-top:10px"><button class="mini-btn" onclick="openApprovedModal()">View key</button></div></div>';
             if (!playApprovedShown) {
               playApprovedShown = true;
               openApprovedModal();
             }
           } else {
-            wrap.innerHTML = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
+            html = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
               '<div style="margin-top:8px;color:#6b6b8a">Key is being prepared — check back shortly.</div></div>';
           }
         } else {
-          wrap.innerHTML = '';
+          html = '';
         }
+        setHTMLifChanged(wrap, html);
       } catch (e) {
         console.error('play request status failed:', e);
       }
@@ -2924,7 +2928,7 @@
         if (name) localStorage.setItem('request_dismissed_' + name, '1');
       } catch (e) {}
       const wrap = document.getElementById('reqBanner');
-      if (wrap) wrap.innerHTML = '';
+      if (wrap) setHTMLifChanged(wrap, '');
     }
 
     function copyPlayKey() {
@@ -3044,6 +3048,8 @@
         if (error) throw error;
         const hidden = dismissedAnnounceIds();
         const rows = (data || []).filter(a => hidden.indexOf(a.id) === -1);
+        const asig = 'ann:' + rows.map(a => a.id + ':' + (a.created_at || '')).join(',');
+        if (sameAsLast(box, asig)) return;
         box.innerHTML = '';
         if (rows.length === 0) return;
         rows.forEach(a => {
@@ -3155,6 +3161,9 @@
     function renderStaffBar(sessions, staffKeys) {
       const bar = document.getElementById('staffBar');
       if (!bar) return;
+      const sig = 'staff:' + sessions.map(s => (s.username || '') + '@' + (s.current_game || '')).sort().join(',') +
+        '|' + staffKeys.map(k => (k.used_by || '') + ':' + (k.rank || '')).sort().join(',');
+      if (sameAsLast(bar, sig)) return;
       const online = {};
       sessions.forEach(s => { if (s.username) online[s.username] = true; });
       const present = staffKeys.filter(k => k.used_by && online[k.used_by]);
@@ -3196,6 +3205,8 @@
     function renderLeaderboard(rows) {
       const box = document.getElementById('leaderList');
       if (!box) return;
+      const sig = 'board:' + rows.map(r => (r.username || '') + '=' + (r.seconds || 0)).join(',');
+      if (sameAsLast(box, sig)) return;
       box.innerHTML = '';
       if (rows.length === 0) {
         box.innerHTML = '<div style="font-size:13px;color:#6b6b8a">No playtime yet today — be the first!</div>';
@@ -3372,6 +3383,9 @@
     function renderBanBanner() {
       const wrap = document.getElementById('banBanner');
       if (!wrap) return;
+      const sig = 'ban:' + (myGameBan && myGameBan.expires_at && new Date(myGameBan.expires_at).getTime() > Date.now()
+        ? (myGameBan.expires_at + '|' + (myGameBan.reason || '')) : 'none');
+      if (sameAsLast(wrap, sig)) return;
       wrap.innerHTML = '';
       if (myGameBan && myGameBan.expires_at && new Date(myGameBan.expires_at).getTime() > Date.now()) {
         const card = document.createElement('div');
@@ -3405,6 +3419,26 @@
         renderBanBanner();
         return false;
       } catch (e) { console.error('ban check failed:', e); }
+      return false;
+    }
+
+    // Typing-safe rendering: only touch the DOM when the markup actually
+    // changed, so heartbeat polls never steal focus or reset scroll.
+    // (Timers stay exactly as they are — same 3s cadence, quieter DOM.)
+    function setHTMLifChanged(el, html) {
+      if (!el) return false;
+      if (el._lastHtml === html) return false;
+      el._lastHtml = html;
+      el.innerHTML = html;
+      return true;
+    }
+
+    // Same idea for DOM-built renderers: skip the whole rebuild when the
+    // underlying data signature is unchanged.
+    function sameAsLast(el, sig) {
+      if (!el) return true;
+      if (el._lastSig === sig) return true;
+      el._lastSig = sig;
       return false;
     }
 

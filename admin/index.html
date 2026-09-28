@@ -1085,6 +1085,11 @@
           <span class="muted">Owner-only XP grants</span>
         </div>
         <div id="userList"><p class="muted">Loading…</p></div>
+        <div id="watchPanel" style="display:none; margin-top:20px; border-top:1px solid #1e1e2e; padding-top:20px;">
+          <h2>👁 Watching <span id="watchName"></span></h2>
+          <div class="inline-form"><button class="btn small ghost" onclick="closeWatch()">Close</button></div>
+          <div id="watchBody"><p class="muted">Loading…</p></div>
+        </div>
         <div class="dm-layout" id="dmThread" style="display:none">
           <div>
             <div class="sec-label">Conversations</div>
@@ -1354,6 +1359,24 @@
 
     // Keys are stored as plaintext uppercase (no hashing anywhere).
 
+    // Typing-safe rendering: only touch the DOM when the markup actually
+    // changed, so heartbeat polls never steal focus or reset scroll.
+    // (Timers stay exactly as they are — same cadence, quieter DOM.)
+    function setHTMLifChanged(el, html) {
+      if (!el) return false;
+      if (el._lastHtml === html) return false;
+      el._lastHtml = html;
+      el.innerHTML = html;
+      return true;
+    }
+
+    function sameAsLast(el, sig) {
+      if (!el) return true;
+      if (el._lastSig === sig) return true;
+      el._lastSig = sig;
+      return false;
+    }
+
     function esc(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -1464,7 +1487,7 @@
       if (name === 'keys') startPoller('keys', loadKeys, 10000);
       if (name === 'blacklist') startPoller('blacklist', loadBlacklist, 10000);
       if (name === 'messages') { startPoller('announce', loadAnnouncements, 3000); startPoller('chatmod', loadChatMod, 3000); loadSlowStatus(); }
-      if (name === 'users') { startPoller('users', loadUsers, 3000); startPoller('dms', pollDms, 3000); }
+      if (name === 'users') { startPoller('users', loadUsers, 3000); startPoller('dms', pollDms, 3000); startPoller('watch', loadWatch, 3000); }
       if (name === 'playerdms') startPoller('spydms', loadDmSpy, 3000);
       if (name === 'reports') startPoller('reports', loadReports, 3000);
       if (name === 'troll') { loadTrollTargets(); startPoller('trollstates', refreshTrollStates, 10000); }
@@ -1554,10 +1577,10 @@
         }
         let html = '';
         top.forEach(r => {
-          html += '<div class="mini-row"><span>' + activityIcon(r.kind) + '</span><span>' +
-            esc(r.detail) + '</span></div>';
-        });
-        box.innerHTML = html;
+    html += '<div class="mini-row"><span>' + activityIcon(r.kind) + '</span><span>' +
+      esc(r.detail) + '</span></div>';
+    });
+    setHTMLifChanged(box, html);
       } catch (e) {
         console.error('dashboard preview failed:', e);
       }
@@ -1643,10 +1666,10 @@
       });
       html += '</div>';
       if (activityShown < activityRows.length) {
-        html += '<button class="btn ghost block" style="margin-top:12px" onclick="activityMore()">Load more (' +
-          (activityRows.length - activityShown) + ' left)</button>';
-      }
-      box.innerHTML = html;
+    html += '<button class="btn ghost block" style="margin-top:12px" onclick="activityMore()">Load more (' +
+      (activityRows.length - activityShown) + ' left)</button>';
+    }
+    setHTMLifChanged(box, html);
     }
 
     function activityMore() {
@@ -1763,10 +1786,10 @@
         const r = trollStateRows[k];
         html += '<div class="keyrow"><span>' + (TRICK_EMOJI[r.type] || '⚡') + ' <b>' + esc(r.type) + '</b> → ' +
           esc(r.scope === '*' ? 'Everyone' : r.scope) + '</span>' +
-          '<button class="btn small ghost" data-t="' + esc(r.type) + '" data-s="' + esc(r.scope) +
-          '" onclick="stopScopeBtn(this)">Stop</button></div>';
-      });
-      box.innerHTML = html;
+      '<button class="btn small ghost" data-t="' + esc(r.type) + '" data-s="' + esc(r.scope) +
+      '" onclick="stopScopeBtn(this)">Stop</button></div>';
+    });
+    setHTMLifChanged(box, html);
     }
 
     function stopScopeBtn(btn) {
@@ -2136,10 +2159,10 @@
             '</div></div>';
         });
         // Drop ids that are no longer pending so a re-request flashes again.
-        Object.keys(knownReqIds).forEach(id => {
-          if (!data.some(r => String(r.id) === String(id))) delete knownReqIds[id];
-        });
-        box.innerHTML = html;
+      Object.keys(knownReqIds).forEach(id => {
+        if (!data.some(r => String(r.id) === String(id))) delete knownReqIds[id];
+      });
+      setHTMLifChanged(box, html);
       } catch (e) {
         console.error(e);
         if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
@@ -2216,14 +2239,15 @@
           });
           html += '</table>';
         }
-        box.innerHTML = html;
+        setHTMLifChanged(box, html);
       } catch (e) {
         console.error('load admin requests failed:', e);
         if (first) {
           const msg = /column/i.test((e && e.message) || '')
             ? 'Admin requests need a database update — run the SQL migration, then reload.'
             : 'Failed to load admin requests.';
-          box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>' + esc(msg) + '</div>';
+          const errHtml = '<div class="empty-state"><div class="big">⚠️</div>' + esc(msg) + '</div>';
+          setHTMLifChanged(box, errHtml);
         }
       }
     }
@@ -2374,15 +2398,9 @@
       setTimeout(() => { overlay.classList.remove('show', 'closing'); }, 200);
       document.getElementById('keyModalText').textContent = '';
       document.getElementById('keyModalList').innerHTML = '';
-      // One-time reveal: clear stored plaintext once dismissed.
-      const ids = lastCreatedIds.slice();
+      // Keys stay stored (plaintext column IS the key) so approved players
+      // always see their key instantly — nothing is ever "being prepared".
       lastCreatedIds = [];
-      if (ids.length > 0) {
-        sb.from('license_keys')
-          .update({ plaintext_reveal: null })
-          .in('id', ids)
-          .then(({ error }) => { if (error) console.error('clear plaintext failed:', error); });
-      }
     }
 
     function copyRevealedKey() {
@@ -2521,6 +2539,10 @@
           .limit(200);
         if (error) throw error;
         lastKeys = data || [];
+        if (lastKeys.length === 0) {
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big">🔑</div>No keys yet — generate one above.</div>');
+          return;
+        }
         renderKeys();
       } catch (e) {
         console.error(e);
@@ -2574,7 +2596,7 @@
             : '') +
           '</div></td></tr>';
       });
-      box.innerHTML = html + '</table></div>';
+      setHTMLifChanged(box, html + '</table></div>');
     }
 
     async function toggleKey(id, next, btn, targetRank) {
@@ -2670,11 +2692,11 @@
             '</td><td><button class="btn small danger" onclick="removeBlacklist(' +
             b.id + ', this)">Remove</button></td></tr>';
         });
-        box.innerHTML = html + '</table>';
-      } catch (e) {
-        console.error(e);
-        if (firstBl) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load blacklist.</div>';
-      }
+      setHTMLifChanged(box, html + '</table>');
+    } catch (e) {
+      console.error(e);
+      if (firstBl) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load blacklist.</div>');
+    }
     }
 
     async function addBlacklist() {
@@ -2762,11 +2784,11 @@
               ? '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Delete</button>'
               : '<button class="btn small danger" onclick="deleteAnnouncement(' + a.id + ', this)">Delete</button>') + '</td></tr>';
         });
-        box.innerHTML = html + '</table>';
-      } catch (e) {
-        console.error('load announcements failed:', e);
-        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load announcements.</div>';
-      }
+      setHTMLifChanged(box, html + '</table>');
+    } catch (e) {
+      console.error('load announcements failed:', e);
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load announcements.</div>');
+    }
     }
 
     async function loadSlowStatus() {
@@ -2865,11 +2887,11 @@
             '</td><td><button class="btn small danger" onclick="deleteChatMessage(' +
             m.id + ', this)">Delete</button></td></tr>';
         });
-        box.innerHTML = html + '</table>';
-      } catch (e) {
-        console.error('load chat mod failed:', e);
-        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load chat.</div>';
-      }
+      setHTMLifChanged(box, html + '</table>');
+    } catch (e) {
+      console.error('load chat mod failed:', e);
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load chat.</div>');
+    }
     }
 
     async function deleteChatMessage(id, btn) {
@@ -2927,7 +2949,7 @@
         if (error) throw error;
         if (!data || data.length === 0) {
           lastUsers.rows = [];
-          box.innerHTML = '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>';
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>');
           return;
         }
         // Owner-only: map active usernames back to license_keys ranks.
@@ -2966,8 +2988,8 @@
       const q = ((document.getElementById('userSearch') || {}).value || '').trim().toLowerCase();
       const rows = lastUsers.rows.filter(u => !q || (u.username || '').toLowerCase().indexOf(q) !== -1);
       if (rows.length === 0) {
-        box.innerHTML = '<div class="empty-state"><div class="big">👥</div>' +
-          (lastUsers.rows.length === 0 ? 'No active sessions.' : 'No users match.') + '</div>';
+        setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>' +
+          (lastUsers.rows.length === 0 ? 'No active sessions.' : 'No users match.') + '</div>');
         return;
       }
       const rankMap = lastUsers.rankMap, warnCounts = lastUsers.warnCounts,
@@ -2999,9 +3021,12 @@
             '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
             '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 60)">Ban 1h</button>'
           : '';
-        const xpBtn = (myRank === 'owner' && !isMe && urank !== 'owner')
-          ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">＋XP</button>'
-          : '';
+          const xpBtn = (myRank === 'owner' && !isMe && urank !== 'owner')
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">＋XP</button>'
+            : '';
+          const watchBtn = (myRank === 'owner' && !isMe)
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="openWatch(this.getAttribute(\'data-user\'))">👁 Watch</button>'
+            : '';
         html += '<div class="user-card' + (stale ? ' stale' : '') + '" style="animation-delay:' + Math.min(ui, 8) * 40 + 'ms">' +
           '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
           '<span class="un">' + esc(u.username) + '</span>' + presencePill(u.last_seen) + '</div>' +
@@ -3009,11 +3034,11 @@
           '<div class="user-meta">🎮 ' + esc(u.current_game || 'Browsing') + '</div>' +
           '<div class="user-meta">🕐 ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '—') + '</div>' +
           '<div class="row-actions">' +
-          '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
-          warnBtn + muteBtn + banBtns + xpBtn +
-          '</div></div>';
+            '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
+            warnBtn + muteBtn + banBtns + xpBtn + watchBtn +
+            '</div></div>';
       });
-      box.innerHTML = html + '</div>';
+      setHTMLifChanged(box, html + '</div>');
     }
 
     /* ---------- per-user rank editing (owner only) ----------
@@ -3292,11 +3317,11 @@
             '<button class="btn small ghost" onclick="dismissReport(' + r.id + ', this)">Dismiss</button>' +
             '</div></td></tr>';
         });
-        box.innerHTML = html + '</table>';
-      } catch (e) {
-        console.error('load reports failed:', e);
-        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load reports.</div>';
-      }
+      setHTMLifChanged(box, html + '</table>');
+    } catch (e) {
+      console.error('load reports failed:', e);
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load reports.</div>');
+    }
     }
 
     async function dismissReport(id, btn) {
@@ -3391,11 +3416,11 @@
             '</td><td><button class="btn small" data-a="' + esc(p.a) + '" data-b="' + esc(p.b) +
             '" onclick="openSpyThread(this)">Read</button></td></tr>';
         });
-        box.innerHTML = html + '</table>';
-      } catch (e) {
-        console.error('spy list failed:', e);
-        if (first) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load threads.</div>';
-      }
+      setHTMLifChanged(box, html + '</table>');
+    } catch (e) {
+      console.error('spy list failed:', e);
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load threads.</div>');
+    }
     }
 
     async function openSpyThread(btn) {
@@ -3523,6 +3548,8 @@
         if (b.error) throw b.error;
         const rows = (a.data || []).concat(b.data || [])
           .sort((x, y) => new Date(x.created_at) - new Date(y.created_at));
+        const dmSig = 'dm:' + dmTarget + ':' + rows.map(m => m.id + ':' + (m.created_at || '')).join(',');
+        if (sameAsLast(box, dmSig)) return;
         if (rows.length === 0) {
           box.innerHTML = '<p class="muted">No messages with this user yet.</p>';
         } else {
@@ -3564,6 +3591,89 @@
             if (relevant) { loadDmHistory(true); loadDmContacts(); }
           })
         .subscribe();
+    }
+
+    /* ---------- Watch mode (owner only — live user activity) ----------
+       Browsers never allow silent screen viewing, so this is the closest
+       honest equivalent: everything the user does, live in one panel. */
+
+    let watchTarget = null;
+
+    function openWatch(username) {
+      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return; }
+      if (!username) return;
+      watchTarget = username;
+      document.getElementById('watchName').textContent = username;
+      document.getElementById('watchPanel').style.display = 'block';
+      document.getElementById('watchBody').innerHTML = '<p class="muted">Loading…</p>';
+      loadWatch();
+    }
+
+    function closeWatch() {
+      watchTarget = null;
+      document.getElementById('watchPanel').style.display = 'none';
+    }
+
+    async function loadWatch() {
+      const body = document.getElementById('watchBody');
+      if (!body || !watchTarget) return;
+      if (myRank !== 'owner') return;
+      const u = watchTarget;
+      try {
+        const now = new Date().toISOString();
+        const today = now.slice(0, 10);
+        const [sess, key, play, xp, warns, mute, ban, chat, tricks] = await Promise.all([
+          sb.from('active_sessions').select('username, current_game, last_seen').eq('username', u).maybeSingle(),
+          sb.from('license_keys').select('used_by, rank, is_active, activated_at').eq('used_by', u).maybeSingle(),
+          sb.from('daily_playtime').select('seconds').eq('username', u).eq('day', today).maybeSingle(),
+          sb.from('xp_balances').select('balance, lifetime').eq('username', u).maybeSingle(),
+          sb.from('warnings').select('id, reason, created_at').eq('username', u).order('created_at', { ascending: false }).limit(5),
+          sb.from('mutes').select('reason, expires_at').eq('username', u).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
+          sb.from('game_bans').select('reason, expires_at').eq('username', u).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
+          sb.from('messages').select('content, created_at').eq('username', u).order('created_at', { ascending: false }).limit(5),
+          sb.from('troll_events').select('event_type, payload, created_at').eq('target_username', u).order('created_at', { ascending: false }).limit(5)
+        ]);
+        if (watchTarget !== u) return; // user switched mid-fetch
+        const s = (!sess.error && sess.data) ? sess.data : null;
+        const k = (!key.error && key.data) ? key.data : null;
+        const secs = (!play.error && play.data) ? (play.data.seconds || 0) : 0;
+        const life = (!xp.error && xp.data) ? (xp.data.lifetime || 0) : 0;
+        const av = avatarFor(u);
+        let html = '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
+          '<span class="un">' + esc(u) + '</span> ' + rankPill((k && k.rank) || 'user') + ' ' +
+          presencePill(s ? s.last_seen : null) + '</div>';
+        html += '<div class="user-meta">🎮 ' + esc((s && s.current_game) || 'offline') + '</div>';
+        html += '<div class="user-meta">🕐 last seen ' + esc(s && s.last_seen ? new Date(s.last_seen).toLocaleString() : '—') + '</div>';
+        html += '<div class="user-meta">⏱️ today ' + fmtDur(secs) + ' · ⭐ level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
+        html += '<div class="user-meta">⚠ ' + ((warns.data || []).length) + ' warning(s)' +
+          ((!mute.error && mute.data) ? ' · 🔇 muted until ' + esc(new Date(mute.data.expires_at).toLocaleString()) : '') +
+          ((!ban.error && ban.data) ? ' · ⛔ game-banned until ' + esc(new Date(ban.data.expires_at).toLocaleString()) : '') + '</div>';
+        html += '<div class="sec-label">Recent chat</div>';
+        const msgs = (!chat.error && chat.data) ? chat.data : [];
+        if (msgs.length === 0) html += '<div class="user-meta">No messages.</div>';
+        msgs.forEach(m => {
+          html += '<div class="user-meta">💬 ' + esc(String(m.content || '').slice(0, 80)) +
+            ' <span class="muted">· ' + esc(m.created_at ? new Date(m.created_at).toLocaleString() : '') + '</span></div>';
+        });
+        html += '<div class="sec-label">Recent tricks aimed at them</div>';
+        const trs = (!tricks.error && tricks.data) ? tricks.data : [];
+        if (trs.length === 0) html += '<div class="user-meta">None.</div>';
+        trs.forEach(t => {
+          const st = (t.payload && t.payload.state) ? t.payload.state.toUpperCase() : 'FIRED';
+          html += '<div class="user-meta">👻 ' + esc(t.event_type || '?') + ' — ' + esc(st) + '</div>';
+        });
+        setHTMLifChanged(body, html);
+      } catch (e) {
+        console.error('watch failed:', e);
+      }
+    }
+
+    function fmtDur(secs) {
+      secs = Math.max(0, parseInt(secs, 10) || 0);
+      const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60);
+      if (h > 0) return h + 'h ' + m + 'm';
+      if (m > 0) return m + 'm';
+      return secs + 's';
     }
 
     async function sendDm() {
