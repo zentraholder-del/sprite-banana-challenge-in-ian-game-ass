@@ -813,7 +813,7 @@
           const prec = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
           if (prec) parts.push([prec.precision, prec.rangeMin, prec.rangeMax].join('/'));
         } catch (e) {}
-        parts.push(gl instanceof WebGL2RenderingContext ? 'webgl2' : 'webgl1');
+        parts.push((typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext) ? 'webgl2' : 'webgl1');
         return parts.join('~');
       } catch (e) { return 'webgl-err'; }
     }
@@ -875,8 +875,10 @@
         'touch=' + (nav.maxTouchPoints || 0),
         'dnt=' + (nav.doNotTrack || ''),
         'webdriver=' + (!!nav.webdriver),
-        'scr=' + screen.width + 'x' + screen.height + 'x' + screen.colorDepth + '@' + (window.devicePixelRatio || 1),
-        'avail=' + (screen.availWidth || '') + 'x' + (screen.availHeight || ''),
+        // Screen dims orientation-invariant (max/min): iPads rotate constantly
+        // and iOS may report width/height per current orientation.
+        'scr=' + Math.max(screen.width, screen.height) + 'x' + Math.min(screen.width, screen.height) + 'x' + screen.colorDepth + '@' + (window.devicePixelRatio || 1),
+        'avail=' + Math.max(screen.availWidth || 0, screen.availHeight || 0) + 'x' + Math.min(screen.availWidth || 0, screen.availHeight || 0),
         'tz=' + new Date().getTimezoneOffset() + '/' + ((typeof Intl !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone) || ''),
         'ck=' + (navigator.cookieEnabled ? 1 : 0),
         'plugins=' + ((navigator.plugins && navigator.plugins.length) || 0),
