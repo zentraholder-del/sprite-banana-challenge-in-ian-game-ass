@@ -1103,7 +1103,12 @@
         window.location.href = elevated ? '../admin/index.html' : 'play/';
       } catch (e) {
         console.error(e);
-        showError('Login failed. Check your connection and try again.');
+        // Surface the real reason (e.g. missing column / RLS block storable
+        // as text) instead of a generic connection message.
+        let detail = '';
+        try { detail = (e && (e.message || e.error_description || e.hint)) || ''; } catch (x) {}
+        detail = String(detail).slice(0, 160);
+        showError('Login failed' + (detail ? ': ' + detail : '. Check your connection and try again.'));
         toast('Login failed. Check your connection.', 'err');
         setLoginBusy(false);
       }
