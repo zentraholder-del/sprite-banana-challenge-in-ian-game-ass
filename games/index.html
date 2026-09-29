@@ -979,17 +979,28 @@
     async function checkExistingSession() {
       const token = localStorage.getItem(LS_TOKEN);
       if (!token) return;
+      let me = '';
+      try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
       showStatus('Checking saved session…');
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .select('id, is_active, is_admin, rank')
-          .eq('session_token', token)
-          .maybeSingle();
+        const { data, error } = await sb.rpc('verify_session', { input_username: me, input_token: token });
         if (error) throw error;
-        if (data && data.is_active) {
+        if (data && data.valid) {
+          if (data.used_by) { try { localStorage.setItem(LS_USER, data.used_by); } catch (e) {} }
           const rank = data.rank || (data.is_admin ? 'admin' : 'user');
           try { localStorage.setItem(LS_RANK, rank); } catch (e) {}
+          if (rank !== 'owner') {
+            try {
+              const lk = await sb.from('app_config').select('locked, lock_message').eq('id', 1).maybeSingle();
+              if (!lk.error && lk.data && lk.data.locked) {
+                localStorage.removeItem(LS_TOKEN);
+                localStorage.removeItem(LS_USER);
+                try { localStorage.removeItem(LS_RANK); } catch (e) {}
+                document.getElementById('status').textContent = lk.data.lock_message || 'Site is temporarily locked by the owner.';
+                return;
+              }
+            } catch (e) { console.error('lock check failed (fail-open):', e); }
+          }
           const elevated = rank === 'owner' || rank === 'admin' || rank === 'mod' || data.is_admin;
           clearRequestState();
           window.location.href = elevated ? '../admin/index.html' : 'play/';
@@ -1047,87 +1058,49 @@
       showStatus('Verifying…');
 
       try {
-        // 1. Blacklist check (by username)
-        const { data: banned, error: banErr } = await sb
-          .from('blacklist')
-          .select('id')
-          .eq('username', username)
-          .limit(1);
-        if (banErr) throw banErr;
-        if (banned && banned.length > 0) {
-          showError('This username is blacklisted.');
-          setLoginBusy(false);
-          return;
-        }
-
-        // 2. Plaintext lookup — keys are stored uppercase, unhashed
-        const keyValue = rawKey.toUpperCase();
-        const { data: row, error: keyErr } = await sb
-          .from('license_keys')
-          .select('id, is_active, is_admin, rank, session_token, used_by, device_fp')
-          .eq('key', keyValue)
-          .maybeSingle();
-        if (keyErr) throw keyErr;
-        if (!row) {
-          showError('Invalid key — request access below.');
-          input.classList.add('error-input');
-          toast('Key not found or already in use.', 'err');
-          authShake();
-          setLoginBusy(false);
-          return;
-        }
-        if (!row.is_active) {
-          showError('This key has been deactivated.');
-          setLoginBusy(false);
-          return;
-        }
-        // 2a. Username lock: a key belongs to one account name — the name it
-        // was requested with (stamped at approve) or first logged in with.
-        // Same device + same key + different name is rejected.
-        if (row.used_by && row.used_by.toLowerCase() !== username.toLowerCase()) {
-          showError('This key belongs to "' + row.used_by + '". Use that name, or ask staff to reset the key.');
-          setLoginBusy(false);
-          return;
-        }
-        // 2b. Device fingerprint: same device rotates back in, any other
-        // device on an active key is rejected. Legacy keys without a
-        // recorded fingerprint adopt the first device that logs in.
+        // Single server-side validation: blacklist, key lookup, site lock,
+        // username bind, device fingerprint — all enforced in validate_key.
         showStatus('Checking this device…');
         const fp = await getDeviceFingerprint();
-        if (row.session_token) {
-          const known = row.device_fp || null;
-          if (known && fp && fp !== known) {
+        const { data: res, error: rpcErr } = await sb.rpc('validate_key', {
+          input_key: rawKey, input_username: username, input_fp: fp
+        });
+        if (rpcErr) throw rpcErr;
+        if (!res || !res.success) {
+          const code = (res && res.error) || 'failed';
+          if (code === 'blacklisted') {
+            showError('This username is blacklisted.');
+          } else if (code === 'invalid') {
+            showError('Invalid key — request access below.');
+            input.classList.add('error-input');
+            toast('Key not found or already in use.', 'err');
+            authShake();
+          } else if (code === 'deactivated') {
+            showError('This key has been deactivated.');
+          } else if (code === 'locked') {
+            showError((res && res.lock_message) || 'Site is temporarily locked by the owner.');
+          } else if (code === 'wrong_user') {
+            showError('This key belongs to "' + ((res && res.bound) || 'another name') + '". Use that name, or ask staff to reset the key.');
+          } else if (code === 'other_device') {
             showError('This key is already active on another device.');
-            setLoginBusy(false);
-            return;
+          } else {
+            showError('Login failed. Try again.');
           }
-          showStatus('Welcome back — restoring your session…');
+          setLoginBusy(false);
+          return;
         }
+        if (res.welcome_back) showStatus('Welcome back — restoring your session…');
 
-        // 3. Claim the key with a fresh session token, stamped with this
-        // device's fingerprint (first activation stores it, same-device
-        // restores adopt/keep it, other devices never reach this line).
-        const token = crypto.randomUUID();
-        const { error: updErr } = await sb
-          .from('license_keys')
-          .update({
-            session_token: token,
-            used_by: row.used_by || username,
-            activated_at: new Date().toISOString(),
-            device_fp: fp
-          })
-          .eq('id', row.id);
-        if (updErr) throw updErr;
-
+        const token = res.session_token;
         localStorage.setItem(LS_TOKEN, token);
         localStorage.setItem(LS_USER, username);
         clearRequestState();
-        const myRank = row.rank || (row.is_admin ? 'admin' : 'user');
+        const myRank = res.rank || (res.is_admin ? 'admin' : 'user');
         try { localStorage.setItem(LS_RANK, myRank); } catch (e) {}
         // Drop legacy stub flag if present
         try { sessionStorage.removeItem('ls_auth'); } catch (e) {}
         // Owner/admin/mod land on the admin panel, everyone else on games.
-        const elevated = myRank === 'owner' || myRank === 'admin' || myRank === 'mod' || row.is_admin;
+        const elevated = myRank === 'owner' || myRank === 'admin' || myRank === 'mod' || res.is_admin;
         window.location.href = elevated ? '../admin/index.html' : 'play/';
       } catch (e) {
         console.error(e);
@@ -1216,33 +1189,8 @@
       }
     });
 
-    /* Key requests: one pending at a time per name, plus a 24h cooldown
-       between requests. Fail-open on lookup errors so outages never trap
-       legitimate requesters. */
-    const REQUEST_COOLDOWN_MS = 24 * 3600 * 1000;
-
-    async function latestRequestFor(name) {
-      try {
-        const r = await sb.from('key_requests')
-          .select('id, status, created_at')
-          .eq('name', name)
-          .order('id', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (!r.error) return r.data || null;
-        if (!/column/i.test(r.error.message || '')) throw r.error;
-      } catch (e) { console.error('request lookup failed:', e); return null; }
-      try {
-        const r2 = await sb.from('key_requests')
-          .select('id, status')
-          .eq('name', name)
-          .order('id', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (!r2.error) return r2.data || null;
-      } catch (e) {}
-      return null;
-    }
+    /* Key requests now go through RPCs: cooldown + pending-block enforced
+       server-side (submit_key_request), status via check_request_status. */
 
     function fmtWait(ms) {
       const h = Math.floor(ms / 3600000);
@@ -1263,22 +1211,22 @@
       btn.disabled = true;
       btn.textContent = 'Sending…';
       try {
-        const prev = await latestRequestFor(name);
-        if (prev && prev.status === 'pending') {
-          errBox.textContent = 'You already have a pending request — check its status below.';
+        const { data: res, error: rpcErr } = await sb.rpc('submit_key_request', {
+          input_name: name, input_reason: reason, input_school: school
+        });
+        if (rpcErr) throw rpcErr;
+        if (!res || !res.success) {
+          const code = (res && res.error) || 'failed';
+          if (code === 'pending') {
+            errBox.textContent = 'You already have a pending request — check its status below.';
+          } else if (code === 'cooldown') {
+            const waitMs = ((res && res.retry_after) || 0) * 1000;
+            errBox.textContent = 'You can request again in ' + fmtWait(waitMs) + '.';
+          } else {
+            errBox.textContent = 'Could not send request. Try again later.';
+          }
           return;
         }
-        if (prev && prev.created_at) {
-          const wait = REQUEST_COOLDOWN_MS - (Date.now() - new Date(prev.created_at).getTime());
-          if (wait > 0) {
-            errBox.textContent = 'You can request again in ' + fmtWait(wait) + '.';
-            return;
-          }
-        }
-        const { error } = await sb
-          .from('key_requests')
-          .insert({ name, reason, school, status: 'pending' });
-        if (error) throw error;
         try { localStorage.setItem('pending_request_name', name); } catch (e) {}
         document.getElementById('reqName').value = '';
         document.getElementById('reqMsg').value = '';
@@ -1311,15 +1259,9 @@
       let dismissed = null;
       try { dismissed = localStorage.getItem('request_dismissed_' + name); } catch (e) {}
       try {
-        const { data, error } = await sb
-          .from('key_requests')
-          .select('id, name, status')
-          .eq('name', name)
-          .order('id', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const { data, error } = await sb.rpc('check_request_status', { input_name: name });
         if (error) throw error;
-        if (!data) { setHTMLifChanged(wrap, ''); return; }
+        if (!data || !data.found) { setHTMLifChanged(wrap, ''); return; }
         let html = '';
         if (data.status === 'pending') {
           html = '<div class="req-banner muted-note">Your request is pending review…</div>';
@@ -1328,17 +1270,7 @@
           html = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
             '<div style="margin-top:10px"><button class="mini-btn ghost" onclick="dismissRequestBanner()">Dismiss</button></div></div>';
         } else if (data.status === 'approved') {
-          let keyText = '';
-          try {
-            const { data: krow, error: kerr } = await sb
-              .from('license_keys')
-              .select('plaintext_reveal')
-              .eq('request_id', data.id)
-              .order('id', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (!kerr && krow && krow.plaintext_reveal) keyText = krow.plaintext_reveal;
-          } catch (e) {}
+          const keyText = (data.key) || '';
           approvedKey = keyText;
           if (keyText) {
             html = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
@@ -1479,12 +1411,13 @@
           return !isNaN(t) && now >= t - 300000;
         });
         if (!due.length) return;
-        const ids = due.map(a => a.id);
-        const seen = await sb.from('announcement_alerts')
-          .select('announcement_id')
-          .eq('username', me)
-          .in('announcement_id', ids);
-        const seenIds = (!seen.error && seen.data) ? seen.data.map(x => x.announcement_id) : [];
+        const seenIds = [];
+        for (const a of due) {
+          try {
+            const s = await sb.rpc('alerts_check', { input_username: me, input_token: '', announcement_id: a.id });
+            if (!s.error && s.data && s.data.seen) seenIds.push(a.id);
+          } catch (e) {}
+        }
         const missed = due.filter(a => seenIds.indexOf(a.id) === -1);
         if (!missed.length) return;
         await showMissedAlertQueue(me, missed);
@@ -1508,7 +1441,7 @@
         }
         btn.onclick = async () => {
           const a = items[i];
-          try { await sb.from('announcement_alerts').insert({ announcement_id: a.id, username: me }); } catch (e) {}
+          try { await sb.rpc('alerts_add', { input_username: me, input_token: '', announcement_id: a.id }); } catch (e) {}
           i++;
           if (i >= items.length) {
             m.classList.remove('visible');

@@ -1410,6 +1410,24 @@
     const LS_USER = 'ls_username';
     const LS_RANK = 'user_rank';
 
+    /* ---------- RPC data layer (deny-by-default RLS) ----------
+       Raw tables are no longer readable/writable by anon; every private
+       read/write goes through a SECURITY DEFINER function. Public reads
+       (messages, announcements, leaderboards, config flags) stay direct. */
+    function myCreds() {
+      let u = '', t = '';
+      try {
+        u = (localStorage.getItem(LS_USER) || '').slice(0, 32);
+        t = localStorage.getItem(LS_TOKEN) || '';
+      } catch (e) {}
+      return { input_username: u, input_token: t };
+    }
+    async function rpc(name, args) {
+      const { data, error } = await sb.rpc(name, args || {});
+      if (error) throw error;
+      return data;
+    }
+
     function toast(msg, kind) {
       const wrap = document.getElementById('toastWrap');
       if (!wrap) return;
@@ -1459,18 +1477,16 @@
         window.location.href = '../index.html';
         return null;
       }
+      let me = '';
+      try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .select('id, is_active, is_admin, rank, username, used_by')
-          .eq('session_token', token)
-          .maybeSingle();
+        const { data, error } = await sb.rpc('verify_session', { input_username: me, input_token: token });
         if (error) throw error;
-        if (!data || !data.is_active) {
+        if (!data || !data.valid) {
           logout();
           return null;
         }
-        const name = localStorage.getItem(LS_USER) || data.used_by || data.username || 'player';
+        const name = localStorage.getItem(LS_USER) || data.used_by || 'player';
         const rank = data.rank || (data.is_admin ? 'admin' : 'user');
         try { localStorage.setItem(LS_RANK, rank); } catch (e) {}
         document.getElementById('navUser').innerHTML =
@@ -1721,23 +1737,8 @@
       const content = input.value.trim();
       if (!content) return false;
       const username = (localStorage.getItem(LS_USER) || 'anon').slice(0, 32);
-      try {
-        // Re-check blacklist on every send — a login-time check can go
-        // stale if the user is blacklisted mid-session. If this select
-        // fails on a transient network error we still attempt the insert
-        // below, which restores the input on failure.
-        const { data: banned, error: banErr } = await sb
-          .from('blacklist')
-          .select('id')
-          .eq('username', username)
-          .limit(1);
-        if (!banErr && banned && banned.length > 0) {
-          status.textContent = 'blocked';
-          return false;
-        }
-      } catch (err) {
-        console.error(err);
-      }
+      // Server enforces blacklist/mute/slowmode too (chat_send); the local
+      // pre-checks below just give instant feedback before the round-trip.
       // Mute + slowmode gates (refreshed every 3s by the session poller).
       if (myMuteUntil && Date.now() < myMuteUntil) {
         status.textContent = 'muted';
@@ -1755,26 +1756,34 @@
       try {
         let msgText = content.slice(0, 500);
         if (isSparkleActive(myCosmetics)) msgText = '✨ ' + msgText;
-        const payload = { username, content: msgText, rank: myRank() };
-        if (replyTo && replyTo.id) {
-          payload.reply_to = replyTo.id;
-          payload.reply_preview = replyTo.preview;
-          payload.reply_username = replyTo.username;
-        }
-        let { error } = await sb
-          .from('messages')
-          .insert(payload);
-        if (error && (payload.rank !== undefined || payload.reply_username !== undefined)) {
-          // Older schema without the new columns — retry with base fields.
-          const slim = { username: payload.username, content: payload.content };
-          if (payload.reply_to !== undefined) {
-            slim.reply_to = payload.reply_to;
-            slim.reply_preview = payload.reply_preview;
+        const args = Object.assign(myCreds(), {
+          content: msgText,
+          reply_to: (replyTo && replyTo.id) || null,
+          reply_preview: (replyTo && replyTo.preview) || null,
+          reply_username: (replyTo && replyTo.username) || null
+        });
+        const res = await rpc('chat_send', args);
+        if (!res || !res.success) {
+          const code = (res && res.error) || 'failed';
+          if (code === 'blocked') {
+            status.textContent = 'blocked';
+            input.value = content;
+            toast('You are blocked from chatting.', 'err');
+            return false;
           }
-          const r2 = await sb.from('messages').insert(slim);
-          error = r2.error;
+          if (code === 'muted') {
+            status.textContent = 'muted';
+            input.value = content;
+            toast('You are muted.', 'err');
+            return false;
+          }
+          if (code === 'slowmode') {
+            input.value = content;
+            toast('Slow mode: wait ' + ((res && res.retry_after) || '?') + 's', 'err');
+            return false;
+          }
+          throw new Error(code);
         }
-        if (error) throw error;
         cancelReply();
         lastChatSent = Date.now();
         claimTrivia(content);
@@ -1795,10 +1804,11 @@
       if (!messageId) { toast('Cannot report this message', 'err'); return; }
       if (!confirm('Report this message from ' + username + ' to staff?')) return;
       try {
-        const { error } = await sb
-          .from('reports')
-          .insert({ reporter: me, reported_user: username, message_id: messageId, reason: 'Reported from chat', status: 'pending' });
-        if (error) throw error;
+        const args = Object.assign(myCreds(), {
+          reported_user: username, message_id: messageId, reason: 'Reported from chat'
+        });
+        const res = await rpc('report_submit', args);
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Reported. Staff will review.', 'ok');
       } catch (e) {
         console.error('report failed:', e);
@@ -1828,20 +1838,10 @@
       if (!me || me === 'anon' || !(amount > 0)) return;
       try {
         const oldLevel = levelForXp(myXpLife);
-        const cur = await sb.from('xp_balances').select('balance, lifetime').eq('username', me).maybeSingle();
-        let bal = 0, life = 0;
-        if (!cur.error && cur.data) { bal = cur.data.balance || 0; life = cur.data.lifetime || 0; }
-        bal += amount; life += amount;
-        const up = await sb.from('xp_balances').upsert({ username: me, balance: bal, lifetime: life });
-        if (up.error) throw up.error;
-        const day = new Date().toISOString().slice(0, 10);
-        try {
-          const d = await sb.from('xp_daily').select('id, amount').eq('username', me).eq('day', day).maybeSingle();
-          if (!d.error) {
-            if (d.data) await sb.from('xp_daily').update({ amount: (d.data.amount || 0) + amount }).eq('id', d.data.id);
-            else await sb.from('xp_daily').insert({ username: me, day: day, amount: amount });
-          }
-        } catch (e) { console.error('xp daily failed:', e); }
+        const args = Object.assign(myCreds(), { earn_amt: amount, reason: reason || null });
+        const res = await rpc('xp_earn', args);
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        const bal = res.balance || 0, life = res.lifetime || 0;
         myXpBal = bal; myXpLife = life;
         renderXpChip();
         if (levelForXp(life) > oldLevel) toast('Level up! You are now level ' + levelForXp(life), 'ok');
@@ -1853,12 +1853,14 @@
       const me = meName();
       if (!me || me === 'anon' || !(amount > 0)) return false;
       try {
-        const cur = await sb.from('xp_balances').select('balance').eq('username', me).maybeSingle();
-        const bal = (!cur.error && cur.data) ? (cur.data.balance || 0) : 0;
-        if (bal < amount) { toast('Not enough XP (need ' + amount + ')', 'err'); return false; }
-        const up = await sb.from('xp_balances').update({ balance: bal - amount }).eq('username', me);
-        if (up.error) throw up.error;
-        myXpBal = bal - amount;
+        const args = Object.assign(myCreds(), { amount: amount });
+        const res = await rpc('xp_spend', args);
+        if (!res || !res.success) {
+          if (res && res.error === 'funds') toast('Not enough XP (need ' + amount + ')', 'err');
+          return false;
+        }
+        const bal = res.balance || 0;
+        myXpBal = bal;
         renderXpChip();
         return true;
       } catch (e) { console.error('spendXP failed:', e); toast('Purchase failed', 'err'); return false; }
@@ -2075,15 +2077,11 @@
     }
 
     async function saveCosmetics(patch) {
-      const me = meName();
       try {
-        const cur = await sb.from('user_cosmetics').select('*').eq('username', me).maybeSingle();
-        const base = (!cur.error && cur.data) ? cur.data : { username: me };
-        delete base.id;
-        const merged = Object.assign({}, base, patch);
-        const up = await sb.from('user_cosmetics').upsert(merged);
-        if (up.error) throw up.error;
-        myCosmetics = merged;
+        const args = Object.assign(myCreds(), { patch: patch || {} });
+        const res = await rpc('cosmetic_save', args);
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        myCosmetics = Object.assign({}, myCosmetics, patch);
         loadCosmeticsMap();
         return true;
       } catch (e) {
@@ -2094,9 +2092,34 @@
     }
 
     async function logPurchase(item, cost) {
+      // Purchase logging now happens server-side inside shop_buy. Kept as a
+      // no-op so older call paths don't throw.
+    }
+
+    // Single server-authoritative purchase: prices, balance, effects and the
+    // purchase log all happen inside shop_buy. Client only gathers extras.
+    async function shopBuy(id, extra) {
       try {
-        await sb.from('xp_purchases').insert({ username: meName(), item: item, cost: cost });
-      } catch (e) { console.error('purchase log failed:', e); }
+        const args = Object.assign(myCreds(), { item_id: id, extra: extra == null ? null : String(extra) });
+        const res = await rpc('shop_buy', args);
+        if (!res || !res.success) {
+          const code = (res && res.error) || 'failed';
+          if (code === 'funds') toast('Not enough XP', 'err');
+          else if (code === 'nowarn') toast('No warnings to clear', 'err');
+          else if (code === 'empty') toast('Enter a message first.', 'err');
+          else if (code === 'color') toast('Pick a valid color.', 'err');
+          else toast('Purchase failed', 'err');
+          return false;
+        }
+        if (typeof res.balance === 'number') { myXpBal = res.balance; renderXpChip(); }
+        loadMyXp();
+        if (res.message) toast(res.message, 'ok');
+        return true;
+      } catch (e) {
+        console.error('buy failed:', e);
+        toast('Purchase failed', 'err');
+        return false;
+      }
     }
 
     async function buyItem(id) {
@@ -2114,14 +2137,9 @@
           const s = document.createElement('button');
           s.style.background = col;
           s.setAttribute('aria-label', 'Pick ' + col);
-          s.onclick = async () => {
-            if (!await spendXP(500)) return;
-            if (await saveCosmetics({ name_color: col })) {
-              toast('Name color set!', 'ok');
-              logPurchase('namecolor:' + col, 500);
-              closeShop();
-            }
-          };
+            s.onclick = async () => {
+              if (await shopBuy('namecolor', col)) closeShop();
+            };
           row.appendChild(s);
         });
         wrap.appendChild(row);
@@ -2132,82 +2150,33 @@
         const cur = (myCosmetics.status || '');
         const val = prompt('Your status message (blank to clear):', cur);
         if (val === null) return;
-        if (!await spendXP(200)) return;
-        if (await saveCosmetics({ status: String(val).slice(0, 60) })) {
-          toast('Status saved!', 'ok');
-          logPurchase('status', 200);
-          closeShop();
-        }
+        if (await shopBuy('status', val)) closeShop();
         return;
       }
-      if (!(await spendXP(it.cost))) return;
       const now = Date.now();
       if (id === 'shoutout') {
         const msg = prompt('Your shoutout (60s pinned):');
-        if (msg === null || !msg.trim()) { await addXP(it.cost, 'shoutout refund'); closeShop(); return; }
-        try {
-          const until = new Date(now + 60000).toISOString();
-          const { error } = await sb.from('messages').insert({
-            username: meName(), content: String(msg).slice(0, 200),
-            rank: myRank(), shoutout_until: until
-          });
-          if (error) throw error;
-          toast('Shouted!', 'ok');
-          logPurchase('shoutout', it.cost);
-        } catch (e) { console.error('shout failed:', e); toast('Shout failed', 'err'); }
+        if (msg === null || !msg.trim()) { closeShop(); return; }
+        await shopBuy('shoutout', msg);
         closeShop();
         return;
       }
       if (id === 'gold24') {
-        if (await saveCosmetics({ gold_until: new Date(now + 86400000).toISOString() })) {
-          toast('Gold for 24h!', 'ok'); logPurchase('gold24', it.cost);
-        }
+        await shopBuy('gold24');
       } else if (id === 'sparkle') {
-        if (await saveCosmetics({ sparkle_until: new Date(now + 7 * 86400000).toISOString() })) {
-          toast('Sparkles for a week!', 'ok'); logPurchase('sparkle', it.cost);
-        }
+        await shopBuy('sparkle');
       } else if (id === 'hideonline') {
-        if (await saveCosmetics({ hide_online: true })) {
-          toast('You are now hidden', 'ok'); logPurchase('hideonline', it.cost);
-        }
+        await shopBuy('hideonline');
       } else if (id === 'glow') {
-        if (await saveCosmetics({ glow: true })) {
-          toast('Glowing!', 'ok'); logPurchase('glow', it.cost);
-        }
+        await shopBuy('glow');
       } else if (id === 'doubleday') {
-        if (await saveCosmetics({ dbl_until: new Date(now + 86400000).toISOString() })) {
-          toast('Double XP for 24h!', 'ok'); logPurchase('doubleday', it.cost);
-        }
+        await shopBuy('doubleday');
       } else if (id === 'vipweek') {
-        if (await saveCosmetics({ vip_until: new Date(now + 7 * 86400000).toISOString() })) {
-          toast('VIP week!', 'ok'); logPurchase('vipweek', it.cost);
-        }
+        await shopBuy('vipweek');
       } else if (id === 'mystery') {
-        const roll = Math.random();
-        if (roll < 0.6) {
-          await addXP(50, 'mystery box');
-        } else if (roll < 0.85) {
-          await addXP(150, 'mystery box');
-        } else if (roll < 0.95) {
-          await saveCosmetics({ gold_until: new Date(now + 86400000).toISOString() });
-          toast('Mystery: 24h GOLD!', 'ok');
-        } else {
-          await saveCosmetics({ dbl_until: new Date(now + 86400000).toISOString() });
-          toast('Mystery: DOUBLE XP DAY!', 'ok');
-        }
-        logPurchase('mystery', it.cost);
+        await shopBuy('mystery');
       } else if (id === 'clearwarn') {
-        try {
-          const w = await sb.from('warnings').select('id').eq('username', meName()).order('created_at', { ascending: false }).limit(1).maybeSingle();
-          if (w.error) throw w.error;
-          if (!w.data) { toast('No warnings to clear', 'err'); await addXP(it.cost, 'warn-clear refund'); }
-          else {
-            const d = await sb.from('warnings').delete().eq('id', w.data.id);
-            if (d.error) throw d.error;
-            toast('Warning cleared!', 'ok');
-            logPurchase('clearwarn', it.cost);
-          }
-        } catch (e) { console.error('clear warn failed:', e); toast('Clear failed', 'err'); }
+        await shopBuy('clearwarn');
       }
       closeShop();
     }
@@ -2259,10 +2228,14 @@
       const ds = dayStr();
       if (!me || me === 'anon') return;
       try {
-        const ins = await sb.from('quest_claims').insert({ username: me, quest_key: q.key, day: ds }).select('id');
-        if (ins.error) return; // already claimed (unique) — silent
-        if (!ins.data || !ins.data.length) return;
-        await addXP(q.xp, 'quest complete');
+        const oldLevel = levelForXp(myXpLife);
+        const args = Object.assign(myCreds(), { qkey: q.key, day_key: ds, earn_amt: q.xp });
+        const res = await rpc('quest_claim', args);
+        if (!res || !res.success) return; // already claimed — silent
+        myXpBal = res.balance || 0; myXpLife = res.lifetime || 0;
+        renderXpChip();
+        if (levelForXp(myXpLife) > oldLevel) toast('Level up! You are now level ' + levelForXp(myXpLife), 'ok');
+        else toast('+' + q.xp + ' XP — quest complete', 'ok');
         loadQuests();
       } catch (e) { console.error('claim failed:', e); }
     }
@@ -2325,8 +2298,9 @@
       const me = meName();
       if (!me || me === 'anon') return;
       try {
-        await sb.from('daily_games').insert({ username: me, game: path, day: dayStr() });
-      } catch (e) {} // duplicate day/game (unique) → ignore silently
+        const args = Object.assign(myCreds(), { game_name: path, day_key: dayStr() });
+        await rpc('game_track', args);
+      } catch (e) {} // duplicate day/game → ignore silently
     }
 
     /* ---------- Trivia bot (hourly, self-claim) ---------- */
@@ -2382,10 +2356,14 @@
       const t = triviaNow();
       if (normAns(text) !== normAns(t.a)) return;
       try {
-        const ins = await sb.from('quest_claims').insert({ username: me, quest_key: 'trivia-' + triviaHourId(), day: dayStr() }).select('id');
-        if (ins.error) return; // someone (you) already claimed — silent
-        if (!ins.data || !ins.data.length) return;
-        await addXP(25, 'trivia correct!');
+        const oldLevel = levelForXp(myXpLife);
+        const args = Object.assign(myCreds(), { qkey: 'trivia-' + triviaHourId(), day_key: dayStr(), earn_amt: 25 });
+        const res = await rpc('quest_claim', args);
+        if (!res || !res.success) return; // someone (you) already claimed — silent
+        myXpBal = res.balance || 0; myXpLife = res.lifetime || 0;
+        renderXpChip();
+        if (levelForXp(myXpLife) > oldLevel) toast('Level up! You are now level ' + levelForXp(myXpLife), 'ok');
+        else toast('+25 XP — trivia correct!', 'ok');
       } catch (e) { console.error('trivia claim failed:', e); }
     }
 
@@ -2402,7 +2380,8 @@
       if (now - lastTypingSent < 2000) return;
       lastTypingSent = now;
       try {
-        await sb.from('typing').upsert({ username: me, channel: channel, updated_at: new Date().toISOString() });
+        const args = Object.assign(myCreds(), { chan: channel });
+        await rpc('typing_send', args);
       } catch (e) {}
     }
     async function loadTyping() {
@@ -2439,7 +2418,7 @@
     async function loadSchoolBoard() {
       try {
         const [keys, xp] = await Promise.all([
-          sb.from('license_keys').select('used_by, school').in('school', ['SST', 'Lenham']).limit(500),
+          sb.rpc('school_roster'),
           sb.from('xp_balances').select('username, lifetime').limit(500)
         ]);
         if (keys.error) throw keys.error;
@@ -2461,16 +2440,10 @@
     async function loadMySchool() {
       const bar = document.getElementById('schoolBanner');
       if (!bar) return;
-      let token = null;
-      try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
-      if (!token) { bar.style.display = 'none'; return; }
+      const c = myCreds();
+      if (!c.input_token) { bar.style.display = 'none'; return; }
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .select('school')
-          .eq('session_token', token)
-          .maybeSingle();
-        if (error) throw error;
+        const data = await rpc('school_mine', c);
         bar.style.display = (data && data.school) ? 'none' : 'block';
       } catch (e) {
         console.error('school check failed:', e);
@@ -2480,15 +2453,12 @@
 
     async function setSchool(s) {
       if (s !== 'SST' && s !== 'Lenham') return;
-      let token = null;
-      try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
-      if (!token) return;
+      const c = myCreds();
+      if (!c.input_token) return;
       try {
-        const { error } = await sb
-          .from('license_keys')
-          .update({ school: s })
-          .eq('session_token', token);
-        if (error) throw error;
+        const args = Object.assign(c, { new_school: s });
+        const res = await rpc('school_set', args);
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         document.getElementById('schoolBanner').style.display = 'none';
         toast('School set: ' + s, 'ok');
         loadSchoolBoard();
@@ -2889,10 +2859,9 @@
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
-        const { data, error } = await sb
-          .from('troll_events')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const args = Object.assign(myCreds(), {});
+        const { data, error } = await sb.rpc('troll_poll', args);
+        if (error) throw error;
         if (error) throw error;
         const latest = {};
         for (const row of (data || [])) {
@@ -2938,32 +2907,16 @@
       let dismissed = null;
       try { dismissed = localStorage.getItem('request_dismissed_' + name); } catch (e) {}
       try {
-        const { data, error } = await sb
-          .from('key_requests')
-          .select('id, name, status')
-          .eq('name', name)
-          .order('id', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const { data, error } = await sb.rpc('check_request_status', { input_name: name });
         if (error) throw error;
-        if (!data) { setHTMLifChanged(wrap, ''); return; }
+        if (!data || !data.found) { setHTMLifChanged(wrap, ''); return; }
         let html = '';
         if (data.status === 'denied') {
           if (dismissed) { setHTMLifChanged(wrap, ''); return; }
           html = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
             '<div style="margin-top:10px"><button class="mini-btn ghost" onclick="dismissPlayBanner()">Dismiss</button></div></div>';
         } else if (data.status === 'approved') {
-          let keyText = '';
-          try {
-            const { data: krow, error: kerr } = await sb
-              .from('license_keys')
-              .select('plaintext_reveal')
-              .eq('request_id', data.id)
-              .order('id', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (!kerr && krow && krow.plaintext_reveal) keyText = krow.plaintext_reveal;
-          } catch (e) {}
+          const keyText = (data.key) || '';
           playApprovedKey = keyText;
           if (keyText) {
             html = '<div class="req-banner approved"><strong>Your request was approved!</strong>' +
@@ -3063,11 +3016,8 @@
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
-        const { data, error } = await sb
-          .from('troll_events')
-          .select('id, event_type, target_username, payload, created_at')
-          .order('id', { ascending: false })
-          .limit(20);
+        const { data, error } = await sb.rpc('troll_poll', myCreds());
+        if (error) throw error;
         if (error) throw error;
         (data || []).slice().reverse().forEach(r => {
           if (r.target_username && r.target_username !== me) return; // not mine: ignore entirely
@@ -3258,15 +3208,11 @@
         if (done) continue;
         try { sessionStorage.setItem(skey, '1'); } catch (e) {}
         try {
-          const r = await sb.from('announcement_alerts')
-            .select('announcement_id')
-            .eq('announcement_id', a.id)
-            .eq('username', me)
-            .limit(1);
-          if (!r.error && r.data && r.data.length > 0) continue;
+          const c = myCreds();
+          const chk = await sb.rpc('alerts_check', Object.assign(c, { ann_id: a.id }));
+          if (!chk.error && chk.data && chk.data.seen) continue;
           showSchedAlert(a);
-          await sb.from('announcement_alerts').insert({ announcement_id: a.id, username: me });
-          sb.from('announcements').update({ reminded: true }).eq('id', a.id).then(() => {});
+          await sb.rpc('alerts_add', Object.assign(myCreds(), { ann_id: a.id }));
         } catch (e) { console.error('sched alert failed:', e); }
       }
     }
@@ -3317,7 +3263,7 @@
       try {
         const [act, staff] = await Promise.all([
           sb.from('active_sessions').select('username, current_game').gte('last_seen', cutoff).limit(200),
-          sb.from('license_keys').select('used_by, rank').in('rank', ['owner', 'admin', 'mod']).limit(100)
+          sb.rpc('staff_roster')
         ]);
         if (!act.error && !staff.error) {
           const hidden = {};
@@ -3430,13 +3376,8 @@
       try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
       if (!token) { wrap.innerHTML = ''; return; }
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .select('admin_request_status')
-          .eq('session_token', token)
-          .maybeSingle();
-        if (error) throw error;
-        const st = (data && data.admin_request_status) || null;
+        const data = await rpc('admin_status', myCreds());
+        const st = (data && data.status) || null;
         adminReqState = st;
         wrap.innerHTML = '';
         if (st) {
@@ -3464,16 +3405,9 @@
       try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
       if (!token) { toast('No session. Log in again.', 'err'); return; }
       try {
-        // Server-side once-ever guard: the update only touches rows whose
-        // status is still NULL, so a repeat click affects 0 rows.
-        const { data, error } = await sb
-          .from('license_keys')
-          .update({ admin_request_status: 'pending' })
-          .eq('session_token', token)
-          .is('admin_request_status', null)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
+        // Server-side once-ever guard lives in request_admin.
+        const res = await rpc('request_admin', myCreds());
+        if (!res || !res.success) {
           toast("You've already used your one admin request.", 'err');
           loadAdminRequestState();
           return;
@@ -3505,29 +3439,32 @@
       loadAdminRequestState();
     }
 
+    /* Site lock (owner kill-switch): cached 60s, fail-open pre-migration. */
+    let lockCheckedAt = 0;
+    let lockState = false;
+    async function checkSiteLock() {
+      const now = Date.now();
+      if (now - lockCheckedAt < 60000) return lockState;
+      lockCheckedAt = now;
+      try {
+        const r = await sb.from('app_config').select('locked').eq('id', 1).maybeSingle();
+        lockState = !r.error && !!r.data && !!r.data.locked;
+      } catch (e) { lockState = false; }
+      return lockState;
+    }
+
     async function refreshSession() {
       let token = null;
       try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
       if (!token) return;
+      let me = '';
+      try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
       try {
-        let res = await sb
-          .from('license_keys')
-          .select('is_active, is_admin, rank, admin_request_status')
-          .eq('session_token', token)
-          .maybeSingle();
-        if (res.error && /column/i.test(res.error.message || '')) {
-          // admin_request_status column not migrated yet — rank polling
-          // still works without it.
-          res = await sb
-            .from('license_keys')
-            .select('is_active, is_admin, rank')
-            .eq('session_token', token)
-            .maybeSingle();
-        }
-        const { data, error } = res;
+        const { data, error } = await sb.rpc('verify_session', { input_username: me, input_token: token });
         if (error) throw error;
-        if (!data || !data.is_active) { logout(); return; }
+        if (!data || !data.valid) { logout(); return; }
         const rank = data.rank || (data.is_admin ? 'admin' : 'user');
+        if (rank !== 'owner' && await checkSiteLock()) { logout(); return; }
         let cur = 'user';
         try { cur = localStorage.getItem(LS_RANK) || 'user'; } catch (e) {}
         if (rank !== cur) {
@@ -3535,8 +3472,6 @@
           updateSessionNav(rank);
           toast('Your rank is now ' + rank.toUpperCase(), 'ok');
         }
-        const st = data.admin_request_status || null;
-        if (adminReqState !== 'unsupported' && st !== adminReqState) loadAdminRequestState();
         refreshModeration();
       } catch (e) {
         console.error('session refresh failed:', e);
@@ -3545,18 +3480,13 @@
 
     // Mute / game-ban / slowmode state. Quiet on failure (pre-migration safe).
     async function refreshModeration() {
-      let me = 'player';
-      try { me = (localStorage.getItem(LS_USER) || 'player').slice(0, 32); } catch (e) {}
       try {
-        const now = new Date().toISOString();
-        const [ban, mute, slow] = await Promise.all([
-          sb.from('game_bans').select('expires_at, reason').eq('username', me).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
-          sb.from('mutes').select('expires_at, reason').eq('username', me).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
-          sb.from('chat_settings').select('slowmode_seconds').eq('id', 1).maybeSingle()
-        ]);
-        myGameBan = (!ban.error && ban.data) ? ban.data : null;
-        myMuteUntil = (!mute.error && mute.data && mute.data.expires_at) ? new Date(mute.data.expires_at).getTime() : 0;
-        slowmodeSecs = (!slow.error && slow.data && slow.data.slowmode_seconds) ? slow.data.slowmode_seconds : 0;
+        const data = await rpc('mod_status', myCreds());
+        const ban = (data && data.ban) || null;
+        const mute = (data && data.mute) || null;
+        myGameBan = ban;
+        myMuteUntil = (mute && mute.expires_at) ? new Date(mute.expires_at).getTime() : 0;
+        slowmodeSecs = (data && data.slowmode) || 0;
         renderBanBanner();
       } catch (e) {
         console.error('moderation refresh failed:', e);
@@ -3581,20 +3511,11 @@
 
     // Live check used when opening a game (blocks even inside the 3s window).
     async function isGameBannedLive() {
-      let me = 'player';
-      try { me = (localStorage.getItem(LS_USER) || 'player').slice(0, 32); } catch (e) {}
       try {
-        const { data, error } = await sb
-          .from('game_bans')
-          .select('expires_at, reason')
-          .eq('username', me)
-          .gt('expires_at', new Date().toISOString())
-          .order('expires_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (error) throw error;
-        if (data) {
-          myGameBan = data;
+        const data = await rpc('mod_status', myCreds());
+        const ban = (data && data.ban) || null;
+        if (ban && ban.expires_at && new Date(ban.expires_at).getTime() > Date.now()) {
+          myGameBan = ban;
           renderBanBanner();
           return true;
         }
@@ -3632,13 +3553,8 @@
 
     async function trackPresence(game) {
       try {
-        const { error } = await sb
-          .from('active_sessions')
-          .upsert(
-            { username: myName, current_game: game, last_seen: new Date().toISOString() },
-            { onConflict: 'username' }
-          );
-        if (error) throw error;
+        const args = Object.assign(myCreds(), { input_game: game });
+        await rpc('presence_upsert', args);
       } catch (e) {
         console.error(e);
       }
@@ -3649,9 +3565,7 @@
       // Only the timestamp is rewritten; current_game is left as-is.
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       heartbeatTimer = setInterval(() => {
-        sb.from('active_sessions')
-          .update({ last_seen: new Date().toISOString() })
-          .eq('username', myName)
+        sb.rpc('presence_touch', myCreds())
           .then(({ error }) => { if (error) console.error(error); });
         trackPlaytime();
         earnTick();
@@ -3668,26 +3582,8 @@
     // Adds ~30s to today's playtime total (drives the daily leaderboard).
     async function trackPlaytime() {
       try {
-        const day = new Date().toISOString().slice(0, 10);
-        const { data, error } = await sb
-          .from('daily_playtime')
-          .select('id, seconds')
-          .eq('username', myName)
-          .eq('day', day)
-          .maybeSingle();
-        if (error) throw error;
-        if (data) {
-          const { error: uerr } = await sb
-            .from('daily_playtime')
-            .update({ seconds: (data.seconds || 0) + 30 })
-            .eq('id', data.id);
-          if (uerr) throw uerr;
-        } else {
-          const { error: ierr } = await sb
-            .from('daily_playtime')
-            .insert({ username: myName, day: day, seconds: 30 });
-          if (ierr) throw ierr;
-        }
+        const args = Object.assign(myCreds(), { add_seconds: 30 });
+        await rpc('playtime_add', args);
       } catch (e) {
         console.error('playtime failed:', e);
       }
@@ -3865,50 +3761,25 @@
     }
 
     async function markDmsRead() {
-      try {
-        const { error } = await sb
-          .from('direct_messages')
-          .update({ read: true })
-          .eq('from_username', dmPeer)
-          .eq('to_username', myName)
-          .eq('read', false);
-        if (error) throw error;
-      } catch (e) {
-        console.error(e);
-      }
+      // Read-marking now happens server-side inside dm_thread on every fetch.
+      return;
     }
 
     async function loadDms() {
       try {
-        // History in either direction between me and the current peer.
-        // Two exact-match queries merged client-side (avoids
-        // filter-escaping issues with freeform usernames).
-        const [a, b] = await Promise.all([
-          sb.from('direct_messages')
-            .select('id, from_username, to_username, content, created_at, read')
-            .eq('from_username', dmPeer)
-            .eq('to_username', myName)
-            .order('created_at', { ascending: true })
-            .limit(50),
-          sb.from('direct_messages')
-            .select('id, from_username, to_username, content, created_at, read')
-            .eq('from_username', myName)
-            .eq('to_username', dmPeer)
-            .order('created_at', { ascending: true })
-            .limit(50)
-        ]);
-        if (a.error) throw a.error;
-        if (b.error) throw b.error;
-        const data = (a.data || []).concat(b.data || [])
-          .sort((x, y) => new Date(x.created_at) - new Date(y.created_at))
-          .slice(0, 50);
+        // Single server-side fetch merges both directions and marks
+        // inbound as read. Realtime is dead post-lockdown; the dms poller
+        // below keeps this fresh instead.
+        const { data, error } = await sb.rpc('dm_thread', Object.assign(myCreds(), { peer: dmPeer }));
+        if (error) throw error;
+        const dataArr = data || [];
         const box = document.getElementById('dmMsgs');
         box.innerHTML = '';
-        if (!data || data.length === 0) {
+        if (!dataArr || dataArr.length === 0) {
           box.innerHTML = '<div class="chat-empty">No messages yet.</div>';
         } else {
-          data.forEach(appendDm);
-          if (data.some(m => m.to_username === myName && !m.read)) {
+          dataArr.forEach(appendDm);
+          if (dataArr.some(m => m.to_username === myName && !m.read)) {
             document.getElementById('dmDot').classList.add('show');
           }
         }
@@ -3944,10 +3815,9 @@
       if (!content) return false;
       input.value = '';
       try {
-        const { error } = await sb
-          .from('direct_messages')
-          .insert({ from_username: myName, to_username: dmPeer, content: content.slice(0, 500) });
-        if (error) throw error;
+        const args = Object.assign(myCreds(), { to_user: dmPeer, content: content.slice(0, 500) });
+        const res = await rpc('dm_send', args);
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         // Echo optimistically (Realtime only fires for rows addressed to me).
         appendDm({ from_username: myName, to_username: dmPeer, content, created_at: new Date().toISOString() });
       } catch (err) {
@@ -3969,8 +3839,8 @@
       const me = meName();
       if (!me || me === 'anon') return;
       try {
-        const r = await sb.from('blocks').select('blocked').eq('username', me);
-        if (!r.error) myBlocks = (r.data || []).map(x => x.blocked);
+        const data = await rpc('friends_mine', myCreds());
+        if (data && data.blocked) myBlocks = data.blocked.filter(Boolean);
       } catch (e) { console.error('blocks failed:', e); }
     }
 
@@ -3980,13 +3850,10 @@
       const me = meName();
       let fr = [], bl = [];
       try {
-        const [a, b] = await Promise.all([
-          sb.from('friends').select('friend').eq('username', me).limit(100),
-          sb.from('blocks').select('blocked').eq('username', me).limit(100)
-        ]);
-        if (!a.error) fr = (a.data || []).map(x => x.friend).filter(Boolean);
-        if (!b.error) {
-          bl = (b.data || []).map(x => x.blocked).filter(Boolean);
+        const data = await rpc('friends_mine', myCreds());
+        if (data) {
+          fr = (data.friends || []).filter(Boolean);
+          bl = (data.blocked || []).filter(Boolean);
           myBlocks = bl.slice();
         }
       } catch (e) { console.error('friends load failed:', e); }
@@ -4052,8 +3919,9 @@
       const me = meName();
       if (!me || me === 'anon' || !u || u === me) return;
       try {
-        const { error } = await sb.from('friends').insert({ username: me, friend: u });
-        if (error) throw error;
+        const args = Object.assign(myCreds(), { target: u });
+        const res = await rpc('friend_add', args);
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Added ' + u, 'ok');
         loadFriends();
       } catch (e) { console.error('add friend failed:', e); toast('Already friends?', 'err'); }
@@ -4062,8 +3930,8 @@
     async function unFriend(u) {
       const me = meName();
       try {
-        const { error } = await sb.from('friends').delete().eq('username', me).eq('friend', u);
-        if (error) throw error;
+        const args = Object.assign(myCreds(), { target: u });
+        await rpc('friend_remove', args);
         loadFriends();
       } catch (e) { console.error('unfriend failed:', e); }
     }
@@ -4073,9 +3941,9 @@
       if (!me || me === 'anon' || !u || u === me) return;
       if (!confirm('Block ' + u + '? You will no longer see their DMs.')) return;
       try {
-        const { error } = await sb.from('blocks').insert({ username: me, blocked: u });
-        if (error) throw error;
-        try { await sb.from('friends').delete().eq('username', me).eq('friend', u); } catch (e) {}
+        const args = Object.assign(myCreds(), { target: u });
+        const res = await rpc('friend_block', args);
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Blocked ' + u, 'ok');
         loadBlocks();
         loadFriends();
@@ -4085,8 +3953,8 @@
     async function unblockUser(u) {
       const me = meName();
       try {
-        const { error } = await sb.from('blocks').delete().eq('username', me).eq('blocked', u);
-        if (error) throw error;
+        const args = Object.assign(myCreds(), { target: u });
+        await rpc('friend_unblock', args);
         toast('Unblocked ' + u, 'ok');
         loadBlocks();
         loadFriends();
@@ -4428,6 +4296,8 @@
       startPoller('quests', loadQuests, 10000);
       startPoller('xpboard', loadXpBoard, 10000);
       startPoller('typing', loadTyping, 3000);
+      startPoller('dms', loadDms, 5000);
+      startPoller('reqstat', checkPlayRequestStatus, 5000);
       startPoller('mycos', loadMyXp, 15000);
       startPoller('cosmap', loadCosmeticsMap, 15000);
       startPoller('trivia', renderTrivia, 60000);

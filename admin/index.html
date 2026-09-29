@@ -994,6 +994,16 @@
           <div id="dashPreview"><p class="muted">Loading…</p></div>
           <button class="linklike" onclick="showTab('activity', document.querySelector('.tabs button[data-tab=&quot;activity&quot;]'))">View full log →</button>
         </div>
+        <div class="dash-preview" id="lockPanel" style="display:none">
+          <h3>🔒 Site lock (kill-switch)</h3>
+          <p class="sub">While locked, only you can log in or stay online. Everyone else is signed out with your message.</p>
+          <div class="inline-form" style="margin-top:8px">
+            <input id="lockMsg" placeholder="Locked message (optional)" maxlength="200" style="flex:1;min-width:0" />
+            <button class="btn small danger" onclick="setSiteLock(true)">Lock site</button>
+            <button class="btn small ghost" onclick="setSiteLock(false)">Unlock</button>
+          </div>
+          <span class="muted" id="lockStatus">Checking…</span>
+        </div>
       </div>
 
       <div class="card section" id="sec-requests">
@@ -1300,6 +1310,26 @@
     // IDs of keys created this session whose plaintext_reveal must be cleared on modal dismiss.
     let lastCreatedIds = [];
 
+    /* ---------- RPC data layer (deny-by-default RLS) ----------
+       Caller identity (username + session token from localStorage) rides
+       on every staff call; rank/permission checks run inside the functions. */
+    function staffCreds() {
+      let u = '', t = '';
+      try {
+        u = localStorage.getItem(LS_USER) || '';
+        t = localStorage.getItem(LS_TOKEN) || '';
+      } catch (e) {}
+      return { input_username: u, input_token: t };
+    }
+    function callerArgs(extra) {
+      return Object.assign(staffCreds(), extra || {});
+    }
+    async function srpc(name, args) {
+      const { data, error } = await sb.rpc(name, args || {});
+      if (error) throw error;
+      return data;
+    }
+
     function toast(msg, kind) {
       const wrap = document.getElementById('toastWrap');
       if (!wrap) return;
@@ -1459,6 +1489,30 @@
       }
       const xpPanel = document.getElementById('xpGrantPanel');
       if (xpPanel) xpPanel.style.display = can('users.give_xp') ? '' : 'none';
+      const lockPanel = document.getElementById('lockPanel');
+      if (lockPanel) lockPanel.style.display = myRank === 'owner' ? '' : 'none';
+    }
+
+    /* Site lock (kill-switch): owner-only, hardcoded (never matrix-gated). */
+    async function loadLockStatus() {
+      const st = document.getElementById('lockStatus');
+      if (!st || myRank !== 'owner') return;
+      try {
+        const r = await sb.from('app_config').select('locked').eq('id', 1).maybeSingle();
+        if (!r.error && r.data) st.textContent = r.data.locked ? '🔒 LOCKED' : 'Unlocked';
+        else st.textContent = 'Not set up yet — run the SQL, then lock/unlock here.';
+      } catch (e) { console.error('lock status failed:', e); }
+    }
+    async function setSiteLock(locked) {
+      if (myRank !== 'owner') { toast('Insufficient rank', 'err'); return; }
+      const st = document.getElementById('lockStatus');
+      const msg = (document.getElementById('lockMsg') || {}).value || '';
+      try {
+        const res = await srpc('lock_set', callerArgs({ new_locked: locked, new_message: msg.slice(0, 200) }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        if (st) st.textContent = locked ? '🔒 LOCKED' : 'Unlocked';
+        toast(locked ? 'Site locked' : 'Site unlocked', locked ? undefined : 'ok');
+      } catch (e) { console.error('set lock failed:', e); toast('Lock change failed', 'err'); }
     }
 
     /* Owner permission matrix: render / save / reset. */
@@ -1488,8 +1542,8 @@
           perms[cb.getAttribute('data-rank')][cb.getAttribute('data-perm')] = cb.checked;
         });
         for (const rank of ['admin', 'mod']) {
-          const { error } = await sb.from('rank_perms').upsert({ rank: rank, perms: perms[rank] });
-          if (error) throw error;
+          const res = await srpc('perms_set', callerArgs({ target_rank: rank, new_perms: perms[rank] }));
+          if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         }
         await loadPerms();
         applyRankGating();
@@ -1502,8 +1556,8 @@
       if (!confirm('Reset admin/mod permissions to defaults?')) return;
       try {
         for (const rank of ['admin', 'mod']) {
-          const { error } = await sb.from('rank_perms').delete().eq('rank', rank);
-          if (error) throw error;
+          const res = await srpc('perms_clear', callerArgs({ target_rank: rank }));
+          if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         }
         await loadPerms();
         applyRankGating();
@@ -1549,16 +1603,14 @@
         window.location.href = '../games/index.html';
         return;
       }
+      let me = '';
+      try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .select('id, is_active, is_admin, rank')
-          .eq('session_token', token)
-          .maybeSingle();
+        const { data, error } = await sb.rpc('verify_session', { input_username: me, input_token: token });
         if (error) throw error;
-        const rank = data ? rankOf(data) : 'user';
+        const rank = data ? (data.rank || (data.is_admin ? 'admin' : 'user')) : 'user';
         const elevated = rank === 'owner' || rank === 'admin' || rank === 'mod';
-        if (!data || !data.is_active || (!data.is_admin && !elevated)) {
+        if (!data || !data.valid || (!data.is_admin && !elevated)) {
           window.location.href = '../games/index.html';
           return;
         }
@@ -1643,7 +1695,7 @@
       } else {
         nextSec.classList.add('active');
       }
-      if (name === 'dashboard') startPoller('stats', loadDashboard, 3000);
+      if (name === 'dashboard') { startPoller('stats', loadDashboard, 3000); loadLockStatus(); startPoller('lockstat', loadLockStatus, 10000); }
       if (name === 'requests') startPoller('requests', loadRequests, 3000);
       if (name === 'adminreqs') startPoller('adminreqs', loadAdminRequests, 3000);
       if (name === 'keys') startPoller('keys', loadKeys, 10000);
@@ -1699,25 +1751,20 @@
       if (!grid) return;
       const cards = grid.querySelectorAll('.stat-num');
       try {
-        const cutoff = new Date(Date.now() - 90000).toISOString();
-        const [keys, used, online, pending] = await Promise.all([
-          sb.from('license_keys').select('id', { count: 'exact', head: true }).eq('is_active', true),
-          sb.from('license_keys').select('id', { count: 'exact', head: true }).not('used_by', 'is', null),
-          sb.from('active_sessions').select('username', { count: 'exact', head: true }).gte('last_seen', cutoff),
-          sb.from('key_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
-        ]);
-        [keys, used, online, pending].forEach(r => { if (r.error) throw r.error; });
+        const data = await srpc('dashboard_stats', staffCreds());
+        if (!data || data.error) throw new Error((data && data.error) || 'failed');
+        const keys = data.keys, used = data.used, online = data.online, pending = data.pending;
         const vals = [
-          String(keys.count != null ? keys.count : '—'),
-          String(used.count != null ? used.count : '—'),
-          String(online.count != null ? online.count : '—'),
-          String(pending.count != null ? pending.count : '—'),
+          String(keys != null ? keys : '—'),
+          String(used != null ? used : '—'),
+          String(online != null ? online : '—'),
+          String(pending != null ? pending : '—'),
           '100'
         ];
         cards.forEach((el, i) => setStat(el, i, vals[i]));
-        setTick('tickKeys', keys.count);
-        setTick('tickPending', pending.count);
-        setTick('tickOnline', online.count);
+        setTick('tickKeys', keys);
+        setTick('tickPending', pending);
+        setTick('tickOnline', online);
         dashLoaded = true;
         renderDashPreview();
       } catch (e) {
@@ -1780,34 +1827,12 @@
     const ACTIVITY_PAGE = 20;
 
     async function fetchActivityRows() {
-      const [acts, bans, trolls, reqs] = await Promise.all([
-        sb.from('license_keys').select('used_by, activated_at').not('used_by', 'is', null)
-          .order('activated_at', { ascending: false }).limit(30),
-        sb.from('blacklist').select('username, reason, created_at')
-          .order('created_at', { ascending: false }).limit(20),
-        sb.from('troll_events').select('target_username, event_type, created_at')
-          .order('created_at', { ascending: false }).limit(20),
-        sb.from('key_requests').select('name, status, status_updated_at')
-          .in('status', ['approved', 'denied'])
-          .order('status_updated_at', { ascending: false }).limit(10)
-      ]);
-      [acts, bans, trolls, reqs].forEach(r => { if (r.error) throw r.error; });
+      const data = await srpc('activity_feed', staffCreds());
+      if (!data) return [];
+      if (data.error) throw new Error(data.error);
       const rows = [];
-      (acts.data || []).forEach(k => rows.push({
-        when: k.activated_at, kind: 'activation',
-        detail: (k.used_by || 'unknown') + ' activated a key'
-      }));
-      (bans.data || []).forEach(b => rows.push({
-        when: b.created_at, kind: 'blacklist',
-        detail: (b.username || 'unknown') + ' blacklisted' + (b.reason ? ' — ' + b.reason : '')
-      }));
-      (trolls.data || []).forEach(t => rows.push({
-        when: t.created_at, kind: 'troll: ' + (t.event_type || '?'),
-        detail: '→ ' + (t.target_username || 'Everyone')
-      }));
-      (reqs.data || []).forEach(r => rows.push({
-        when: r.status_updated_at, kind: 'request ' + (r.status || '?'),
-        detail: (r.name || 'unknown') + ' — request ' + (r.status || '?')
+      (data || []).forEach(r => rows.push({
+        when: r.when_ts, kind: r.kind, detail: r.detail
       }));
       rows.sort((a, b) => new Date(b.when) - new Date(a.when));
       return rows;
@@ -1963,13 +1988,10 @@
       if (!type) return;
       const target = scopeKey === '*' ? null : scopeKey;
       try {
-        const { data, error } = await sb.from('troll_events').insert({
-          target_username: target,
-          event_type: type,
-          payload: { state: 'off' }
-        }).select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error('Insert affected 0 rows.');
+        const res = await srpc('troll_fire', callerArgs({
+          target_username: target, event_type: type, payload: { state: 'off' }
+        }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast(type + ' OFF for ' + (target || 'Everyone'), 'ok');
         refreshTrollStates();
       } catch (e) {
@@ -1982,12 +2004,9 @@
     // remembers what's currently active even after navigating away.
     async function refreshTrollStates() {
       try {
-        const { data, error } = await sb
-          .from('troll_events')
-          .select('event_type, target_username, payload, created_at')
-          .order('created_at', { ascending: false })
-          .limit(200);
-        if (error) throw error;
+        const data = await srpc('troll_admin_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
         const map = {};
         const rows = {};
         (data || []).forEach(r => {
@@ -2039,15 +2058,12 @@
       }
       errBox.textContent = '';
       try {
-        const { data, error } = await sb.from('troll_events').insert({
+        const res = await srpc('troll_fire', callerArgs({
           target_username: scope.target,
           event_type: trick,
           payload: payload
-        }).select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('Insert affected 0 rows — check the INSERT RLS policy on troll_events.');
-        }
+        }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         okBox.textContent = 'Sent ' + trick + ' → ' + (scope.target || 'Everyone') + ' ✓';
         toast('Trick sent', 'ok');
       } catch (e) {
@@ -2079,12 +2095,12 @@
           }
           payload.image = picked;
         }
-        const { error } = await sb.from('troll_events').insert({
+        const res = await srpc('troll_fire', callerArgs({
           target_username: scope.target,
           event_type: trick,
           payload: payload
-        });
-        if (error) throw error;
+        }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         trollStates[trick + '|' + scope.key] = next;
         trollStateRows[trick + '|' + scope.key] = { type: trick, scope: scope.key };
         paintTrickButtons();
@@ -2151,8 +2167,8 @@
       try {
         const dataUrl = await downscaleImage(f, 800);
         if (dataUrl.length > 700000) { if (st) st.textContent = 'Still too big after shrinking — try a smaller image.'; return; }
-        const { error } = await sb.from('troll_settings').upsert({ id: 1, jumpscare_image: dataUrl });
-        if (error) throw error;
+        const res = await srpc('scare_set', callerArgs({ image_data: dataUrl }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         customScareReady = true;
         const prev = document.getElementById('customScarePreview');
         if (prev) { prev.src = dataUrl; prev.style.display = ''; }
@@ -2165,8 +2181,8 @@
       if (!can('troll.custom_image')) { if (st) st.textContent = 'Insufficient rank.'; return; }
       if (!confirm('Remove the custom jumpscare image?')) return;
       try {
-        const { error } = await sb.from('troll_settings').upsert({ id: 1, jumpscare_image: null });
-        if (error) throw error;
+        const res = await srpc('scare_set', callerArgs({ image_data: null }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         customScareReady = false;
         const prev = document.getElementById('customScarePreview');
         if (prev) prev.style.display = 'none';
@@ -2274,24 +2290,13 @@
       }
       setBtnLoading(btn, true);
       try {
-        const made = [];
-        const ids = [];
-        for (let i = 0; i < customs.length; i++) {
-          const plaintext = customs[i];
-          const { data: created, error } = await sb
-            .from('license_keys')
-            .insert({ key: plaintext, is_active: true, is_admin: isAdmin, rank: rank, plaintext_reveal: plaintext })
-            .select('id')
-            .maybeSingle();
-          if (error) throw error;
-          if (created && created.id) ids.push(created.id);
-          made.push(plaintext);
-        }
-        lastCreatedIds = ids;
+        const res = await srpc('key_create_bulk', callerArgs({ input_keys: customs, key_rank: rank }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        lastCreatedIds = [];
         document.getElementById('bulkKeysM').value = '';
         closeBulkModal();
-        showKeysModal(made);
-        toast(made.length + ' keys created', 'ok');
+        showKeysModal(customs);
+        toast(customs.length + ' keys created', 'ok');
         loadKeys();
       } catch (e) {
         console.error('bulk generate failed:', e);
@@ -2374,29 +2379,18 @@
       const firstReq = !box.querySelector('.req-card') && !box.querySelector('.empty-state');
       if (firstReq) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
-        let res = await sb
-          .from('key_requests')
-          .select('id, name, reason, school, status, created_at')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false });
-        if (res.error && /column/i.test(res.error.message || '')) {
-          // School column not migrated yet — fall back without it.
-          res = await sb
-            .from('key_requests')
-            .select('id, name, reason, status, created_at')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: false });
-        }
-        const { data, error } = res;
-        if (error) throw error;
-        if (!data || data.length === 0) {
+        const data = await srpc('req_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
+        const pending = (data || []).filter(r => r.status === 'pending');
+        if (pending.length === 0) {
           box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending requests.</div>';
           knownReqIds = {};
           return;
         }
         const isFirst = Object.keys(knownReqIds).length === 0;
         let html = '';
-        data.forEach((r, ri) => {
+        pending.forEach((r, ri) => {
           const isNew = !isFirst && !knownReqIds[r.id];
           knownReqIds[r.id] = true;
           html += '<div class="req-card' + (isNew ? ' flash' : '') + '" style="animation-delay:' + Math.min(ri, 8) * 40 + 'ms">' +
@@ -2409,9 +2403,9 @@
             '</div></div>';
         });
         // Drop ids that are no longer pending so a re-request flashes again.
-      Object.keys(knownReqIds).forEach(id => {
-        if (!data.some(r => String(r.id) === String(id))) delete knownReqIds[id];
-      });
+        Object.keys(knownReqIds).forEach(id => {
+          if (!pending.some(r => String(r.id) === String(id))) delete knownReqIds[id];
+        });
       setHTMLifChanged(box, html);
       } catch (e) {
         console.error(e);
@@ -2451,19 +2445,17 @@
       const first = !box.querySelector('table') && !box.querySelector('.empty-state');
       if (first) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .select('id, key, used_by, rank, admin_request_status, activated_at')
-          .eq('admin_request_status', 'pending')
-          .order('id', { ascending: true })
-          .limit(100);
-        if (error) throw error;
+        const data = await srpc('adminreq_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
+        const pending = data.pending || [];
+        const decided = data.decided || [];
         let html = '';
-        if (!data || data.length === 0) {
+        if (pending.length === 0) {
           html += '<div class="empty-state"><div class="big">📭</div>No pending admin requests.</div>';
         } else {
           html += '<table><tr><th>User</th><th>Key</th><th>Rank</th><th></th></tr>';
-          data.forEach((r, ri) => {
+          pending.forEach((r, ri) => {
             html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.used_by || '—') +
               '</td><td class="mono">' + maskKey(r.key) +
               '</td><td>' + rankPill(r.rank || 'user') +
@@ -2474,15 +2466,9 @@
           });
           html += '</table>';
         }
-        const dec = await sb
-          .from('license_keys')
-          .select('id, used_by, admin_request_status')
-          .in('admin_request_status', ['approved', 'denied'])
-          .order('id', { ascending: false })
-          .limit(10);
-        if (!dec.error && dec.data && dec.data.length > 0) {
+        if (decided.length > 0) {
           html += '<h2 style="margin-top:24px">Recently decided</h2><table><tr><th>User</th><th>Outcome</th></tr>';
-          dec.data.forEach(d => {
+          decided.forEach(d => {
             html += '<tr><td>' + esc(d.used_by || '—') +
               '</td><td><span class="pill ' + (d.admin_request_status === 'approved' ? 'on' : 'off') + '">' +
               esc(d.admin_request_status) + '</span></td></tr>';
@@ -2506,13 +2492,8 @@
       if (!can('adminreqs.decide')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .update({ rank: 'admin', is_admin: true, admin_request_status: 'approved' })
-          .eq('id', id)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error('Update affected 0 rows.');
+        const res = await srpc('adminreq_decide', callerArgs({ target_key_id: id, approve: true }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('User promoted to admin', 'ok');
         loadAdminRequests();
       } catch (e) {
@@ -2526,13 +2507,8 @@
       if (!can('adminreqs.decide')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .update({ admin_request_status: 'denied' })
-          .eq('id', id)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error('Update affected 0 rows.');
+        const res = await srpc('adminreq_decide', callerArgs({ target_key_id: id, approve: false }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Admin request denied', 'ok');
         loadAdminRequests();
       } catch (e) {
@@ -2592,37 +2568,13 @@
       }
       setBtnLoading(btn, true);
       try {
-        const plaintext = resolvePlaintext(custom);
-        let reqSchool = null;
-        let reqName = null;
-        try {
-          const rq = await sb.from('key_requests').select('school, name').eq('id', pendingApproveId).maybeSingle();
-          if (!rq.error && rq.data) { reqSchool = rq.data.school || null; reqName = rq.data.name || null; }
-        } catch (e) { console.error('approve school lookup failed:', e); }
-        const insPayload = { key: plaintext, is_active: true, is_admin: false, rank: 'user', plaintext_reveal: plaintext, request_id: pendingApproveId, school: reqSchool, used_by: reqName };
-        let ins = await sb
-          .from('license_keys')
-          .insert(insPayload)
-          .select('id')
-          .maybeSingle();
-        if (ins.error && /column/i.test(ins.error.message || '')) {
-          // school column not migrated yet — retry without it rather than failing the approve
-          delete insPayload.school;
-          console.error('approve retrying without school column');
-          ins = await sb
-            .from('license_keys')
-            .insert(insPayload)
-            .select('id')
-            .maybeSingle();
-        }
-        const { data: created, error: insErr } = ins;
-        if (insErr) throw insErr;
-        lastCreatedIds = created && created.id ? [created.id] : [];
-        const { error: updErr } = await sb
-          .from('key_requests')
-          .update({ status: 'approved', status_updated_at: new Date().toISOString() })
-          .eq('id', pendingApproveId);
-        if (updErr) throw updErr;
+        const customTrimmed = custom.trim() || null;
+        const res = await srpc('approve_key_request', callerArgs({
+          request_id: pendingApproveId, custom_key: customTrimmed, key_rank: 'user'
+        }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        const plaintext = res.key;
+        lastCreatedIds = [];
         closeApproveModal();
         showKeyModal(plaintext);
         toast('Request approved', 'ok');
@@ -2690,35 +2642,14 @@
         toast('Custom key: letters, numbers and dashes only (4–64 chars).', 'err');
         return;
       }
-      // Only one owner key may exist at any time.
-      if (rank === 'owner') {
-        try {
-          const { data: existing, error: ownErr } = await sb
-            .from('license_keys')
-            .select('id')
-            .eq('rank', 'owner')
-            .limit(1);
-          if (ownErr) throw ownErr;
-          if (existing && existing.length > 0) {
-            toast('An owner key already exists.', 'err');
-            return;
-          }
-        } catch (e) {
-          console.error('owner check failed:', e);
-          toast('Could not verify owner uniqueness.', 'err');
-          return;
-        }
-      }
+      // Only one owner key may exist at any time (enforced server-side too).
+      if (rank === 'owner' && myRank !== 'owner') { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const plaintext = resolvePlaintext(custom);
-        const { data: created, error } = await sb
-          .from('license_keys')
-          .insert({ key: plaintext, is_active: true, is_admin: (rank === 'admin' || rank === 'owner'), rank: rank, plaintext_reveal: plaintext })
-          .select('id')
-          .maybeSingle();
-        if (error) throw error;
-        lastCreatedIds = created && created.id ? [created.id] : [];
+        const res = await srpc('key_create_bulk', callerArgs({ input_keys: [plaintext], key_rank: rank }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        lastCreatedIds = [];
         document.getElementById('customKey').value = '';
         showKeyModal(plaintext);
         toast('Key created', 'ok');
@@ -2735,13 +2666,10 @@
       if (!can('requests.decide')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const patch = { status: 'denied', status_updated_at: new Date().toISOString() };
-        if (reason) patch.deny_reason = String(reason).slice(0, 200);
-        const { error } = await sb
-          .from('key_requests')
-          .update(patch)
-          .eq('id', id);
-        if (error) throw error;
+        const res = await srpc('deny_key_request', callerArgs({
+          request_id: id, input_reason: reason ? String(reason).slice(0, 200) : null
+        }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Request denied', 'ok');
         loadRequests();
       } catch (e) {
@@ -2785,12 +2713,9 @@
       const firstKeys = !box.querySelector('table') && !box.querySelector('.empty-state');
       if (firstKeys) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .select('id, key, used_by, is_active, is_admin, rank, activated_at, created_at')
-          .order('created_at', { ascending: false })
-          .limit(200);
-        if (error) throw error;
+        const data = await srpc('keys_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
         lastKeys = data || [];
         if (lastKeys.length === 0) {
           setHTMLifChanged(box, '<div class="empty-state"><div class="big">🔑</div>No keys yet — generate one above.</div>');
@@ -2856,15 +2781,8 @@
       if (!canModify(targetRank || 'user')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .update({ is_active: next })
-          .eq('id', id)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('Update affected 0 rows — check the UPDATE RLS policy on license_keys.');
-        }
+        const res = await srpc('toggle_key', callerArgs({ target_key_id: id, next_active: next }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast(next ? 'Key enabled' : 'Key disabled', 'ok');
         loadKeys();
       } catch (e) {
@@ -2879,15 +2797,8 @@
       if (!confirm('Reset this key so it can be redeemed again?')) return;
       setBtnLoading(btn, true);
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .update({ used_by: null, session_token: null, activated_at: null, device_fp: null })
-          .eq('id', id)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('Update affected 0 rows — check the UPDATE RLS policy on license_keys.');
-        }
+        const res = await srpc('reset_key', callerArgs({ target_key_id: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Key reset', 'ok');
         loadKeys();
       } catch (e) {
@@ -2903,17 +2814,8 @@
       if (!confirm('Permanently delete this key? This cannot be undone.')) return;
       setBtnLoading(btn, true);
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .delete()
-          .eq('id', id)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          // RLS can make a delete silently affect 0 rows (HTTP success,
-          // nothing removed). Never report that as a success.
-          throw new Error('Delete affected 0 rows — check the DELETE RLS policy on license_keys.');
-        }
+        const res = await srpc('delete_key', callerArgs({ target_key_id: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Key deleted', 'ok');
         loadKeys();
       } catch (e) {
@@ -2930,11 +2832,9 @@
       const firstBl = !box.querySelector('table') && !box.querySelector('.empty-state');
       if (firstBl) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
-        const { data, error } = await sb
-          .from('blacklist')
-          .select('id, username, reason, created_at')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
+        const data = await srpc('bl_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
         if (!data || data.length === 0) {
           box.innerHTML = '<div class="empty-state"><div class="big">🚫</div>Blacklist is empty.</div>';
           return;
@@ -2958,8 +2858,8 @@
       if (!can('blacklist.manage')) { toast('Insufficient rank', 'err'); return; }
       if (!username) { toast('Enter a username first.', 'err'); return; }
       try {
-        const { error } = await sb.from('blacklist').insert({ username, reason });
-        if (error) throw error;
+        const res = await srpc('bl_add', callerArgs({ target_username: username, reason: reason }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         document.getElementById('blUser').value = '';
         document.getElementById('blReason').value = '';
         toast('Added to blacklist', 'ok');
@@ -2974,8 +2874,8 @@
       if (!can('blacklist.manage')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const { error } = await sb.from('blacklist').delete().eq('id', id);
-        if (error) throw error;
+        const res = await srpc('bl_remove', callerArgs({ target_id: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Removed from blacklist', 'ok');
         loadBlacklist();
       } catch (e) {
@@ -3005,14 +2905,12 @@
           if (!whenEl || !whenEl.value) { document.getElementById('msgError').textContent = 'Pick a date and time for the scheduled announcement.'; return; }
           schedISO = new Date(whenEl.value).toISOString();
         }
-        const { data, error } = await sb
-          .from('announcements')
-          .insert({ content: content.slice(0, 500), posted_by: postedBy, rank: myRank, pinned: type === 'sticky', scheduled_for: schedISO })
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('Insert affected 0 rows — check the INSERT RLS policy on announcements.');
-        }
+        const res = await srpc('announce_post', callerArgs({
+          content: content.slice(0, 500),
+          pinned: type === 'sticky',
+          scheduled_for: schedISO
+        }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         input.value = '';
         document.getElementById('msgOk').textContent = 'Announcement posted.';
         toast('Announcement posted', 'ok');
@@ -3088,8 +2986,8 @@
       if (isNaN(n) || n < 0) n = 0;
       if (n > 300) n = 300;
       try {
-        const { error } = await sb.from('chat_settings').upsert({ id: 1, slowmode_seconds: n });
-        if (error) throw error;
+        const res = await srpc('slowmode_set', callerArgs({ seconds: n }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast(n > 0 ? ('Slow mode: ' + n + 's') : 'Slow mode off', 'ok');
         loadSlowStatus();
       } catch (e) {
@@ -3108,15 +3006,8 @@
       if (!can('announce.delete')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const { data, error } = await sb
-          .from('announcements')
-          .delete()
-          .eq('id', id)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('Delete affected 0 rows — check the DELETE RLS policy on announcements.');
-        }
+        const res = await srpc('announce_delete', callerArgs({ target_id: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Announcement deleted', 'ok');
         loadAnnouncements();
       } catch (e) {
@@ -3172,15 +3063,8 @@
       if (!can('chat.delete')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const { data, error } = await sb
-          .from('messages')
-          .delete()
-          .eq('id', id)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error('Delete affected 0 rows — check the DELETE RLS policy on messages.');
-        }
+        const res = await srpc('chat_delete', callerArgs({ target_id: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Message deleted', 'ok');
         loadChatMod();
       } catch (e) {
@@ -3229,24 +3113,20 @@
         }
 // Rank map for whoever can set ranks (owner by default).
 let rankMap = {};
-if (can('users.set_rank')) {
-          try {
-            const r = await sb.from('license_keys').select('used_by, rank');
-            if (r.error) throw r.error;
-            (r.data || []).forEach(k => { if (k.used_by) rankMap[k.used_by] = k.rank || 'user'; });
-          } catch (e) { console.error('rank map failed:', e); }
-        }
+try {
+  const rk = await srpc('keys_ranks', staffCreds());
+  if (rk && !rk.error) rankMap = rk;
+} catch (e) { console.error('rank map failed:', e); }
         // Moderation maps (all staff ranks can warn/mute/ban from here).
         let warnCounts = {};
         let mutedMap = {};
         try {
-          const w = await sb.from('warnings').select('username').limit(500);
-          if (!w.error) (w.data || []).forEach(x => { if (x.username) warnCounts[x.username] = (warnCounts[x.username] || 0) + 1; });
-        } catch (e) { console.error('warnings map failed:', e); }
-        try {
-          const m = await sb.from('mutes').select('username, expires_at').gt('expires_at', new Date().toISOString()).limit(200);
-          if (!m.error) (m.data || []).forEach(x => { if (x.username) mutedMap[x.username] = x.expires_at; });
-        } catch (e) { console.error('mutes map failed:', e); }
+          const mm = await srpc('users_bundle', staffCreds());
+          if (mm && !mm.error) {
+            warnCounts = mm.warns || {};
+            mutedMap = mm.mutes || {};
+          }
+        } catch (e) { console.error('moderation maps failed:', e); }
         let myName = '';
         try { myName = localStorage.getItem(LS_USER) || ''; } catch (e) {}
         lastUsers = { rows: data, rankMap: rankMap, warnCounts: warnCounts, mutedMap: mutedMap, myName: myName };
@@ -3358,13 +3238,8 @@ if (can('users.set_rank')) {
       if (!can('users.set_rank')) { toast('Insufficient rank', 'err'); return; }
       if (!username || URANK_OPTS.indexOf(rank) === -1) return;
       try {
-        const { data, error } = await sb
-          .from('license_keys')
-          .update({ rank: rank, is_admin: (rank === 'admin') })
-          .eq('used_by', username)
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error('No key row matched that user.');
+        const res = await srpc('set_rank', callerArgs({ target_username: username, new_rank: rank }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         if (dd) dd.classList.remove('open');
         toast(username + ' is now ' + rank, 'ok');
         loadUsers();
@@ -3387,12 +3262,8 @@ if (can('users.set_rank')) {
       const reason = prompt('Warn ' + username + ' — reason (optional):');
       if (reason === null) return;
       try {
-        const { data, error } = await sb
-          .from('warnings')
-          .insert({ username: username, reason: (reason || '').slice(0, 200), warned_by: staffName() })
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error('Insert affected 0 rows.');
+        const res = await srpc('mod_action', callerArgs({ target_username: username, action: 'warn', reason: reason || null }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Warned ' + username, 'ok');
         loadUsers();
       } catch (e) {
@@ -3405,13 +3276,8 @@ if (can('users.set_rank')) {
       if (!username) return;
       if (!canModerateTarget(username)) { toast('Insufficient rank', 'err'); return; }
       try {
-        const until = new Date(Date.now() + minutes * 60000).toISOString();
-        const { data, error } = await sb
-          .from('mutes')
-          .insert({ username: username, reason: 'Muted by staff', muted_by: staffName(), expires_at: until })
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error('Insert affected 0 rows.');
+        const res = await srpc('mod_action', callerArgs({ target_username: username, action: 'mute', minutes: minutes }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast(username + ' muted for ' + minutes + 'm', 'ok');
         loadUsers();
       } catch (e) {
@@ -3426,12 +3292,8 @@ if (can('users.set_rank')) {
       if (!canModerateTarget(username)) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        const { error } = await sb
-          .from('mutes')
-          .delete()
-          .eq('username', username)
-          .gt('expires_at', new Date().toISOString());
-        if (error) throw error;
+        const res = await srpc('mod_action', callerArgs({ target_username: username, action: 'unmute' }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast(username + ' unmuted', 'ok');
         loadUsers();
       } catch (e) {
@@ -3448,13 +3310,8 @@ if (can('users.set_rank')) {
       if (!confirm('Ban ' + username + ' from games for ' + minutes + ' minutes? They stay logged in.')) return;
       setBtnLoading(btn, true);
       try {
-        const until = new Date(Date.now() + minutes * 60000).toISOString();
-        const { data, error } = await sb
-          .from('game_bans')
-          .insert({ username: username, reason: 'Banned after 3+ warnings', banned_by: staffName(), expires_at: until })
-          .select('id');
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error('Insert affected 0 rows.');
+        const res = await srpc('mod_action', callerArgs({ target_username: username, action: 'ban', minutes: minutes, reason: 'Banned after 3+ warnings' }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast(username + ' banned from games for ' + minutes + 'm', 'ok');
         loadUsers();
       } catch (e) {
@@ -3498,14 +3355,8 @@ if (can('users.set_rank')) {
       if (!can('users.give_xp')) { toast('Insufficient rank', 'err'); return false; }
       if (!username || !(amount > 0)) return false;
       try {
-        const cur = await sb.from('xp_balances').select('balance, lifetime').eq('username', username).maybeSingle();
-        let bal = 0, life = 0;
-        if (!cur.error && cur.data) { bal = cur.data.balance || 0; life = cur.data.lifetime || 0; }
-        const up = await sb.from('xp_balances').upsert({ username: username, balance: bal + amount, lifetime: life + amount });
-        if (up.error) throw up.error;
-        try {
-          await sb.from('xp_purchases').insert({ username: username, item: 'owner grant', cost: 0 });
-        } catch (e) { console.error('grant log failed:', e); }
+        const res = await srpc('xp_grant', callerArgs({ target_username: username, amount: amount }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         return true;
       } catch (e) {
         console.error('grant xp failed:', e, { username: username, amount: amount });
@@ -3531,23 +3382,10 @@ if (can('users.set_rank')) {
       if (isNaN(amount) || amount <= 0 || amount > 10000) { toast('Enter 1–10000 XP.', 'err'); return; }
       setBtnLoading(btn, true);
       try {
-        let names = [];
-        if (which === 'online') {
-          const r = await sb.from('active_sessions').select('username').limit(200);
-          if (r.error) throw r.error;
-          names = (r.data || []).map(x => x.username).filter(Boolean);
-        } else {
-          const r = await sb.from('license_keys').select('used_by').not('used_by', 'is', null).limit(500);
-          if (r.error) throw r.error;
-          const set = {};
-          (r.data || []).forEach(x => { if (x.used_by) set[x.used_by] = true; });
-          names = Object.keys(set);
-        }
-        let okCount = 0;
-        for (const u of names) {
-          if (await grantXp(u, amount)) okCount++;
-        }
-        toast('Gave ' + amount + ' XP to ' + okCount + '/' + names.length + ' users', okCount ? 'ok' : 'err');
+        const res = await srpc('xp_grant_all', callerArgs({ which: which, amount: amount }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        const n = res.count || 0;
+        toast('Gave ' + amount + ' XP to ' + n + ' users', n ? 'ok' : 'err');
       } catch (e) {
         console.error('grant everyone failed:', e);
         toast('Grant failed.', 'err');
@@ -3564,18 +3402,15 @@ if (can('users.set_rank')) {
       const first = !box.querySelector('table') && !box.querySelector('.empty-state');
       if (first) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
-        const { data, error } = await sb
-          .from('reports')
-          .select('id, reporter, reported_user, message_id, reason, status, created_at')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(50);
-        if (error) throw error;
-        if (!data || data.length === 0) {
+        const data = await srpc('reports_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
+        const pending = (data || []).filter(r => r.status === 'pending');
+        if (pending.length === 0) {
           box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending reports.</div>';
           return;
         }
-        const ids = data.map(r => r.message_id).filter(Boolean);
+        const ids = pending.map(r => r.message_id).filter(Boolean);
         let msgMap = {};
         if (ids.length > 0) {
           try {
@@ -3584,7 +3419,7 @@ if (can('users.set_rank')) {
           } catch (e) { console.error('report context failed:', e); }
         }
         let html = '<table><tr><th>Reported</th><th>Message</th><th>By</th><th></th></tr>';
-        data.forEach((r, ri) => {
+        pending.forEach((r, ri) => {
           const ctx = (r.message_id && msgMap[r.message_id]) ? msgMap[r.message_id].content : '(message gone)';
           html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.reported_user) +
             '</td><td>' + esc(String(ctx).slice(0, 120)) +
@@ -3605,8 +3440,8 @@ if (can('users.set_rank')) {
     async function dismissReport(id, btn) {
       setBtnLoading(btn, true);
       try {
-        const { error } = await sb.from('reports').update({ status: 'reviewed' }).eq('id', id);
-        if (error) throw error;
+        const res = await srpc('report_dismiss', callerArgs({ report_id: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Report dismissed', 'ok');
         loadReports();
       } catch (e) {
@@ -3620,11 +3455,11 @@ if (can('users.set_rank')) {
       setBtnLoading(btn, true);
       try {
         if (messageId) {
-          const { error: derr } = await sb.from('messages').delete().eq('id', messageId);
-          if (derr) throw derr;
+          const dres = await srpc('chat_delete', callerArgs({ target_id: messageId }));
+          if (!dres || !dres.success) throw new Error((dres && dres.error) || 'failed');
         }
-        const { error } = await sb.from('reports').update({ status: 'actioned' }).eq('id', reportId);
-        if (error) throw error;
+        const res = await srpc('report_action', callerArgs({ report_id: reportId }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Message deleted', 'ok');
         loadReports();
       } catch (e) {
@@ -3637,13 +3472,12 @@ if (can('users.set_rank')) {
     async function muteReported(reportId, username, btn) {
       setBtnLoading(btn, true);
       try {
-        const until = new Date(Date.now() + 30 * 60000).toISOString();
-        const { error: merr } = await sb
-          .from('mutes')
-          .insert({ username: username, reason: 'Muted from report', muted_by: staffName(), expires_at: until });
-        if (merr) throw merr;
-        const { error } = await sb.from('reports').update({ status: 'actioned' }).eq('id', reportId);
-        if (error) throw error;
+        const mres = await srpc('mod_action', callerArgs({
+          target_username: username, action: 'mute', minutes: 30, reason: 'Muted from report'
+        }));
+        if (!mres || !mres.success) throw new Error((mres && mres.error) || 'failed');
+        const res = await srpc('report_action', callerArgs({ report_id: reportId }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast(username + ' muted 30m', 'ok');
         loadReports();
       } catch (e) {
@@ -3667,19 +3501,16 @@ if (can('users.set_rank')) {
       const first = !box.querySelector('table') && !box.querySelector('.empty-state');
       if (first) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
       try {
-        const { data, error } = await sb
-          .from('direct_messages')
-          .select('from_username, to_username, content, created_at')
-          .order('created_at', { ascending: false })
-          .limit(200);
-        if (error) throw error;
+        const data = await srpc('dm_spy_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
         const pairs = {};
         (data || []).forEach(m => {
-          const a = m.from_username || '?';
-          const b = m.to_username || '?';
+          const a = m.u1 || '?';
+          const b = m.u2 || '?';
           if (a === b) return;
           const key = [a, b].sort().join(' <> ');
-          if (!pairs[key]) pairs[key] = { a: [a, b].sort()[0], b: [a, b].sort()[1], preview: m.content || '', when: m.created_at };
+          if (!pairs[key]) pairs[key] = { a: [a, b].sort()[0], b: [a, b].sort()[1], preview: m.preview || '', when: m.last_at };
         });
         const keys = Object.keys(pairs).slice(0, 30);
         if (keys.length === 0) {
@@ -3711,13 +3542,10 @@ if (can('users.set_rank')) {
       const box = document.getElementById('spyHistory');
       box.innerHTML = '<p class="muted">Loading…</p>';
       try {
-        const [r1, r2] = await Promise.all([
-          sb.from('direct_messages').select('from_username, content, created_at').eq('from_username', a).eq('to_username', b).order('created_at', { ascending: true }).limit(100),
-          sb.from('direct_messages').select('from_username, content, created_at').eq('from_username', b).eq('to_username', a).order('created_at', { ascending: true }).limit(100)
-        ]);
-        if (r1.error) throw r1.error;
-        if (r2.error) throw r2.error;
-        const rows = (r1.data || []).concat(r2.data || []).sort((x, y) => new Date(x.created_at) - new Date(y.created_at));
+        const data = await srpc('dm_spy_thread', callerArgs({ u1: a, u2: b }));
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
+        const rows = (data || []).sort((x, y) => new Date(x.created_at) - new Date(y.created_at));
         if (rows.length === 0) {
           box.innerHTML = '<p class="muted">No messages.</p>';
           return;
@@ -3765,19 +3593,14 @@ if (can('users.set_rank')) {
       const box = document.getElementById('dmContacts');
       if (!box) return;
       try {
-        const [a, b] = await Promise.all([
-          sb.from('direct_messages').select('from_username, created_at').eq('to_username', 'admin').order('created_at', { ascending: false }).limit(50),
-          sb.from('direct_messages').select('to_username, created_at').eq('from_username', 'admin').order('created_at', { ascending: false }).limit(50)
-        ]);
-        if (a.error) throw a.error;
-        if (b.error) throw b.error;
+        const data = await srpc('dm_contacts', callerArgs({ peer: 'admin' }));
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
         const seen = {};
         const names = [];
-        (a.data || []).forEach(m => {
-          if (m.from_username && m.from_username !== 'admin' && !seen[m.from_username]) { seen[m.from_username] = true; names.push(m.from_username); }
-        });
-        (b.data || []).forEach(m => {
-          if (m.to_username && m.to_username !== 'admin' && !seen[m.to_username]) { seen[m.to_username] = true; names.push(m.to_username); }
+        (data || []).forEach(m => {
+          const u = m.peer;
+          if (u && u !== 'admin' && !seen[u]) { seen[u] = true; names.push(u); }
         });
         if (dmTarget && !seen[dmTarget]) names.unshift(dmTarget);
         box.innerHTML = '';
@@ -3806,25 +3629,10 @@ if (can('users.set_rank')) {
       // admin is already at the bottom reading the latest messages.
       const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
       try {
-        // Two exact-match queries merged client-side (avoids filter-escaping
-        // issues with freeform usernames).
-        const [a, b] = await Promise.all([
-          sb.from('direct_messages')
-            .select('id, from_username, content, created_at')
-            .eq('from_username', 'admin')
-            .eq('to_username', dmTarget)
-            .order('created_at', { ascending: true })
-            .limit(100),
-          sb.from('direct_messages')
-            .select('id, from_username, content, created_at')
-            .eq('from_username', dmTarget)
-            .eq('to_username', 'admin')
-            .order('created_at', { ascending: true })
-            .limit(100)
-        ]);
-        if (a.error) throw a.error;
-        if (b.error) throw b.error;
-        const rows = (a.data || []).concat(b.data || [])
+        const data = await srpc('dm_thread', callerArgs({ peer: dmTarget, as_user: 'admin' }));
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
+        const rows = (data || [])
           .sort((x, y) => new Date(x.created_at) - new Date(y.created_at));
         const dmSig = 'dm:' + dmTarget + ':' + rows.map(m => m.id + ':' + (m.created_at || '')).join(',');
         if (sameAsLast(box, dmSig)) return;
@@ -3844,12 +3652,7 @@ if (can('users.set_rank')) {
           });
           if (!background || atBottom) box.scrollTop = box.scrollHeight;
         }
-        // Their messages to me are now seen.
-        await sb.from('direct_messages')
-          .update({ read: true })
-          .eq('from_username', dmTarget)
-          .eq('to_username', 'admin')
-          .eq('read', false);
+        // Read-marking happens server-side inside dm_thread.
       } catch (e) {
         console.error(e);
         box.innerHTML = '<p class="muted">Failed to load thread.</p>';
@@ -3898,24 +3701,15 @@ if (can('users.set_rank')) {
       if (!can('users.watch')) return;
       const u = watchTarget;
       try {
-        const now = new Date().toISOString();
-        const today = now.slice(0, 10);
-        const [sess, key, play, xp, warns, mute, ban, chat, tricks] = await Promise.all([
-          sb.from('active_sessions').select('username, current_game, last_seen').eq('username', u).maybeSingle(),
-          sb.from('license_keys').select('used_by, rank, is_active, activated_at').eq('used_by', u).maybeSingle(),
-          sb.from('daily_playtime').select('seconds').eq('username', u).eq('day', today).maybeSingle(),
-          sb.from('xp_balances').select('balance, lifetime').eq('username', u).maybeSingle(),
-          sb.from('warnings').select('id, reason, created_at').eq('username', u).order('created_at', { ascending: false }).limit(5),
-          sb.from('mutes').select('reason, expires_at').eq('username', u).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
-          sb.from('game_bans').select('reason, expires_at').eq('username', u).gt('expires_at', now).order('expires_at', { ascending: false }).limit(1).maybeSingle(),
-          sb.from('messages').select('content, created_at').eq('username', u).order('created_at', { ascending: false }).limit(5),
-          sb.from('troll_events').select('event_type, payload, created_at').eq('target_username', u).order('created_at', { ascending: false }).limit(5)
-        ]);
+        const w = await srpc('watch_get', callerArgs({ target: u }));
+        if (!w) throw new Error('failed');
+        if (w.error) throw new Error(w.error);
         if (watchTarget !== u) return; // user switched mid-fetch
-        const s = (!sess.error && sess.data) ? sess.data : null;
-        const k = (!key.error && key.data) ? key.data : null;
-        const secs = (!play.error && play.data) ? (play.data.seconds || 0) : 0;
-        const life = (!xp.error && xp.data) ? (xp.data.lifetime || 0) : 0;
+        const s = (w.sessions && w.sessions[0]) ? w.sessions[0] : null;
+        const k = w.key || null;
+        const today = new Date().toISOString().slice(0, 10);
+        const secs = ((w.playtime || []).find(p => p.day === today) || {}).seconds || 0;
+        const life = (w.xp && w.xp.lifetime) || 0;
         const av = avatarFor(u);
         let html = '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
           '<span class="un">' + esc(u) + '</span> ' + rankPill((k && k.rank) || 'user') + ' ' +
@@ -3923,18 +3717,18 @@ if (can('users.set_rank')) {
         html += '<div class="user-meta">🎮 ' + esc((s && s.current_game) || 'offline') + '</div>';
         html += '<div class="user-meta">🕐 last seen ' + esc(s && s.last_seen ? new Date(s.last_seen).toLocaleString() : '—') + '</div>';
         html += '<div class="user-meta">⏱️ today ' + fmtDur(secs) + ' · ⭐ level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
-        html += '<div class="user-meta">⚠ ' + ((warns.data || []).length) + ' warning(s)' +
-          ((!mute.error && mute.data) ? ' · 🔇 muted until ' + esc(new Date(mute.data.expires_at).toLocaleString()) : '') +
-          ((!ban.error && ban.data) ? ' · ⛔ game-banned until ' + esc(new Date(ban.data.expires_at).toLocaleString()) : '') + '</div>';
+        html += '<div class="user-meta">⚠ ' + ((w.warnings || []).length) + ' warning(s)' +
+          ((w.mute && w.mute.expires_at) ? ' · 🔇 muted until ' + esc(new Date(w.mute.expires_at).toLocaleString()) : '') +
+          ((w.ban && w.ban.expires_at) ? ' · ⛔ game-banned until ' + esc(new Date(w.ban.expires_at).toLocaleString()) : '') + '</div>';
         html += '<div class="sec-label">Recent chat</div>';
-        const msgs = (!chat.error && chat.data) ? chat.data : [];
+        const msgs = w.messages || [];
         if (msgs.length === 0) html += '<div class="user-meta">No messages.</div>';
         msgs.forEach(m => {
           html += '<div class="user-meta">💬 ' + esc(String(m.content || '').slice(0, 80)) +
             ' <span class="muted">· ' + esc(m.created_at ? new Date(m.created_at).toLocaleString() : '') + '</span></div>';
         });
         html += '<div class="sec-label">Recent tricks aimed at them</div>';
-        const trs = (!tricks.error && tricks.data) ? tricks.data : [];
+        const trs = w.trolls || [];
         if (trs.length === 0) html += '<div class="user-meta">None.</div>';
         trs.forEach(t => {
           const st = (t.payload && t.payload.state) ? t.payload.state.toUpperCase() : 'FIRED';
@@ -3960,10 +3754,8 @@ if (can('users.set_rank')) {
       if (!content || !dmTarget) { if (!content) toast('Type a message first.', 'err'); return; }
       input.value = '';
       try {
-        const { error } = await sb
-          .from('direct_messages')
-          .insert({ from_username: 'admin', to_username: dmTarget, content: content.slice(0, 500) });
-        if (error) throw error;
+        const res = await srpc('dm_send', callerArgs({ to_user: dmTarget, content: content.slice(0, 500), as_user: 'admin' }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         loadDmHistory();
         loadDmContacts();
       } catch (e) {
