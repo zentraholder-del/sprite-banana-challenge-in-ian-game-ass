@@ -441,7 +441,9 @@ BEGIN
     RETURN json_build_object('success', false, 'error', 'Request not found');
   END IF;
   req_school := req.school;
-  final_key := upper(trim(COALESCE(NULLIF(custom_key, ''), encode(gen_random_bytes(6), 'hex'))));
+  -- Random 12-hex-char key from built-in md5 (no extension dependency).
+  final_key := upper(trim(COALESCE(NULLIF(custom_key, ''),
+    substring(md5(random()::text || clock_timestamp()::text || request_id::text), 1, 12))));
   IF NOT final_key ~ '^[A-Z0-9-]{4,64}$' THEN
     RETURN json_build_object('success', false, 'error', 'Bad key format');
   END IF;
