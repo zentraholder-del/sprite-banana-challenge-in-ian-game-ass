@@ -1322,7 +1322,14 @@
       return { input_username: u, input_token: t };
     }
     function callerArgs(extra) {
-      return Object.assign(staffCreds(), extra || {});
+      // Staff RPCs take caller_username/caller_token (PostgREST matches
+      // parameter names exactly — input_* names do NOT match these).
+      let u = '', t = '';
+      try {
+        u = localStorage.getItem(LS_USER) || '';
+        t = localStorage.getItem(LS_TOKEN) || '';
+      } catch (e) {}
+      return Object.assign({ caller_username: u, caller_token: t }, extra || {});
     }
     async function srpc(name, args) {
       const { data, error } = await sb.rpc(name, args || {});
@@ -3544,7 +3551,7 @@ try {
       const box = document.getElementById('spyHistory');
       box.innerHTML = '<p class="muted">Loading…</p>';
       try {
-        const data = await srpc('dm_spy_thread', callerArgs({ u1: a, u2: b }));
+        const data = await srpc('dm_spy_thread', Object.assign(staffCreds(), { u1: a, u2: b }));
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         const rows = (data || []).sort((x, y) => new Date(x.created_at) - new Date(y.created_at));
@@ -3595,7 +3602,7 @@ try {
       const box = document.getElementById('dmContacts');
       if (!box) return;
       try {
-        const data = await srpc('dm_contacts', callerArgs({ peer: 'admin' }));
+        const data = await srpc('dm_contacts', Object.assign(staffCreds(), { peer: 'admin' }));
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         const seen = {};
@@ -3631,7 +3638,7 @@ try {
       // admin is already at the bottom reading the latest messages.
       const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
       try {
-        const data = await srpc('dm_thread', callerArgs({ peer: dmTarget, as_user: 'admin' }));
+        const data = await srpc('dm_thread', Object.assign(staffCreds(), { peer: dmTarget, as_user: 'admin' }));
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         const rows = (data || [])
@@ -3703,7 +3710,7 @@ try {
       if (!can('users.watch')) return;
       const u = watchTarget;
       try {
-        const w = await srpc('watch_get', callerArgs({ target: u }));
+        const w = await srpc('watch_get', Object.assign(staffCreds(), { target: u }));
         if (!w) throw new Error('failed');
         if (w.error) throw new Error(w.error);
         if (watchTarget !== u) return; // user switched mid-fetch
@@ -3756,7 +3763,7 @@ try {
       if (!content || !dmTarget) { if (!content) toast('Type a message first.', 'err'); return; }
       input.value = '';
       try {
-        const res = await srpc('dm_send', callerArgs({ to_user: dmTarget, content: content.slice(0, 500), as_user: 'admin' }));
+        const res = await srpc('dm_send', Object.assign(staffCreds(), { to_user: dmTarget, content: content.slice(0, 500), as_user: 'admin' }));
         if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         loadDmHistory();
         loadDmContacts();

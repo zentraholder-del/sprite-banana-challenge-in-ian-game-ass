@@ -1414,7 +1414,7 @@
         const seenIds = [];
         for (const a of due) {
           try {
-            const s = await sb.rpc('alerts_check', { input_username: me, input_token: '', announcement_id: a.id });
+            const s = await sb.rpc('alerts_check', { input_username: me, input_token: '', ann_id: a.id });
             if (!s.error && s.data && s.data.seen) seenIds.push(a.id);
           } catch (e) {}
         }
@@ -1441,7 +1441,7 @@
         }
         btn.onclick = async () => {
           const a = items[i];
-          try { await sb.rpc('alerts_add', { input_username: me, input_token: '', announcement_id: a.id }); } catch (e) {}
+          try { await sb.rpc('alerts_add', { input_username: me, input_token: '', ann_id: a.id }); } catch (e) {}
           i++;
           if (i >= items.length) {
             m.classList.remove('visible');
