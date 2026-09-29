@@ -90,6 +90,16 @@ CREATE TABLE IF NOT EXISTS announcement_alerts (
 
 );
 
+CREATE TABLE IF NOT EXISTS blacklist_devices (
+
+  fp TEXT PRIMARY KEY,
+
+  reason TEXT NOT NULL DEFAULT '',
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+
+);
+
 CREATE TABLE IF NOT EXISTS xp_balances (username TEXT PRIMARY KEY, balance INTEGER NOT NULL DEFAULT 0, lifetime INTEGER NOT NULL DEFAULT 0);
 
 CREATE TABLE IF NOT EXISTS xp_daily (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, username TEXT NOT NULL, day DATE NOT NULL, amount INTEGER NOT NULL DEFAULT 0);
@@ -166,7 +176,7 @@ DECLARE
 
     'troll_settings', 'typing', 'user_cosmetics', 'warnings', 'xp_balances',
 
-    'xp_daily', 'xp_purchases', 'mutes'
+    'xp_daily', 'xp_purchases', 'mutes', 'blacklist_devices'
 
   ];
 
@@ -309,6 +319,13 @@ BEGIN
   IF r.used_by IS NOT NULL AND lower(r.used_by) <> lower(input_username) THEN
     RETURN json_build_object('success', false, 'error', 'wrong_user', 'bound', r.used_by);
   END IF;
+  -- Blocked devices: rejected whether or not they match a recorded fp.
+  IF (input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
+      SELECT 1 FROM blacklist_devices WHERE fp = input_fp))
+     OR (r.device_fp IS NOT NULL AND EXISTS (
+      SELECT 1 FROM blacklist_devices WHERE fp = r.device_fp)) THEN
+    RETURN json_build_object('success', false, 'error', 'device_blocked');
+  END IF;
   -- Strict device check: a recorded fingerprint must match exactly. A missing
   -- client fingerprint cannot bypass it (else anyone could pass NULL).
   IF r.device_fp IS NOT NULL AND (input_fp IS NULL OR input_fp = '' OR r.device_fp <> input_fp) THEN
@@ -316,7 +333,7 @@ BEGIN
   END IF;
   new_token := gen_random_uuid();
   UPDATE license_keys
-  SET session_token = new_token,
+  SET session_token = new_token::text,
       used_by = COALESCE(r.used_by, input_username),
       activated_at = COALESCE(activated_at, NOW()),
       device_fp = COALESCE(NULLIF(input_fp, ''), device_fp)
@@ -334,6 +351,15 @@ BEGIN
     AND (input_username = '' OR used_by = input_username)
     AND is_active = true;
   IF NOT FOUND THEN
+    RETURN json_build_object('valid', false);
+  END IF;
+  -- Blacklisted names and blocked devices fail validation too, so an
+  -- existing session is booted within one poll cycle, not just at login.
+  IF EXISTS (SELECT 1 FROM blacklist WHERE username = r.used_by) THEN
+    RETURN json_build_object('valid', false);
+  END IF;
+  IF r.device_fp IS NOT NULL AND EXISTS (
+    SELECT 1 FROM blacklist_devices WHERE fp = r.device_fp) THEN
     RETURN json_build_object('valid', false);
   END IF;
   RETURN json_build_object('valid', true, 'used_by', r.used_by,
@@ -1711,9 +1737,101 @@ BEGIN
         'alerts_check','alerts_add','friend_add','friend_remove','friend_block','friend_unblock',
         'friends_mine','typing_send','report_submit','slowmode_set','scare_set','perms_set',
         'perms_clear','lock_set','xp_grant','xp_grant_all','dashboard_stats','activity_feed',
-        'keys_ranks','watch_get','reports_list','report_dismiss','report_action')
+        'keys_ranks','watch_get','reports_list','report_dismiss','report_action',
+        'wall_check','user_delete','block_device_by_key','unblock_device','devices_list')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);
   END LOOP;
 END $$;
+
+-- ----------------------------------------------------------------------------
+-- STEP 9: device blacklist + site-wide wall + user deletion
+-- ----------------------------------------------------------------------------
+-- Site-wide wall: checked on EVERY page (even pre-login) by remembered
+-- username + device fingerprint. No auth needed by design; worst abuse is
+-- learning whether a name/fp is blocked (trivial, non-sensitive).
+CREATE OR REPLACE FUNCTION wall_check(input_username TEXT, input_fp TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF input_username IS NOT NULL AND input_username <> '' AND EXISTS (
+    SELECT 1 FROM blacklist WHERE username = input_username) THEN
+    RETURN json_build_object('blocked', true);
+  END IF;
+  IF input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
+    SELECT 1 FROM blacklist_devices WHERE fp = input_fp) THEN
+    RETURN json_build_object('blocked', true);
+  END IF;
+  RETURN json_build_object('blocked', false);
+END; $$;
+
+-- Full user deletion: keys, sessions, presence. Content/history stays.
+CREATE OR REPLACE FUNCTION user_delete(caller_username TEXT, caller_token TEXT,
+  target_username TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT; trank TEXT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF target_username IS NULL OR target_username = '' OR target_username = caller_username THEN
+    RETURN json_build_object('success', false, 'error', 'Bad target');
+  END IF;
+  SELECT COALESCE(rank, 'user') INTO trank FROM license_keys WHERE used_by = target_username;
+  IF trank IS NULL THEN trank := 'user'; END IF;
+  IF trank = 'owner' THEN
+    RETURN json_build_object('success', false, 'error', 'Owner cannot be deleted here');
+  END IF;
+  IF crank <> 'owner' THEN
+    IF trank = 'user' AND NOT has_perm(crank, 'keys.modify_user') THEN
+      RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+    ELSIF trank <> 'user' AND NOT has_perm(crank, 'keys.modify_staff') THEN
+      RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+    END IF;
+  END IF;
+  DELETE FROM active_sessions WHERE username = target_username;
+  DELETE FROM license_keys WHERE used_by = target_username;
+  RETURN json_build_object('success', true);
+END; $$;
+
+-- Block the device currently tied to a key (fingerprint never leaves the DB).
+CREATE OR REPLACE FUNCTION block_device_by_key(caller_username TEXT, caller_token TEXT,
+  target_key_id BIGINT, reason TEXT DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT; f TEXT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'blacklist.manage') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  SELECT device_fp INTO f FROM license_keys WHERE id = target_key_id;
+  IF f IS NULL OR f = '' THEN
+    RETURN json_build_object('success', false, 'error', 'no-device');
+  END IF;
+  INSERT INTO blacklist_devices (fp, reason)
+  VALUES (f, left(COALESCE(reason, ''), 200))
+  ON CONFLICT (fp) DO NOTHING;
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE OR REPLACE FUNCTION unblock_device(caller_username TEXT, caller_token TEXT, fp TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'blacklist.manage') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  DELETE FROM blacklist_devices WHERE blacklist_devices.fp = unblock_device.fp;
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE OR REPLACE FUNCTION devices_list(input_username TEXT, input_token TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT;
+BEGIN
+  crank := caller_rank_of(input_username, input_token);
+  IF NOT has_perm(crank, 'blacklist.manage') THEN
+    RETURN json_build_object('error', 'rank');
+  END IF;
+  RETURN COALESCE((SELECT json_agg(t ORDER BY t.created_at DESC) FROM (
+    SELECT fp, reason, created_at FROM blacklist_devices ORDER BY created_at DESC LIMIT 100) t), '[]'::json);
+END; $$;
