@@ -85,19 +85,23 @@ DECLARE
     'xp_daily', 'xp_purchases', 'mutes'
   ];
   pol RECORD;
-BEGIN
-  FOREACH t IN ARRAY tbls LOOP
-    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
-    FOR pol IN SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = t LOOP
-      EXECUTE format('DROP POLICY %I ON public.%I', pol.policyname, t);
-    END LOOP;
-    EXECUTE format('REVOKE ALL ON public.%I FROM anon, authenticated', t);
-    IF t = ANY(pub) THEN
-      EXECUTE format('CREATE POLICY "public read" ON public.%I FOR SELECT TO anon USING (true)', t);
-      EXECUTE format('GRANT SELECT ON public.%I TO anon', t);
-    END IF;
-  END LOOP;
-END $$;
+BEGIN
+  FOREACH t IN ARRAY tbls LOOP
+    BEGIN
+      EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+      FOR pol IN SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = t LOOP
+        EXECUTE format('DROP POLICY %I ON public.%I', pol.policyname, t);
+      END LOOP;
+      EXECUTE format('REVOKE ALL ON public.%I FROM anon, authenticated', t);
+      IF t = ANY(pub) THEN
+        EXECUTE format('CREATE POLICY "public read" ON public.%I FOR SELECT TO anon USING (true)', t);
+        EXECUTE format('GRANT SELECT ON public.%I TO anon', t);
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE 'lockdown skipped for %: %', t, SQLERRM;
+    END;
+  END LOOP;
+END $$;
 
 -- ----------------------------------------------------------------------------
 -- STEP 2: shared helpers (rank lookup + permission matrix, server-side)

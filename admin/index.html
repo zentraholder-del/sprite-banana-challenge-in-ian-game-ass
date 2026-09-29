@@ -2581,7 +2581,9 @@
         loadRequests();
       } catch (e) {
         console.error(e);
-        errBox.textContent = 'Approve failed. Try again.';
+        let dApprove = '';
+        try { dApprove = (e && e.message) || ''; } catch (x) {}
+        errBox.textContent = 'Approve failed' + (dApprove ? ': ' + String(dApprove).slice(0, 200) : '. Try again.');
         toast('Approve failed', 'err');
       } finally {
         setBtnLoading(btn, false, 'Confirm');
