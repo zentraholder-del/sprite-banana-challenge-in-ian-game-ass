@@ -1285,8 +1285,12 @@
       btn.disabled = true;
       btn.textContent = 'Sending…';
       try {
+        // Fingerprint the requester: stored with the request for device
+        // blocking, and blocked devices are rejected outright server-side.
+        let fp = '';
+        try { fp = await getDeviceFingerprint(); } catch (e) {}
         const { data: res, error: rpcErr } = await sb.rpc('submit_key_request', {
-          input_name: name, input_reason: reason, input_school: school
+          input_name: name, input_reason: reason, input_school: school, input_fp: fp || null
         });
         if (rpcErr) throw rpcErr;
         if (!res || !res.success) {
@@ -1296,6 +1300,10 @@
           } else if (code === 'cooldown') {
             const waitMs = ((res && res.retry_after) || 0) * 1000;
             errBox.textContent = 'You can request again in ' + fmtWait(waitMs) + '.';
+          } else if (code === 'blacklisted') {
+            errBox.textContent = 'This username is blacklisted.';
+          } else if (code === 'device_blocked') {
+            errBox.textContent = 'This device has been blocked by staff.';
           } else {
             errBox.textContent = 'Could not send request. Try again later.';
           }

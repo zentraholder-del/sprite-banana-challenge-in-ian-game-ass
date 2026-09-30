@@ -2566,12 +2566,13 @@ async function sha256hexFp(str) {
           const isNew = !isFirst && !knownReqIds[r.id];
           knownReqIds[r.id] = true;
           html += '<div class="req-card' + (isNew ? ' flash' : '') + '" style="animation-delay:' + Math.min(ri, 8) * 40 + 'ms">' +
-            '<div class="rname">' + esc(r.name) + '</div>' +
+            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off">🚫 device blocked</span>' : '') + '</div>' +
             '<div class="rmeta">' + esc(r.school || '—') + ' · ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '—') + '</div>' +
             '<div class="rreason">' + esc(r.reason || '(no reason given)') + '</div>' +
             '<div class="row-actions">' +
             '<button class="btn small" onclick="approveRequest(' + r.id + ', this)">Approve</button>' +
             '<button class="btn small ghost" onclick="askDeny(' + r.id + ', this)">Deny</button>' +
+            (can('blacklist.manage') ? '<button class="btn small ghost" onclick="blockRequesterDevice(' + r.id + ', this)">Block device</button>' : '') +
             '</div></div>';
         });
         // Drop ids that are no longer pending so a re-request flashes again.
@@ -3115,6 +3116,23 @@ async function sha256hexFp(str) {
     }
 
     /* ---------- full user deletion ---------- */
+    async function blockRequesterDevice(reqId, btn) {
+      if (!can('blacklist.manage')) { toast('Insufficient rank', 'err'); return; }
+      if (!confirm('Block the device that filed this request? It will be locked out of every page.')) return;
+      setBtnLoading(btn, true);
+      try {
+        const reason = prompt('Reason (optional):', '') || '';
+        const res = await srpc('block_requester_device', callerArgs({ request_id: reqId, reason: reason.slice(0, 200) }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        toast('Requester device blocked', 'ok');
+        loadRequests();
+        loadDevices();
+      } catch (e) {
+        console.error(e);
+        setBtnLoading(btn, false, 'Block device');
+        toast(e && e.message === 'no-device' ? 'No device recorded on that request.' : 'Block failed.', 'err');
+      }
+    }
     async function deleteUserAccount(username, btn) {
       if (!username) return;
       if (!canModify(targetRankOf(username))) { toast('Insufficient rank', 'err'); return; }

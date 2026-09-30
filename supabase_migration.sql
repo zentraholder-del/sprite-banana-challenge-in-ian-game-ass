@@ -52,6 +52,8 @@ ALTER TABLE key_requests ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMPTZ;
 
 ALTER TABLE key_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
 
+ALTER TABLE key_requests ADD COLUMN IF NOT EXISTS device_fp TEXT;
+
 ALTER TABLE announcements ADD COLUMN IF NOT EXISTS pinned BOOLEAN NOT NULL DEFAULT false;
 
 ALTER TABLE announcements ADD COLUMN IF NOT EXISTS scheduled_for TIMESTAMPTZ NULL;
@@ -383,10 +385,22 @@ BEGIN
     'is_admin', r.is_admin);
 END; $$;
 
-CREATE OR REPLACE FUNCTION submit_key_request(input_name TEXT, input_reason TEXT, input_school TEXT)
+-- Old 3-arg version must go first: same name + different arity would
+-- otherwise linger as a second overload and confuse PostgREST matching.
+DROP FUNCTION IF EXISTS submit_key_request(TEXT, TEXT, TEXT);
+CREATE OR REPLACE FUNCTION submit_key_request(input_name TEXT, input_reason TEXT,
+  input_school TEXT, input_fp TEXT DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE prev key_requests%ROWTYPE;
 BEGIN
+  -- Blocked names and blocked devices are rejected outright.
+  IF EXISTS (SELECT 1 FROM blacklist WHERE username = input_name) THEN
+    RETURN json_build_object('success', false, 'error', 'blacklisted');
+  END IF;
+  IF input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
+    SELECT 1 FROM blacklist_devices WHERE fp = input_fp) THEN
+    RETURN json_build_object('success', false, 'error', 'device_blocked');
+  END IF;
   SELECT * INTO prev FROM key_requests WHERE name = input_name ORDER BY id DESC LIMIT 1;
   IF FOUND AND prev.status = 'pending' THEN
     RETURN json_build_object('success', false, 'error', 'pending');
@@ -395,8 +409,9 @@ BEGIN
     RETURN json_build_object('success', false, 'error', 'cooldown',
       'retry_after', EXTRACT(EPOCH FROM (prev.created_at + INTERVAL '24 hours' - NOW()))::BIGINT);
   END IF;
-  INSERT INTO key_requests (name, reason, school, status)
-  VALUES (input_name, input_reason, NULLIF(input_school, ''), 'pending');
+  INSERT INTO key_requests (name, reason, school, status, device_fp)
+  VALUES (input_name, input_reason, NULLIF(input_school, ''), 'pending',
+    NULLIF(input_fp, ''));
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -453,10 +468,32 @@ BEGIN
   END IF;
   RETURN COALESCE((
     SELECT json_agg(t ORDER BY t.id DESC) FROM (
-      SELECT id, name, reason, school, status, created_at, status_updated_at, deny_reason
+      SELECT id, name, reason, school, status, created_at, status_updated_at, deny_reason,
+        (device_fp IS NOT NULL AND EXISTS (
+          SELECT 1 FROM blacklist_devices WHERE fp = key_requests.device_fp)) AS fp_blocked
       FROM key_requests ORDER BY id DESC LIMIT 100
     ) t
   ), '[]'::json);
+END; $$;
+
+-- Block the device that filed a key request (fingerprint never leaves the DB).
+CREATE OR REPLACE FUNCTION block_requester_device(caller_username TEXT, caller_token TEXT,
+  request_id BIGINT, reason TEXT DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT; f TEXT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'blacklist.manage') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  SELECT device_fp INTO f FROM key_requests WHERE id = request_id;
+  IF f IS NULL OR f = '' THEN
+    RETURN json_build_object('success', false, 'error', 'no-device');
+  END IF;
+  INSERT INTO blacklist_devices (fp, reason)
+  VALUES (f, left(COALESCE(reason, ''), 200))
+  ON CONFLICT (fp) DO NOTHING;
+  RETURN json_build_object('success', true);
 END; $$;
 
 CREATE OR REPLACE FUNCTION approve_key_request(caller_username TEXT, caller_token TEXT,
@@ -1755,7 +1792,7 @@ BEGIN
         'perms_clear','lock_set','xp_grant','xp_grant_all','dashboard_stats','activity_feed',
         'keys_ranks','watch_get','reports_list','report_dismiss','report_action',
         'wall_check','user_delete','block_device_by_key','unblock_device','devices_list',
-        'reset_my_key')
+        'reset_my_key','block_requester_device')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);
