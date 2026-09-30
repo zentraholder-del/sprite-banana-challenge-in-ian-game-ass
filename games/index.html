@@ -642,6 +642,7 @@
     <div class="authtabs" role="tablist">
       <button class="authtab active" id="tabLogin" role="tab" onclick="switchAuthTab('login')">Log In</button>
       <button class="authtab" id="tabRequest" role="tab" onclick="switchAuthTab('request')">Request Access</button>
+      <button class="authtab" id="tabReset" role="tab" onclick="switchAuthTab('reset')" style="display:none">Reset my key</button>
     </div>
 
     <div class="pane active" id="paneLogin" role="tabpanel">
@@ -697,6 +698,24 @@
         <div id="reqStatusWrap" aria-live="polite"></div>
         <button class="btn ghost" style="margin-top:14px" onclick="showRequestForm()">Back to form</button>
       </div>
+    </div>
+
+    <div class="pane" id="paneReset" role="tabpanel">
+      <div class="field">
+        <label>Full name (as requested)</label>
+        <div class="input-wrap">
+          <input type="text" id="resetName" placeholder="Your full name" autocomplete="username" maxlength="64" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Access Key</label>
+        <div class="input-wrap">
+          <input type="password" id="resetKey" class="mono" placeholder="Your key" autocomplete="off" />
+        </div>
+      </div>
+      <button class="btn" id="resetBtn" onclick="resetMyKey()">Reset key</button>
+      <div class="error-msg" id="resetError"></div>
+      <div class="status-msg" id="resetOk"></div>
     </div>
   </div>
 
@@ -771,147 +790,6 @@
        active key stays blocked. No permissions needed, nothing uploaded
        except the final hash stored on the key's own row. */
 
-    async function sha256hexFp(str) {
-      const data = new TextEncoder().encode(str);
-      const hash = await crypto.subtle.digest('SHA-256', data);
-      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function canvasFp() {
-      try {
-        const c = document.createElement('canvas');
-        c.width = 280; c.height = 60;
-        const x = c.getContext('2d');
-        x.textBaseline = 'top';
-        x.font = '14px Arial';
-        x.fillStyle = '#f60';
-        x.fillRect(10, 10, 60, 30);
-        x.fillStyle = '#069';
-        x.fillText('Lightspeed <fp> 123', 8, 8);
-        x.strokeStyle = '#000';
-        x.beginPath();
-        x.arc(200, 30, 20, 0, Math.PI * 2);
-        x.stroke();
-        const g = x.createLinearGradient(0, 0, 280, 0);
-        g.addColorStop(0, '#ff0000');
-        g.addColorStop(1, '#0000ff');
-        x.fillStyle = g;
-        x.fillRect(0, 50, 280, 10);
-        return c.toDataURL();
-      } catch (e) { return 'nocanvas'; }
-    }
-
-    function webglFp() {
-      try {
-        const c = document.createElement('canvas');
-        const gl = c.getContext('webgl2') || c.getContext('webgl');
-        if (!gl) return 'nowebgl';
-        const parts = [];
-        parts.push(gl.getParameter(gl.VERSION));
-        parts.push(gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
-        parts.push(gl.getParameter(gl.VENDOR));
-        parts.push(gl.getParameter(gl.RENDERER));
-        parts.push(gl.getParameter(gl.MAX_TEXTURE_SIZE));
-        parts.push(gl.getParameter(gl.MAX_VIEWPORT_DIMS));
-        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-        if (dbg) {
-          parts.push(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL));
-          parts.push(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
-        }
-        const exts = gl.getSupportedExtensions() || [];
-        parts.push(exts.slice().sort().join(','));
-        try {
-          const prec = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
-          if (prec) parts.push([prec.precision, prec.rangeMin, prec.rangeMax].join('/'));
-        } catch (e) {}
-        parts.push((typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext) ? 'webgl2' : 'webgl1');
-        return parts.join('~');
-      } catch (e) { return 'webgl-err'; }
-    }
-
-    function audioFp() {
-      // Offline-rendered oscillator fingerprint — no sound ever plays.
-      try {
-        const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-        if (!AC) return Promise.resolve('noaudioctx');
-        const ctx = new AC(1, 5000, 44100);
-        const osc = ctx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.value = 1000;
-        const comp = ctx.createDynamicsCompressor();
-        osc.connect(comp);
-        comp.connect(ctx.destination);
-        osc.start(0);
-        return ctx.startRendering().then(buf => {
-          const d = buf.getChannelData(0);
-          let h = 0;
-          for (let i = 0; i < d.length; i += 7) {
-            h = ((h * 31) + Math.floor(d[i] * 100000)) | 0;
-          }
-          return 'audio:' + (h >>> 0).toString(16);
-        }).catch(() => 'audio-err');
-      } catch (e) { return Promise.resolve('audio-err'); }
-    }
-
-    function fontFp() {
-      try {
-        const base = ['monospace', 'sans-serif', 'serif'];
-        const test = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia',
-          'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Palatino', 'Garamond', 'Tahoma',
-          'Calibri', 'Cambria', 'Consolas', 'Segoe UI', 'Helvetica', 'Menlo',
-          'Roboto', 'Ubuntu', 'Lato', 'Open Sans', 'Noto Sans', 'Symbol', 'Webdings'];
-        const c = document.createElement('canvas');
-        const x = c.getContext('2d');
-        const probe = 'mmmmmmmmmmlli';
-        const widths = {};
-        base.forEach(b => { x.font = '72px ' + b; widths[b] = x.measureText(probe).width; });
-        const present = test.filter(f => base.some(b => {
-          x.font = '72px "' + f + '", ' + b;
-          return x.measureText(probe).width !== widths[b];
-        }));
-        // NOTE: document.fonts.size intentionally excluded — it changes as
-        // webfonts finish loading, which would destabilise the fingerprint.
-        return present.sort().join(',');
-      } catch (e) { return 'fonts-err'; }
-    }
-
-    async function getDeviceFingerprint() {
-      const nav = navigator;
-      const parts = [
-        'ua=' + (nav.userAgent || ''),
-        'plat=' + (nav.platform || ''),
-        'vendor=' + (nav.vendor || ''),
-        'lang=' + (nav.language || '') + '/' + ((nav.languages || []).join(',')),
-        'hw=' + (nav.hardwareConcurrency || '') + '/' + (nav.deviceMemory || ''),
-        'touch=' + (nav.maxTouchPoints || 0),
-        'dnt=' + (nav.doNotTrack || ''),
-        'webdriver=' + (!!nav.webdriver),
-        // Screen dims orientation-invariant (max/min): iPads rotate constantly
-        // and iOS may report width/height per current orientation.
-        'scr=' + Math.max(screen.width, screen.height) + 'x' + Math.min(screen.width, screen.height) + 'x' + screen.colorDepth + '@' + (window.devicePixelRatio || 1),
-        'avail=' + Math.max(screen.availWidth || 0, screen.availHeight || 0) + 'x' + Math.min(screen.availWidth || 0, screen.availHeight || 0),
-        'tz=' + new Date().getTimezoneOffset() + '/' + ((typeof Intl !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone) || ''),
-        'ck=' + (navigator.cookieEnabled ? 1 : 0),
-        'plugins=' + ((navigator.plugins && navigator.plugins.length) || 0),
-        'canvas=' + canvasFp(),
-        'webgl=' + webglFp(),
-        'fonts=' + fontFp()
-      ];
-      let audio = 'audio:skip';
-      // No timeout race here on purpose: a race can resolve differently on
-      // fast vs slow runs and would destabilise the fingerprint (same device,
-      // different hash = legit user locked out). Offline renders complete.
-      try { audio = await audioFp(); } catch (e) { audio = 'audio-err'; }
-      parts.push(audio);
-      const raw = parts.join('||');
-      try {
-        if (window.crypto && crypto.subtle) return await sha256hexFp(raw);
-      } catch (e) {}
-      let h1 = 0x811c9dc5;
-      for (let i = 0; i < raw.length; i++) { h1 ^= raw.charCodeAt(i); h1 = Math.imul(h1, 0x01000193) >>> 0; }
-      return 'fnv1a:' + h1.toString(16);
-    }
-
     function showError(msg) {
       const err = document.getElementById('error');
       err.textContent = msg;
@@ -930,20 +808,69 @@
       document.getElementById('usernameInput').classList.remove('error-input');
     }
 
+    // True while a recent (<24h) key request replaces the Request tab.
+    let resetMode = false;
     function switchAuthTab(which) {
+      if (which === 'request' && resetMode) which = 'reset';
       const login = which === 'login';
       document.getElementById('tabLogin').classList.toggle('active', login);
-      document.getElementById('tabRequest').classList.toggle('active', !login);
-      const pl = document.getElementById('paneLogin');
-      const pr = document.getElementById('paneRequest');
-      pl.classList.remove('active');
-      pr.classList.remove('active');
-      const next = login ? pl : pr;
+      document.getElementById('tabRequest').classList.toggle('active', which === 'request');
+      document.getElementById('tabReset').classList.toggle('active', which === 'reset');
+      ['paneLogin', 'paneRequest', 'paneReset'].forEach(id => document.getElementById(id).classList.remove('active'));
+      const next = document.getElementById(which === 'login' ? 'paneLogin' : which === 'request' ? 'paneRequest' : 'paneReset');
       void next.offsetWidth; // restart the cross-fade/slide animation
       next.classList.add('active');
       document.getElementById('logoSub').textContent = login
         ? 'Enter your access key to continue'
-        : 'Request an access key from staff';
+        : which === 'request' ? 'Request an access key from staff' : 'Reset your key instantly';
+    }
+    // Recent requesters get Reset instead of Request (they have a key coming).
+    function updateRequestTabs() {
+      let recent = false;
+      try {
+        const t = parseInt(localStorage.getItem('pending_request_time') || '0', 10);
+        recent = t > 0 && (Date.now() - t) < 24 * 3600 * 1000;
+      } catch (e) {}
+      resetMode = recent;
+      document.getElementById('tabRequest').style.display = recent ? 'none' : '';
+      document.getElementById('tabReset').style.display = recent ? '' : 'none';
+    }
+    async function resetMyKey() {
+      const name = document.getElementById('resetName').value.trim();
+      const key = document.getElementById('resetKey').value.trim();
+      const errBox = document.getElementById('resetError');
+      const okBox = document.getElementById('resetOk');
+      errBox.textContent = '';
+      okBox.textContent = '';
+      if (!name) { errBox.textContent = 'Enter your full name.'; return; }
+      if (!key) { errBox.textContent = 'Enter your key.'; return; }
+      const btn = document.getElementById('resetBtn');
+      btn.disabled = true;
+      try {
+        const { data: res, error } = await sb.rpc('reset_my_key', { input_name: name, input_key: key });
+        if (error) throw error;
+        if (!res || !res.success) {
+          const code = (res && res.error) || 'failed';
+          if (code === 'invalid') errBox.textContent = 'Key not found.';
+          else if (code === 'deactivated') errBox.textContent = 'This key has been deactivated.';
+          else if (code === 'wrong_user') errBox.textContent = 'That name does not match this key.';
+          else if (code === 'unbound') errBox.textContent = 'This key is not bound yet — just log in.';
+          else if (code === 'no-session') errBox.textContent = 'No active session — just log in.';
+          else errBox.textContent = 'Reset failed. Try again.';
+          return;
+        }
+        // Instant effect: prefill login and switch there.
+        okBox.textContent = 'Key reset ✓ — hit Continue to log in.';
+        document.getElementById('usernameInput').value = name;
+        document.getElementById('keyInput').value = key;
+        switchAuthTab('login');
+        toast('Key reset — welcome back', 'ok');
+      } catch (e) {
+        console.error(e);
+        errBox.textContent = 'Reset failed. Check your connection.';
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function authShake() {
@@ -1024,8 +951,10 @@
         const n = localStorage.getItem('pending_request_name');
         if (n) localStorage.removeItem('request_dismissed_' + n);
         localStorage.removeItem('pending_request_name');
+        localStorage.removeItem('pending_request_time');
       } catch (e) {}
       try { approvedKey = ''; approvedShown = false; } catch (e) {}
+      try { updateRequestTabs(); } catch (e) {}
     }
 
     function resetRequestState() {
@@ -1059,11 +988,9 @@
 
       try {
         // Single server-side validation: blacklist, key lookup, site lock,
-        // username bind, device fingerprint — all enforced in validate_key.
-        showStatus('Checking this device…');
-        const fp = await getDeviceFingerprint();
+        // username bind, hard single-session lock (idle sessions take over).
         const { data: res, error: rpcErr } = await sb.rpc('validate_key', {
-          input_key: rawKey, input_username: username, input_fp: fp
+          input_key: rawKey, input_username: username, input_fp: null
         });
         if (rpcErr) throw rpcErr;
         if (!res || !res.success) {
@@ -1080,11 +1007,9 @@
           } else if (code === 'locked') {
             showError((res && res.lock_message) || 'Site is temporarily locked by the owner.');
           } else if (code === 'wrong_user') {
-            showError('This key belongs to "' + ((res && res.bound) || 'another name') + '". Use that name, or ask staff to reset the key.');
-          } else if (code === 'other_device') {
-            showError('This key is already active on another device.');
-          } else if (code === 'device_blocked') {
-            showError('This device has been blocked by staff.');
+            showError('This key belongs to "' + ((res && res.bound) || 'another name') + '". Use that name, or use Reset my key below.');
+          } else if (code === 'in_use') {
+            showError('This key is already in use. If it is you on another tab, wait a few minutes — or use Reset my key below.');
           } else {
             showError('Login failed. Try again.');
           }
@@ -1230,6 +1155,8 @@
           return;
         }
         try { localStorage.setItem('pending_request_name', name); } catch (e) {}
+        try { localStorage.setItem('pending_request_time', String(Date.now())); } catch (e) {}
+        updateRequestTabs();
         document.getElementById('reqName').value = '';
         document.getElementById('reqMsg').value = '';
         document.getElementById('charCount').textContent = '0/500';
@@ -1456,14 +1383,13 @@
     }
 
     const FAKE_ERROR_HTML = '<div style="position:fixed;inset:0;z-index:999999;background:#f5f5f5;color:#333;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box"><div style="max-width:420px;text-align:center"><h1 style="font-size:24px;margin:0 0 12px">Something went wrong</h1><p style="font-size:15px;line-height:1.6;margin:0 0 8px">Error code: 500.<br>We could not load this page. Check your connection and try again later.</p><button onclick="location.reload()" style="margin-top:12px;padding:10px 28px;font-size:15px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;min-height:48px">Reload</button></div></div>';
-    // Site-wide blacklist wall: remembered username + device fingerprint.
+    // Site-wide blacklist wall: remembered username (name-only).
     // Fail-open on any error (only an explicit blocked=true walls).
     async function siteWall() {
       try {
         let me = '';
         try { me = localStorage.getItem('ls_username') || ''; } catch (e) {}
-        let fp = '';
-        try { fp = await getDeviceFingerprint(); } catch (e) {}
+        const fp = ''; // device fingerprinting retired
         if (!me && !fp) return false;
         const { data, error } = await sb.rpc('wall_check', { input_username: me, input_fp: fp });
         if (error || !data || !data.blocked) return false;
@@ -1480,6 +1406,7 @@
     checkRequestStatus();
     subscribeRequestStatus();
     syncSchoolDD();
+    updateRequestTabs();
     try {
       if (localStorage.getItem('pending_request_name')) {
         switchAuthTab('request');

@@ -1059,9 +1059,6 @@
           <button class="btn small" onclick="addBlacklist()">Add</button>
         </div>
         <div id="blList"><p class="muted">Loading…</p></div>
-        <h2 style="margin-top:24px">Blocked devices</h2>
-        <p class="sub">Fingerprints blocked here (or via a key's Block device button) can't log in on any page — every page shows them a fake error instead.</p>
-        <div id="devList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-messages">
@@ -1340,156 +1337,14 @@
       return data;
     }
 
-async function sha256hexFp(str) {
-      const data = new TextEncoder().encode(str);
-      const hash = await crypto.subtle.digest('SHA-256', data);
-      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function canvasFp() {
-      try {
-        const c = document.createElement('canvas');
-        c.width = 280; c.height = 60;
-        const x = c.getContext('2d');
-        x.textBaseline = 'top';
-        x.font = '14px Arial';
-        x.fillStyle = '#f60';
-        x.fillRect(10, 10, 60, 30);
-        x.fillStyle = '#069';
-        x.fillText('Lightspeed <fp> 123', 8, 8);
-        x.strokeStyle = '#000';
-        x.beginPath();
-        x.arc(200, 30, 20, 0, Math.PI * 2);
-        x.stroke();
-        const g = x.createLinearGradient(0, 0, 280, 0);
-        g.addColorStop(0, '#ff0000');
-        g.addColorStop(1, '#0000ff');
-        x.fillStyle = g;
-        x.fillRect(0, 50, 280, 10);
-        return c.toDataURL();
-      } catch (e) { return 'nocanvas'; }
-    }
-
-    function webglFp() {
-      try {
-        const c = document.createElement('canvas');
-        const gl = c.getContext('webgl2') || c.getContext('webgl');
-        if (!gl) return 'nowebgl';
-        const parts = [];
-        parts.push(gl.getParameter(gl.VERSION));
-        parts.push(gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
-        parts.push(gl.getParameter(gl.VENDOR));
-        parts.push(gl.getParameter(gl.RENDERER));
-        parts.push(gl.getParameter(gl.MAX_TEXTURE_SIZE));
-        parts.push(gl.getParameter(gl.MAX_VIEWPORT_DIMS));
-        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-        if (dbg) {
-          parts.push(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL));
-          parts.push(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
-        }
-        const exts = gl.getSupportedExtensions() || [];
-        parts.push(exts.slice().sort().join(','));
-        try {
-          const prec = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
-          if (prec) parts.push([prec.precision, prec.rangeMin, prec.rangeMax].join('/'));
-        } catch (e) {}
-        parts.push((typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext) ? 'webgl2' : 'webgl1');
-        return parts.join('~');
-      } catch (e) { return 'webgl-err'; }
-    }
-
-    function audioFp() {
-      // Offline-rendered oscillator fingerprint — no sound ever plays.
-      try {
-        const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-        if (!AC) return Promise.resolve('noaudioctx');
-        const ctx = new AC(1, 5000, 44100);
-        const osc = ctx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.value = 1000;
-        const comp = ctx.createDynamicsCompressor();
-        osc.connect(comp);
-        comp.connect(ctx.destination);
-        osc.start(0);
-        return ctx.startRendering().then(buf => {
-          const d = buf.getChannelData(0);
-          let h = 0;
-          for (let i = 0; i < d.length; i += 7) {
-            h = ((h * 31) + Math.floor(d[i] * 100000)) | 0;
-          }
-          return 'audio:' + (h >>> 0).toString(16);
-        }).catch(() => 'audio-err');
-      } catch (e) { return Promise.resolve('audio-err'); }
-    }
-
-    function fontFp() {
-      try {
-        const base = ['monospace', 'sans-serif', 'serif'];
-        const test = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia',
-          'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Palatino', 'Garamond', 'Tahoma',
-          'Calibri', 'Cambria', 'Consolas', 'Segoe UI', 'Helvetica', 'Menlo',
-          'Roboto', 'Ubuntu', 'Lato', 'Open Sans', 'Noto Sans', 'Symbol', 'Webdings'];
-        const c = document.createElement('canvas');
-        const x = c.getContext('2d');
-        const probe = 'mmmmmmmmmmlli';
-        const widths = {};
-        base.forEach(b => { x.font = '72px ' + b; widths[b] = x.measureText(probe).width; });
-        const present = test.filter(f => base.some(b => {
-          x.font = '72px "' + f + '", ' + b;
-          return x.measureText(probe).width !== widths[b];
-        }));
-        // NOTE: document.fonts.size intentionally excluded — it changes as
-        // webfonts finish loading, which would destabilise the fingerprint.
-        return present.sort().join(',');
-      } catch (e) { return 'fonts-err'; }
-    }
-
-    async function getDeviceFingerprint() {
-      const nav = navigator;
-      const parts = [
-        'ua=' + (nav.userAgent || ''),
-        'plat=' + (nav.platform || ''),
-        'vendor=' + (nav.vendor || ''),
-        'lang=' + (nav.language || '') + '/' + ((nav.languages || []).join(',')),
-        'hw=' + (nav.hardwareConcurrency || '') + '/' + (nav.deviceMemory || ''),
-        'touch=' + (nav.maxTouchPoints || 0),
-        'dnt=' + (nav.doNotTrack || ''),
-        'webdriver=' + (!!nav.webdriver),
-        // Screen dims orientation-invariant (max/min): iPads rotate constantly
-        // and iOS may report width/height per current orientation.
-        'scr=' + Math.max(screen.width, screen.height) + 'x' + Math.min(screen.width, screen.height) + 'x' + screen.colorDepth + '@' + (window.devicePixelRatio || 1),
-        'avail=' + Math.max(screen.availWidth || 0, screen.availHeight || 0) + 'x' + Math.min(screen.availWidth || 0, screen.availHeight || 0),
-        'tz=' + new Date().getTimezoneOffset() + '/' + ((typeof Intl !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone) || ''),
-        'ck=' + (navigator.cookieEnabled ? 1 : 0),
-        'plugins=' + ((navigator.plugins && navigator.plugins.length) || 0),
-        'canvas=' + canvasFp(),
-        'webgl=' + webglFp(),
-        'fonts=' + fontFp()
-      ];
-      let audio = 'audio:skip';
-      // No timeout race here on purpose: a race can resolve differently on
-      // fast vs slow runs and would destabilise the fingerprint (same device,
-      // different hash = legit user locked out). Offline renders complete.
-      try { audio = await audioFp(); } catch (e) { audio = 'audio-err'; }
-      parts.push(audio);
-      const raw = parts.join('||');
-      try {
-        if (window.crypto && crypto.subtle) return await sha256hexFp(raw);
-      } catch (e) {}
-      let h1 = 0x811c9dc5;
-      for (let i = 0; i < raw.length; i++) { h1 ^= raw.charCodeAt(i); h1 = Math.imul(h1, 0x01000193) >>> 0; }
-      return 'fnv1a:' + h1.toString(16);
-    }
-
-    const FAKE_ERROR_HTML = '<div style="position:fixed;inset:0;z-index:999999;background:#f5f5f5;color:#333;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box"><div style="max-width:420px;text-align:center"><h1 style="font-size:24px;margin:0 0 12px">Something went wrong</h1><p style="font-size:15px;line-height:1.6;margin:0 0 8px">Error code: 500.<br>We could not load this page. Check your connection and try again later.</p><button onclick="location.reload()" style="margin-top:12px;padding:10px 28px;font-size:15px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;min-height:48px">Reload</button></div></div>';
-    // Site-wide blacklist wall: remembered username + device fingerprint.
+const FAKE_ERROR_HTML = '<div style="position:fixed;inset:0;z-index:999999;background:#f5f5f5;color:#333;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box"><div style="max-width:420px;text-align:center"><h1 style="font-size:24px;margin:0 0 12px">Something went wrong</h1><p style="font-size:15px;line-height:1.6;margin:0 0 8px">Error code: 500.<br>We could not load this page. Check your connection and try again later.</p><button onclick="location.reload()" style="margin-top:12px;padding:10px 28px;font-size:15px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;min-height:48px">Reload</button></div></div>';
+    // Site-wide blacklist wall: remembered username (name-only).
     // Fail-open on any error (only an explicit blocked=true walls).
     async function siteWall() {
       try {
         let me = '';
         try { me = localStorage.getItem('ls_username') || ''; } catch (e) {}
-        let fp = '';
-        try { fp = await getDeviceFingerprint(); } catch (e) {}
+        const fp = ''; // device fingerprinting retired
         if (!me && !fp) return false;
         const { data, error } = await sb.rpc('wall_check', { input_username: me, input_fp: fp });
         if (error || !data || !data.blocked) return false;
@@ -1871,7 +1726,7 @@ async function sha256hexFp(str) {
       if (name === 'requests') startPoller('requests', loadRequests, 3000);
       if (name === 'adminreqs') startPoller('adminreqs', loadAdminRequests, 3000);
       if (name === 'keys') startPoller('keys', loadKeys, 10000);
-      if (name === 'blacklist') { startPoller('blacklist', loadBlacklist, 10000); loadDevices(); startPoller('devlist', loadDevices, 10000); }
+      if (name === 'blacklist') startPoller('blacklist', loadBlacklist, 10000);
       if (name === 'messages') { startPoller('announce', loadAnnouncements, 3000); startPoller('chatmod', loadChatMod, 3000); loadSlowStatus(); }
       if (name === 'users') { startPoller('users', loadUsers, 3000); startPoller('dms', pollDms, 3000); startPoller('watch', loadWatch, 3000); }
       if (name === 'playerdms') startPoller('spydms', loadDmSpy, 3000);
@@ -2941,8 +2796,7 @@ async function sha256hexFp(str) {
           '<td><div class="row-actions">' +
           (editable
             ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active — tap to disable' : 'Inactive — tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +
-              '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this, \'' + esc(trank) + '\')">Reset</button>' +
-              (can('blacklist.manage') ? '<button class="btn small ghost" onclick="blockDevice(' + k.id + ', this)">Block device</button>' : '')
+              '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this, \'' + esc(trank) + '\')">Reset</button>'
             : '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Locked</button>') +
           (!isOwner && editable
             ? '<button class="btn small danger" onclick="deleteKey(' + k.id + ', this, \'' + esc(trank) + '\')">Delete</button>'
@@ -3060,59 +2914,7 @@ async function sha256hexFp(str) {
       }
     }
 
-    /* ---------- blocked devices + full user deletion ---------- */
-    async function loadDevices() {
-      const box = document.getElementById('devList');
-      if (!box) return;
-      try {
-        const data = await srpc('devices_list', staffCreds());
-        if (!data) throw new Error('failed');
-        if (data.error) throw new Error(data.error);
-        if (!data.length) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📵</div>No blocked devices.</div>';
-          return;
-        }
-        let html = '<table><tr><th>Device</th><th>Reason</th><th>When</th><th></th></tr>';
-        data.forEach(d => {
-          html += '<tr><td class="mono">' + esc(String(d.fp || '').slice(0, 12)) + '…</td><td>' + esc(d.reason || '—') +
-            '</td><td class="muted">' + esc(d.created_at ? new Date(d.created_at).toLocaleString() : '—') +
-            '</td><td><button class="btn small ghost" onclick="unblockDevice(\'' + esc(d.fp) + '\', this)">Unblock</button></td></tr>';
-        });
-        setHTMLifChanged(box, html + '</table>');
-      } catch (e) {
-        console.error('devices failed:', e);
-        setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load devices.</div>');
-      }
-    }
-    async function unblockDevice(fp, btn) {
-      setBtnLoading(btn, true);
-      try {
-        const res = await srpc('unblock_device', callerArgs({ fp: fp }));
-        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
-        toast('Device unblocked', 'ok');
-        loadDevices();
-      } catch (e) {
-        console.error(e);
-        setBtnLoading(btn, false, 'Unblock');
-        toast('Unblock failed.', 'err');
-      }
-    }
-    async function blockDevice(keyId, btn) {
-      if (!can('blacklist.manage')) { toast('Insufficient rank', 'err'); return; }
-      if (!confirm('Block the device tied to this key? It will be locked out of every page.')) return;
-      setBtnLoading(btn, true);
-      try {
-        const reason = prompt('Reason (optional):', '') || '';
-        const res = await srpc('block_device_by_key', callerArgs({ target_key_id: keyId, reason: reason.slice(0, 200) }));
-        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
-        toast('Device blocked', 'ok');
-        loadDevices();
-      } catch (e) {
-        console.error(e);
-        setBtnLoading(btn, false, 'Block device');
-        toast(e && e.message === 'no-device' ? 'No device recorded on that key yet.' : 'Block failed.', 'err');
-      }
-    }
+    /* ---------- full user deletion ---------- */
     async function deleteUserAccount(username, btn) {
       if (!username) return;
       if (!canModify(targetRankOf(username))) { toast('Insufficient rank', 'err'); return; }

@@ -297,7 +297,11 @@ DECLARE
   new_token UUID;
   lk_locked BOOLEAN := FALSE;
   lk_msg TEXT := '';
+  sess_fresh BOOLEAN := FALSE;
 BEGIN
+  -- NOTE: input_fp is accepted for signature stability but ignored:
+  -- device fingerprinting is retired in favour of a hard single-session
+  -- lock with stale-session takeover (see below).
   IF EXISTS (SELECT 1 FROM blacklist WHERE username = input_username) THEN
     RETURN json_build_object('success', false, 'error', 'blacklisted');
   END IF;
@@ -319,24 +323,25 @@ BEGIN
   IF r.used_by IS NOT NULL AND lower(r.used_by) <> lower(input_username) THEN
     RETURN json_build_object('success', false, 'error', 'wrong_user', 'bound', r.used_by);
   END IF;
-  -- Blocked devices: rejected whether or not they match a recorded fp.
-  IF (input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
-      SELECT 1 FROM blacklist_devices WHERE fp = input_fp))
-     OR (r.device_fp IS NOT NULL AND EXISTS (
-      SELECT 1 FROM blacklist_devices WHERE fp = r.device_fp)) THEN
-    RETURN json_build_object('success', false, 'error', 'device_blocked');
-  END IF;
-  -- Strict device check: a recorded fingerprint must match exactly. A missing
-  -- client fingerprint cannot bypass it (else anyone could pass NULL).
-  IF r.device_fp IS NOT NULL AND (input_fp IS NULL OR input_fp = '' OR r.device_fp <> input_fp) THEN
-    RETURN json_build_object('success', false, 'error', 'other_device');
+  -- Hard lock: an active session blocks everyone else. Exception: if the
+  -- bound account shows no recent presence (idle 5+ min, closed tab, crash),
+  -- the same account takes the session over instead of being locked out.
+  IF r.session_token IS NOT NULL THEN
+    IF r.used_by IS NOT NULL AND EXISTS (
+      SELECT 1 FROM active_sessions
+      WHERE lower(username) = lower(r.used_by) AND last_seen > NOW() - INTERVAL '5 minutes'
+    ) THEN
+      sess_fresh := TRUE;
+    END IF;
+    IF sess_fresh THEN
+      RETURN json_build_object('success', false, 'error', 'in_use');
+    END IF;
   END IF;
   new_token := gen_random_uuid();
   UPDATE license_keys
   SET session_token = new_token::text,
       used_by = COALESCE(r.used_by, input_username),
-      activated_at = COALESCE(activated_at, NOW()),
-      device_fp = COALESCE(NULLIF(input_fp, ''), device_fp)
+      activated_at = COALESCE(activated_at, NOW())
   WHERE id = r.id;
   RETURN json_build_object('success', true, 'rank', crank, 'is_admin', r.is_admin,
     'session_token', new_token, 'used_by', COALESCE(r.used_by, input_username),
@@ -357,10 +362,6 @@ BEGIN
   -- Blacklisted names and blocked devices fail validation too, so an
   -- existing session is booted within one poll cycle, not just at login.
   IF EXISTS (SELECT 1 FROM blacklist WHERE username = r.used_by) THEN
-    RETURN json_build_object('valid', false);
-  END IF;
-  IF r.device_fp IS NOT NULL AND EXISTS (
-    SELECT 1 FROM blacklist_devices WHERE fp = r.device_fp) THEN
     RETURN json_build_object('valid', false);
   END IF;
   RETURN json_build_object('valid', true, 'used_by', r.used_by,
@@ -1739,7 +1740,8 @@ BEGIN
         'friends_mine','typing_send','report_submit','slowmode_set','scare_set','perms_set',
         'perms_clear','lock_set','xp_grant','xp_grant_all','dashboard_stats','activity_feed',
         'keys_ranks','watch_get','reports_list','report_dismiss','report_action',
-        'wall_check','user_delete','block_device_by_key','unblock_device','devices_list')
+        'wall_check','user_delete','block_device_by_key','unblock_device','devices_list',
+        'reset_my_key')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);
@@ -1750,8 +1752,9 @@ END $$;
 -- STEP 9: device blacklist + site-wide wall + user deletion
 -- ----------------------------------------------------------------------------
 -- Site-wide wall: checked on EVERY page (even pre-login) by remembered
--- username + device fingerprint. No auth needed by design; worst abuse is
--- learning whether a name/fp is blocked (trivial, non-sensitive).
+-- username. Device fingerprints are retired; input_fp stays in the signature
+-- for stability and is ignored. No auth needed by design; worst abuse is
+-- learning whether a name is blocked (trivial, non-sensitive).
 CREATE OR REPLACE FUNCTION wall_check(input_username TEXT, input_fp TEXT)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
@@ -1759,11 +1762,36 @@ BEGIN
     SELECT 1 FROM blacklist WHERE username = input_username) THEN
     RETURN json_build_object('blocked', true);
   END IF;
-  IF input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
-    SELECT 1 FROM blacklist_devices WHERE fp = input_fp) THEN
-    RETURN json_build_object('blocked', true);
-  END IF;
   RETURN json_build_object('blocked', false);
+END; $$;
+
+-- Self-service key reset: name + key must match the bound account, and a
+-- session must currently be active (otherwise just log in). Clears the
+-- session instantly so the owner can log straight back in. The name binding
+-- is preserved. Key + exact name = full control: share them and you share
+-- the account — reset wars are settled by staff (Reset + blacklist).
+CREATE OR REPLACE FUNCTION reset_my_key(input_name TEXT, input_key TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE r license_keys%ROWTYPE;
+BEGIN
+  SELECT * INTO r FROM license_keys WHERE key = upper(trim(input_key));
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'invalid');
+  END IF;
+  IF NOT r.is_active THEN
+    RETURN json_build_object('success', false, 'error', 'deactivated');
+  END IF;
+  IF r.used_by IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'unbound');
+  END IF;
+  IF lower(r.used_by) <> lower(input_name) THEN
+    RETURN json_build_object('success', false, 'error', 'wrong_user');
+  END IF;
+  IF r.session_token IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'no-session');
+  END IF;
+  UPDATE license_keys SET session_token = NULL, activated_at = NULL WHERE id = r.id;
+  RETURN json_build_object('success', true);
 END; $$;
 
 -- Full user deletion: keys, sessions, presence. Content/history stays.
