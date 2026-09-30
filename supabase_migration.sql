@@ -339,7 +339,8 @@ BEGIN
       device_fp = COALESCE(NULLIF(input_fp, ''), device_fp)
   WHERE id = r.id;
   RETURN json_build_object('success', true, 'rank', crank, 'is_admin', r.is_admin,
-    'session_token', new_token, 'welcome_back', (r.session_token IS NOT NULL));
+    'session_token', new_token, 'used_by', COALESCE(r.used_by, input_username),
+    'welcome_back', (r.session_token IS NOT NULL));
 END; $$;
 
 CREATE OR REPLACE FUNCTION verify_session(input_username TEXT, input_token TEXT)
@@ -348,7 +349,7 @@ DECLARE r license_keys%ROWTYPE;
 BEGIN
   SELECT * INTO r FROM license_keys
   WHERE session_token::text = input_token
-    AND (input_username = '' OR used_by = input_username)
+    AND (input_username = '' OR lower(used_by) = lower(input_username))
     AND is_active = true;
   IF NOT FOUND THEN
     RETURN json_build_object('valid', false);

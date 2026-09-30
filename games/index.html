@@ -1095,7 +1095,7 @@
 
         const token = res.session_token;
         localStorage.setItem(LS_TOKEN, token);
-        localStorage.setItem(LS_USER, username);
+        localStorage.setItem(LS_USER, res.used_by || username);
         clearRequestState();
         const myRank = res.rank || (res.is_admin ? 'admin' : 'user');
         try { localStorage.setItem(LS_RANK, myRank); } catch (e) {}
