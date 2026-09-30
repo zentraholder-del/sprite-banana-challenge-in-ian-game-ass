@@ -299,9 +299,9 @@ DECLARE
   lk_msg TEXT := '';
   sess_fresh BOOLEAN := FALSE;
 BEGIN
-  -- NOTE: input_fp is accepted for signature stability but ignored:
-  -- device fingerprinting is retired in favour of a hard single-session
-  -- lock with stale-session takeover (see below).
+  -- input_fp feeds DEVICE BLACKLIST enforcement only (no session locking):
+  -- blocked fingerprints are rejected here, and the fp is recorded for
+  -- future block-device actions. Never used to decide who may log in.
   IF EXISTS (SELECT 1 FROM blacklist WHERE username = input_username) THEN
     RETURN json_build_object('success', false, 'error', 'blacklisted');
   END IF;
@@ -326,6 +326,15 @@ BEGIN
   -- Hard lock: an active session blocks everyone else. Exception: if the
   -- bound account shows no recent presence (idle 5+ min, closed tab, crash),
   -- the same account takes the session over instead of being locked out.
+  -- (Device fingerprints play no part in this decision.)
+  -- Device blacklist: rejected whether or not the fp matches anything
+  -- recorded. Checked before the hard lock so the message is accurate.
+  IF (input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
+      SELECT 1 FROM blacklist_devices WHERE fp = input_fp))
+     OR (r.device_fp IS NOT NULL AND EXISTS (
+      SELECT 1 FROM blacklist_devices WHERE fp = r.device_fp)) THEN
+    RETURN json_build_object('success', false, 'error', 'device_blocked');
+  END IF;
   IF r.session_token IS NOT NULL THEN
     IF r.used_by IS NOT NULL AND EXISTS (
       SELECT 1 FROM active_sessions
@@ -341,7 +350,8 @@ BEGIN
   UPDATE license_keys
   SET session_token = new_token::text,
       used_by = COALESCE(r.used_by, input_username),
-      activated_at = COALESCE(activated_at, NOW())
+      activated_at = COALESCE(activated_at, NOW()),
+      device_fp = COALESCE(NULLIF(input_fp, ''), device_fp)
   WHERE id = r.id;
   RETURN json_build_object('success', true, 'rank', crank, 'is_admin', r.is_admin,
     'session_token', new_token, 'used_by', COALESCE(r.used_by, input_username),
@@ -362,6 +372,10 @@ BEGIN
   -- Blacklisted names and blocked devices fail validation too, so an
   -- existing session is booted within one poll cycle, not just at login.
   IF EXISTS (SELECT 1 FROM blacklist WHERE username = r.used_by) THEN
+    RETURN json_build_object('valid', false);
+  END IF;
+  IF r.device_fp IS NOT NULL AND EXISTS (
+    SELECT 1 FROM blacklist_devices WHERE fp = r.device_fp) THEN
     RETURN json_build_object('valid', false);
   END IF;
   RETURN json_build_object('valid', true, 'used_by', r.used_by,
@@ -1752,14 +1766,17 @@ END $$;
 -- STEP 9: device blacklist + site-wide wall + user deletion
 -- ----------------------------------------------------------------------------
 -- Site-wide wall: checked on EVERY page (even pre-login) by remembered
--- username. Device fingerprints are retired; input_fp stays in the signature
--- for stability and is ignored. No auth needed by design; worst abuse is
--- learning whether a name is blocked (trivial, non-sensitive).
+-- username + device fingerprint. No auth needed by design; worst abuse is
+-- learning whether a name/fp is blocked (trivial, non-sensitive).
 CREATE OR REPLACE FUNCTION wall_check(input_username TEXT, input_fp TEXT)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   IF input_username IS NOT NULL AND input_username <> '' AND EXISTS (
     SELECT 1 FROM blacklist WHERE username = input_username) THEN
+    RETURN json_build_object('blocked', true);
+  END IF;
+  IF input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
+    SELECT 1 FROM blacklist_devices WHERE fp = input_fp) THEN
     RETURN json_build_object('blocked', true);
   END IF;
   RETURN json_build_object('blocked', false);
