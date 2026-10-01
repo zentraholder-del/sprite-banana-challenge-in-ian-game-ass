@@ -651,7 +651,7 @@
     <div class="authtabs" role="tablist">
       <button class="authtab active" id="tabLogin" role="tab" onclick="switchAuthTab('login')">Log In</button>
       <button class="authtab" id="tabRequest" role="tab" onclick="switchAuthTab('request')">Request Access</button>
-      <button class="authtab" id="tabReset" role="tab" onclick="switchAuthTab('reset')" style="display:none">Reset my key</button>
+      <button class="authtab" id="tabReset" role="tab" onclick="switchAuthTab('reset')">Reset key</button>
     </div>
 
     <div class="pane active" id="paneLogin" role="tabpanel">
@@ -710,21 +710,36 @@
     </div>
 
     <div class="pane" id="paneReset" role="tabpanel">
-      <div class="field">
-        <label>Full name (as requested)</label>
-        <div class="input-wrap">
-          <input type="text" id="resetName" placeholder="Your full name" autocomplete="username" maxlength="64" />
+      <div id="resetFormView">
+        <div class="field">
+          <label>Full name (as requested)</label>
+          <div class="input-wrap">
+            <input type="text" id="resetName" placeholder="Your full name" autocomplete="username" maxlength="64" />
+          </div>
         </div>
-      </div>
-      <div class="field">
-        <label>Access Key</label>
-        <div class="input-wrap">
-          <input type="password" id="resetKey" class="mono" placeholder="Your key" autocomplete="off" />
+        <div class="field">
+          <label>Access Key</label>
+          <div class="input-wrap">
+            <input type="password" id="resetKey" class="mono" placeholder="Your key" autocomplete="off" />
+          </div>
         </div>
+        <div class="field">
+          <label>Why do you need a reset? (optional)</label>
+          <div class="input-wrap">
+            <input type="text" id="resetReason" placeholder="e.g. stuck signed in elsewhere" maxlength="200" />
+          </div>
+        </div>
+        <p style="font-size:12px;color:#7d8590;margin:10px 0 14px;line-height:1.5">Resets need staff approval — only ask if your key is stuck signed in somewhere else.</p>
+        <button class="btn" id="resetBtn" onclick="submitResetRequest()">Request reset</button>
+        <div class="error-msg" id="resetError"></div>
+        <div class="status-msg" id="resetOk"></div>
       </div>
-      <button class="btn" id="resetBtn" onclick="resetMyKey()">Reset key</button>
-      <div class="error-msg" id="resetError"></div>
-      <div class="status-msg" id="resetOk"></div>
+      <div id="resetStatusView" style="display:none">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Reset request status</h2>
+        <p style="font-size:13px;color:#7d8590;margin-bottom:16px;line-height:1.5">Live updates — no need to refresh.</p>
+        <div id="resetStatusWrap" aria-live="polite"></div>
+        <button class="btn ghost" style="margin-top:14px" onclick="showResetForm()">Back to form</button>
+      </div>
     </div>
   </div>
 
@@ -972,9 +987,10 @@
       next.classList.add('active');
       document.getElementById('logoSub').textContent = login
         ? 'Enter your access key to continue'
-        : which === 'request' ? 'Request an access key from staff' : 'Reset your key instantly';
+        : which === 'request' ? 'Request an access key from staff' : 'Ask staff to reset your key';
     }
     // Recent requesters get Reset instead of Request (they have a key coming).
+    // The Reset tab itself is always visible: locked-out users need it.
     function updateRequestTabs() {
       let recent = false;
       try {
@@ -983,43 +999,163 @@
       } catch (e) {}
       resetMode = recent;
       document.getElementById('tabRequest').style.display = recent ? 'none' : '';
-      document.getElementById('tabReset').style.display = recent ? '' : 'none';
+      document.getElementById('tabReset').style.display = '';
     }
-    async function resetMyKey() {
+
+    function showResetForm() {
+      document.getElementById('resetFormView').style.display = 'block';
+      document.getElementById('resetStatusView').style.display = 'none';
+    }
+
+    function showResetStatus() {
+      document.getElementById('resetFormView').style.display = 'none';
+      const sv = document.getElementById('resetStatusView');
+      sv.style.display = 'block';
+      sv.classList.remove('pane-in');
+      void sv.offsetWidth;
+      sv.classList.add('pane-in');
+    }
+
+    function dismissResetBanner() {
+      try {
+        const name = localStorage.getItem('pending_reset_name');
+        if (name) localStorage.setItem('reset_dismissed_' + name, '1');
+      } catch (e) {}
+      const wrap = document.getElementById('resetStatusWrap');
+      if (wrap) setHTMLifChanged(wrap, '');
+    }
+
+    function goResetLogin() {
+      try {
+        const n = localStorage.getItem('pending_reset_name');
+        if (n) document.getElementById('usernameInput').value = n;
+      } catch (e) {}
+      switchAuthTab('login');
+    }
+
+    /* Resetting a key needs STAFF APPROVAL now (instant self-reset was
+       removed: anyone holding a leaked name+key could steal the session).
+       Same request/status pattern as key requests below. */
+    async function submitResetRequest() {
       const name = document.getElementById('resetName').value.trim();
       const key = document.getElementById('resetKey').value.trim();
+      const reason = document.getElementById('resetReason').value.trim();
       const errBox = document.getElementById('resetError');
       const okBox = document.getElementById('resetOk');
       errBox.textContent = '';
       okBox.textContent = '';
-      if (!name) { errBox.textContent = 'Enter your full name.'; return; }
-      if (!key) { errBox.textContent = 'Enter your key.'; return; }
+      if (!name) { errBox.textContent = 'Enter your full name.'; authShake(); return; }
+      if (!key) { errBox.textContent = 'Enter your key.'; authShake(); return; }
       const btn = document.getElementById('resetBtn');
       btn.disabled = true;
+      btn.textContent = 'Sending…';
       try {
-        const { data: res, error } = await sb.rpc('reset_my_key', { input_name: name, input_key: key });
-        if (error) throw error;
+        let fp = '';
+        try { fp = await getDeviceFingerprint(); } catch (e) {}
+        const { data: res, error: rpcErr } = await sb.rpc('submit_reset_request', {
+          input_name: name, input_key: key, input_reason: reason, input_fp: fp || null
+        });
+        if (rpcErr) throw rpcErr;
         if (!res || !res.success) {
           const code = (res && res.error) || 'failed';
           if (code === 'invalid') errBox.textContent = 'Key not found.';
           else if (code === 'deactivated') errBox.textContent = 'This key has been deactivated.';
           else if (code === 'wrong_user') errBox.textContent = 'That name does not match this key.';
           else if (code === 'unbound') errBox.textContent = 'This key is not bound yet — just log in.';
-          else if (code === 'no-session') errBox.textContent = 'No active session — just log in.';
-          else errBox.textContent = 'Reset failed. Try again.';
+          else if (code === 'no-session') errBox.textContent = 'No active session on this key — just log in.';
+          else if (code === 'pending') errBox.textContent = 'You already have a pending reset request — check its status below.';
+          else if (code === 'cooldown') {
+            const waitMs = ((res && res.retry_after) || 0) * 1000;
+            errBox.textContent = 'You can request a reset again in ' + fmtWait(waitMs) + '.';
+          }
+          else if (code === 'blacklisted') errBox.textContent = 'This username is blacklisted.';
+          else if (code === 'device_blocked') errBox.textContent = 'This device has been blocked by staff.';
+          else errBox.textContent = 'Could not send request. Try again later.';
+          authShake();
           return;
         }
-        // Instant effect: prefill login and switch there.
-        okBox.textContent = 'Key reset ✓ — hit Continue to log in.';
-        document.getElementById('usernameInput').value = name;
-        document.getElementById('keyInput').value = key;
-        switchAuthTab('login');
-        toast('Key reset — welcome back', 'ok');
+        try { localStorage.setItem('pending_reset_name', name); } catch (e) {}
+        try { localStorage.setItem('pending_reset_time', String(Date.now())); } catch (e) {}
+        document.getElementById('resetName').value = '';
+        document.getElementById('resetKey').value = '';
+        document.getElementById('resetReason').value = '';
+        showResetStatus();
+        toast('Reset requested', 'ok');
+        checkResetStatus();
+        subscribeResetStatus();
       } catch (e) {
         console.error(e);
-        errBox.textContent = 'Reset failed. Check your connection.';
+        errBox.textContent = 'Could not send request. Try again later.';
+        toast('Request failed', 'err');
       } finally {
         btn.disabled = false;
+        btn.textContent = 'Request reset';
+      }
+    }
+
+    async function checkResetStatus() {
+      const wrap = document.getElementById('resetStatusWrap');
+      if (!wrap) return;
+      let name = null;
+      try { name = localStorage.getItem('pending_reset_name'); } catch (e) {}
+      if (!name) { setHTMLifChanged(wrap, ''); return; }
+      let dismissed = null;
+      try { dismissed = localStorage.getItem('reset_dismissed_' + name); } catch (e) {}
+      try {
+        const { data, error } = await sb.rpc('check_reset_status', { input_name: name });
+        if (error) throw error;
+        if (!data || !data.found) { setHTMLifChanged(wrap, ''); return; }
+        let html = '';
+        if (data.status === 'pending') {
+          html = '<div class="req-banner muted-note">Your reset request is pending review — staff have been notified.</div>';
+        } else if (data.status === 'denied') {
+          if (dismissed) { setHTMLifChanged(wrap, ''); return; }
+          html = '<div class="req-banner denied"><strong>Your reset request was denied.</strong>' +
+            '<div style="margin-top:10px"><button class="mini-btn ghost" onclick="dismissResetBanner()">Dismiss</button></div></div>';
+        } else if (data.status === 'approved') {
+          html = '<div class="req-banner approved"><strong>Reset approved!</strong>' +
+            '<div class="muted-note" style="margin-top:8px">Your key is free — head to Log In and hit Continue.</div>' +
+            '<div style="margin-top:10px"><button class="mini-btn" onclick="goResetLogin()">Log in now</button></div></div>';
+        } else {
+          html = '';
+        }
+        setHTMLifChanged(wrap, html);
+      } catch (e) {
+        console.error('reset status failed:', e);
+        if (wrap && !wrap.innerHTML) {
+          wrap.innerHTML = '<div class="req-banner muted-note">Could not check status — check your connection. <button class="mini-btn ghost" onclick="checkResetStatus()">Retry</button></div>';
+        }
+      }
+    }
+
+    let resetReqChannel = null;
+    let resetReqSubName = null;
+    let resetReqPoll = null;
+
+    function subscribeResetStatus() {
+      try {
+        let name = null;
+        try { name = localStorage.getItem('pending_reset_name'); } catch (e) {}
+        if (!name || name === resetReqSubName) return;
+        if (resetReqChannel) { try { sb.removeChannel(resetReqChannel); } catch (e) {} resetReqChannel = null; }
+        resetReqSubName = name;
+        resetReqChannel = sb.channel('ls-reset-' + name)
+          .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'key_reset_requests', filter: 'name=eq.' + name },
+            () => checkResetStatus())
+          .subscribe();
+        // 3s heartbeat as well, same as key requests: banner flips with
+        // no user action even if realtime drops an event.
+        if (resetReqPoll) clearInterval(resetReqPoll);
+        resetReqPoll = setInterval(() => {
+          try {
+            let n = null;
+            try { n = localStorage.getItem('pending_reset_name'); } catch (e) {}
+            if (n) checkResetStatus();
+          } catch (e) { console.error(e); }
+        }, 3000);
+      } catch (e) {
+        console.error('reset status realtime failed:', e);
       }
     }
 
@@ -1061,7 +1197,7 @@
       try {
         document.getElementById('status').textContent = r === 'locked'
           ? 'You were signed out because the site is locked. Try again later.'
-          : 'You were signed out — this key was probably used on another device. Log in again to take the session back.';
+          : 'You were signed out — this key was probably used on another device. Ask staff for a reset in the Reset tab, then log in once they approve.';
       } catch (e) {}
       return true;
     }
@@ -1117,6 +1253,10 @@
         if (n) localStorage.removeItem('request_dismissed_' + n);
         localStorage.removeItem('pending_request_name');
         localStorage.removeItem('pending_request_time');
+        const rn = localStorage.getItem('pending_reset_name');
+        if (rn) localStorage.removeItem('reset_dismissed_' + rn);
+        localStorage.removeItem('pending_reset_name');
+        localStorage.removeItem('pending_reset_time');
       } catch (e) {}
       try { approvedKey = ''; approvedShown = false; } catch (e) {}
       try { updateRequestTabs(); } catch (e) {}
@@ -1176,9 +1316,9 @@
           } else if (code === 'locked') {
             showError((res && res.lock_message) || 'Site is temporarily locked by the owner.');
           } else if (code === 'wrong_user') {
-            showError('This key belongs to "' + ((res && res.bound) || 'another name') + '". Use that name, or use Reset my key below.');
+            showError('This key belongs to "' + ((res && res.bound) || 'another name') + '". Use that name, or ask staff for a reset in the Reset key tab below.');
           } else if (code === 'in_use') {
-            showError('This key is already signed in somewhere else. If that was you, use Reset my key below to free it, then log in again.');
+            showError('This key is already signed in somewhere else. Ask staff for a reset in the Reset tab below, then log in once they approve.');
           } else if (code === 'device_blocked') {
             showError('This device has been blocked by staff.');
           } else {
@@ -1585,12 +1725,17 @@
     (async () => { try { if (await siteWall()) return; } catch (e) {} try { await checkMissedAlerts(); } catch (e) {} checkExistingSession(); })();
     checkRequestStatus();
     subscribeRequestStatus();
+    checkResetStatus();
+    subscribeResetStatus();
     syncSchoolDD();
     updateRequestTabs();
     try {
       if (localStorage.getItem('pending_request_name')) {
         switchAuthTab('request');
         showRequestStatus();
+      } else if (localStorage.getItem('pending_reset_name')) {
+        switchAuthTab('reset');
+        showResetStatus();
       }
     } catch (e) {}
   </script>

@@ -178,7 +178,7 @@ DECLARE
 
     'troll_settings', 'typing', 'user_cosmetics', 'warnings', 'xp_balances',
 
-    'xp_daily', 'xp_purchases', 'mutes', 'blacklist_devices'
+    'xp_daily', 'xp_purchases', 'mutes', 'blacklist_devices', 'key_reset_requests'
 
   ];
 
@@ -550,6 +550,146 @@ BEGIN
   END IF;
   UPDATE key_requests SET status = 'denied', status_updated_at = NOW(),
     deny_reason = left(COALESCE(input_reason, ''), 200)
+  WHERE id = request_id;
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE TABLE IF NOT EXISTS key_reset_requests (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name TEXT NOT NULL,
+  key_value TEXT NOT NULL,
+  reason TEXT NOT NULL DEFAULT '',
+  device_fp TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  deny_reason TEXT NOT NULL DEFAULT '',
+  decided_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  status_updated_at TIMESTAMPTZ
+);
+
+-- Reset requests: the ONLY path to freeing a locked key. Instant
+-- self-service reset was removed on purpose: anyone holding a leaked
+-- name+key could steal the live session with it. Staff approve/deny here,
+-- same audience as key requests. Cooldown only after a denial; an approved
+-- user who gets locked again may ask again immediately.
+CREATE OR REPLACE FUNCTION submit_reset_request(input_name TEXT, input_key TEXT,
+  input_reason TEXT DEFAULT '', input_fp TEXT DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE k license_keys%ROWTYPE; prev key_reset_requests%ROWTYPE;
+BEGIN
+  IF EXISTS (SELECT 1 FROM blacklist WHERE username = input_name) THEN
+    RETURN json_build_object('success', false, 'error', 'blacklisted');
+  END IF;
+  IF input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
+    SELECT 1 FROM blacklist_devices WHERE fp = input_fp) THEN
+    RETURN json_build_object('success', false, 'error', 'device_blocked');
+  END IF;
+  SELECT * INTO k FROM license_keys WHERE key = upper(trim(input_key));
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'invalid');
+  END IF;
+  IF NOT k.is_active THEN
+    RETURN json_build_object('success', false, 'error', 'deactivated');
+  END IF;
+  IF k.used_by IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'unbound');
+  END IF;
+  IF lower(k.used_by) <> lower(input_name) THEN
+    RETURN json_build_object('success', false, 'error', 'wrong_user');
+  END IF;
+  IF k.session_token IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'no-session');
+  END IF;
+  SELECT * INTO prev FROM key_reset_requests
+  WHERE upper(key_value) = upper(trim(input_key)) ORDER BY id DESC LIMIT 1;
+  IF FOUND AND prev.status = 'pending' THEN
+    RETURN json_build_object('success', false, 'error', 'pending');
+  END IF;
+  IF FOUND AND prev.status = 'denied' AND prev.status_updated_at IS NOT NULL
+     AND prev.status_updated_at > NOW() - INTERVAL '24 hours' THEN
+    RETURN json_build_object('success', false, 'error', 'cooldown',
+      'retry_after', EXTRACT(EPOCH FROM (prev.status_updated_at + INTERVAL '24 hours' - NOW()))::BIGINT);
+  END IF;
+  INSERT INTO key_reset_requests (name, key_value, reason, device_fp, status)
+  VALUES (input_name, upper(trim(input_key)), left(COALESCE(input_reason, ''), 200),
+    NULLIF(input_fp, ''), 'pending');
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE OR REPLACE FUNCTION check_reset_status(input_name TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE req key_reset_requests%ROWTYPE;
+BEGIN
+  SELECT * INTO req FROM key_reset_requests WHERE name = input_name ORDER BY id DESC LIMIT 1;
+  IF NOT FOUND THEN
+    RETURN json_build_object('found', false);
+  END IF;
+  RETURN json_build_object('found', true, 'status', req.status,
+    'deny_reason', COALESCE(req.deny_reason, ''));
+END; $$;
+
+CREATE OR REPLACE FUNCTION resetreq_list(input_username TEXT, input_token TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT;
+BEGIN
+  crank := caller_rank_of(input_username, input_token);
+  IF NOT has_perm(crank, 'tab.requests') THEN
+    RETURN json_build_object('error', 'rank');
+  END IF;
+  RETURN COALESCE((
+    SELECT json_agg(t ORDER BY t.id DESC) FROM (
+      SELECT id, name, key_value, reason, status, created_at, status_updated_at,
+        deny_reason, decided_by,
+        (SELECT (session_token IS NOT NULL) FROM license_keys
+         WHERE key = key_reset_requests.key_value) AS live_session,
+        (device_fp IS NOT NULL AND EXISTS (
+          SELECT 1 FROM blacklist_devices WHERE fp = key_reset_requests.device_fp)) AS fp_blocked
+      FROM key_reset_requests ORDER BY id DESC LIMIT 100
+    ) t
+  ), '[]'::json);
+END; $$;
+
+CREATE OR REPLACE FUNCTION resetreq_approve(caller_username TEXT, caller_token TEXT,
+  request_id BIGINT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT; req key_reset_requests%ROWTYPE; k license_keys%ROWTYPE;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'requests.decide') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  SELECT * INTO req FROM key_reset_requests WHERE id = request_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Request not found');
+  END IF;
+  IF req.status <> 'pending' THEN
+    RETURN json_build_object('success', false, 'error', 'Already decided');
+  END IF;
+  SELECT * INTO k FROM license_keys WHERE key = req.key_value;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Key gone');
+  END IF;
+  IF k.used_by IS NULL OR lower(k.used_by) <> lower(req.name) THEN
+    RETURN json_build_object('success', false, 'error', 'Name mismatch');
+  END IF;
+  UPDATE license_keys SET session_token = NULL, activated_at = NULL WHERE id = k.id;
+  UPDATE key_reset_requests SET status = 'approved', status_updated_at = NOW(),
+    decided_by = caller_username WHERE id = request_id;
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE OR REPLACE FUNCTION resetreq_deny(caller_username TEXT, caller_token TEXT,
+  request_id BIGINT, input_reason TEXT DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'requests.decide') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  UPDATE key_reset_requests SET status = 'denied', status_updated_at = NOW(),
+    deny_reason = left(COALESCE(input_reason, ''), 200),
+    decided_by = caller_username
   WHERE id = request_id;
   RETURN json_build_object('success', true);
 END; $$;
@@ -1799,7 +1939,9 @@ BEGIN
         'perms_clear','lock_set','xp_grant','xp_grant_all','dashboard_stats','activity_feed',
         'keys_ranks','watch_get','reports_list','report_dismiss','report_action',
         'wall_check','user_delete','block_device_by_key','unblock_device','devices_list',
-        'reset_my_key','block_requester_device','logout_session')
+        'reset_my_key','block_requester_device','logout_session',
+        'submit_reset_request','check_reset_status','resetreq_list',
+        'resetreq_approve','resetreq_deny')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);
@@ -1833,26 +1975,12 @@ END; $$;
 -- the account — reset wars are settled by staff (Reset + blacklist).
 CREATE OR REPLACE FUNCTION reset_my_key(input_name TEXT, input_key TEXT)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE r license_keys%ROWTYPE;
 BEGIN
-  SELECT * INTO r FROM license_keys WHERE key = upper(trim(input_key));
-  IF NOT FOUND THEN
-    RETURN json_build_object('success', false, 'error', 'invalid');
-  END IF;
-  IF NOT r.is_active THEN
-    RETURN json_build_object('success', false, 'error', 'deactivated');
-  END IF;
-  IF r.used_by IS NULL THEN
-    RETURN json_build_object('success', false, 'error', 'unbound');
-  END IF;
-  IF lower(r.used_by) <> lower(input_name) THEN
-    RETURN json_build_object('success', false, 'error', 'wrong_user');
-  END IF;
-  IF r.session_token IS NULL THEN
-    RETURN json_build_object('success', false, 'error', 'no-session');
-  END IF;
-  UPDATE license_keys SET session_token = NULL, activated_at = NULL WHERE id = r.id;
-  RETURN json_build_object('success', true);
+  -- REMOVED: instant self-service reset let anyone holding a leaked
+  -- name+key steal the live session. Resets now go through staff approval
+  -- (submit_reset_request -> resetreq_approve). This stub exists only so
+  -- old clients get a clear answer instead of a missing-function error.
+  RETURN json_build_object('success', false, 'error', 'staff_only');
 END; $$;
 
 -- Full user deletion: keys, sessions, presence. Content/history stays.

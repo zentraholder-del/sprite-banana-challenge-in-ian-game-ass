@@ -957,6 +957,7 @@
       <div class="tabs sidebar">
         <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">📊 Dashboard</button>
         <button data-tab="requests" onclick="showTab('requests', this)">📥 Key requests</button>
+        <button data-tab="resets" onclick="showTab('resets', this)">🔄 Key resets</button>
         <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">🛡️ Admin requests</button>
         <button data-tab="keys" onclick="showTab('keys', this)">🔑 Manage keys</button>
         <button data-tab="blacklist" onclick="showTab('blacklist', this)">🚫 Blacklist</button>
@@ -1002,6 +1003,12 @@
       <div class="card section" id="sec-requests">
         <h2>Pending key requests</h2>
         <div id="reqList"><p class="muted">Loading…</p></div>
+      </div>
+
+      <div class="card section" id="sec-resets">
+        <h2>Key reset requests</h2>
+        <p class="sub">Staff-approved unlocks for stuck keys — approving signs every session on that key out. Owner and admin only.</p>
+        <div id="resetReqList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-adminreqs">
@@ -1561,6 +1568,7 @@ async function sha256hexFp(str) {
     const PERM_DEFS = [
       { group: 'Tabs', id: 'tab.dashboard', label: 'Dashboard tab' },
       { group: 'Tabs', id: 'tab.requests', label: 'Key requests tab' },
+      { group: 'Tabs', id: 'tab.resets', label: 'Key reset requests tab' },
       { group: 'Tabs', id: 'tab.adminreqs', label: 'Admin requests tab' },
       { group: 'Tabs', id: 'tab.keys', label: 'Manage keys tab' },
       { group: 'Tabs', id: 'tab.blacklist', label: 'Blacklist tab' },
@@ -1573,7 +1581,7 @@ async function sha256hexFp(str) {
       { group: 'Keys', id: 'keys.create', label: 'Create keys (bulk + single)' },
       { group: 'Keys', id: 'keys.modify_user', label: 'Toggle / reset / delete USER keys' },
       { group: 'Keys', id: 'keys.modify_staff', label: 'Toggle / reset / delete STAFF keys' },
-      { group: 'Keys', id: 'requests.decide', label: 'Approve / deny key requests' },
+      { group: 'Keys', id: 'requests.decide', label: 'Approve / deny key + reset requests' },
       { group: 'Keys', id: 'adminreqs.decide', label: 'Approve / deny admin requests' },
       { group: 'Users', id: 'users.set_rank', label: 'Change ranks' },
       { group: 'Users', id: 'users.give_xp', label: 'Grant XP (panel + buttons)' },
@@ -1588,8 +1596,8 @@ async function sha256hexFp(str) {
       { group: 'Troll', id: 'troll.custom_image', label: 'Upload custom jumpscare image' }
     ];
     const DEFAULT_PERMS = {
-      admin: { 'tab.dashboard': 1, 'tab.requests': 1, 'tab.adminreqs': 1, 'tab.keys': 1, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 1, 'tab.reports': 1, 'tab.troll': 1, 'tab.activity': 1, 'keys.create': 1, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 1, 'adminreqs.decide': 1, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 1, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 1, 'troll.custom_image': 0 },
-      mod: { 'tab.dashboard': 1, 'tab.requests': 0, 'tab.adminreqs': 0, 'tab.keys': 0, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 0, 'tab.reports': 1, 'tab.troll': 0, 'tab.activity': 0, 'keys.create': 0, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 0, 'adminreqs.decide': 0, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 0, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 0, 'troll.custom_image': 0 }
+      admin: { 'tab.dashboard': 1, 'tab.requests': 1, 'tab.resets': 1, 'tab.adminreqs': 1, 'tab.keys': 1, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 1, 'tab.reports': 1, 'tab.troll': 1, 'tab.activity': 1, 'keys.create': 1, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 1, 'adminreqs.decide': 1, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 1, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 1, 'troll.custom_image': 0 },
+      mod: { 'tab.dashboard': 1, 'tab.requests': 0, 'tab.resets': 0, 'tab.adminreqs': 0, 'tab.keys': 0, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 0, 'tab.reports': 1, 'tab.troll': 0, 'tab.activity': 0, 'keys.create': 0, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 0, 'adminreqs.decide': 0, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 0, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 0, 'troll.custom_image': 0 }
     };
     let permCache = {};
     async function loadPerms() {
@@ -1871,6 +1879,7 @@ async function sha256hexFp(str) {
       }
       if (name === 'dashboard') { startPoller('stats', loadDashboard, 3000); loadLockStatus(); startPoller('lockstat', loadLockStatus, 10000); }
       if (name === 'requests') startPoller('requests', loadRequests, 3000);
+      if (name === 'resets') startPoller('resets', loadResetRequests, 3000);
       if (name === 'adminreqs') startPoller('adminreqs', loadAdminRequests, 3000);
       if (name === 'keys') startPoller('keys', loadKeys, 10000);
       if (name === 'blacklist') { startPoller('blacklist', loadBlacklist, 10000); loadDevices(); startPoller('devlist', loadDevices, 10000); }
@@ -2849,6 +2858,107 @@ async function sha256hexFp(str) {
         if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         toast('Request denied', 'ok');
         loadRequests();
+      } catch (e) {
+        console.error(e);
+        setBtnLoading(btn, false, 'Deny');
+        toast('Deny failed.', 'err');
+      }
+    }
+
+    /* ---------- key reset requests (staff-approved unlocks) ---------- */
+
+    let knownResetReqIds = {};
+
+    async function loadResetRequests() {
+      const box = document.getElementById('resetReqList');
+      if (!box) return;
+      const firstReset = !box.querySelector('.req-card') && !box.querySelector('.empty-state');
+      if (firstReset) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      try {
+        const data = await srpc('resetreq_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
+        const pending = (data || []).filter(r => r.status === 'pending');
+        if (pending.length === 0) {
+          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending reset requests.</div>';
+          knownResetReqIds = {};
+          return;
+        }
+        const isFirst = Object.keys(knownResetReqIds).length === 0;
+        let html = '';
+        pending.forEach((r, ri) => {
+          const isNew = !isFirst && !knownResetReqIds[r.id];
+          knownResetReqIds[r.id] = true;
+          html += '<div class="req-card' + (isNew ? ' flash' : '') + '" style="animation-delay:' + Math.min(ri, 8) * 40 + 'ms">' +
+            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off">🚫 device blocked</span>' : '') +
+            (r.live_session ? '' : ' <span class="pill off">no live session</span>') + '</div>' +
+            '<div class="rmeta">key <span class="mono">' + esc(r.key_value || '?') + '</span> — ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '—') + '</div>' +
+            '<div class="rreason">' + esc(r.reason || '(no reason given)') + '</div>' +
+            '<div class="row-actions">' +
+            '<button class="btn small" onclick="approveResetRequest(' + r.id + ', this)">Approve + free key</button>' +
+            '<button class="btn small ghost" onclick="askResetDeny(' + r.id + ', this)">Deny</button>' +
+            '</div></div>';
+        });
+        // Drop ids that are no longer pending so a re-request flashes again.
+        Object.keys(knownResetReqIds).forEach(id => {
+          if (!pending.some(r => String(r.id) === String(id))) delete knownResetReqIds[id];
+        });
+        setHTMLifChanged(box, html);
+      } catch (e) {
+        console.error(e);
+        if (firstReset) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load reset requests.</div>';
+      }
+    }
+
+    async function approveResetRequest(id, btn) {
+      if (!can('requests.decide')) { toast('Insufficient rank', 'err'); return; }
+      setBtnLoading(btn, true);
+      try {
+        const res = await srpc('resetreq_approve', callerArgs({ request_id: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        toast('Reset approved — key is free', 'ok');
+        loadResetRequests();
+      } catch (e) {
+        console.error(e);
+        setBtnLoading(btn, false, 'Approve + free key');
+        toast('Approve failed: ' + String((e && e.message) || 'try again').slice(0, 120), 'err');
+      }
+    }
+
+    function askResetDeny(id, btn) {
+      const card = btn.closest ? btn.closest('.req-card') : null;
+      if (!card) { denyResetRequest(id, btn, ''); return; }
+      const actions = card.querySelector('.row-actions');
+      if (!actions) return;
+      actions.innerHTML = '';
+      const inp = document.createElement('input');
+      inp.placeholder = 'Deny reason (optional)';
+      inp.maxLength = 200;
+      inp.setAttribute('aria-label', 'Deny reason');
+      const ok = document.createElement('button');
+      ok.className = 'btn small danger';
+      ok.textContent = 'Confirm deny';
+      ok.onclick = () => denyResetRequest(id, ok, inp.value.trim());
+      const cancel = document.createElement('button');
+      cancel.className = 'btn small ghost';
+      cancel.textContent = 'Cancel';
+      cancel.onclick = () => loadResetRequests();
+      actions.appendChild(inp);
+      actions.appendChild(ok);
+      actions.appendChild(cancel);
+      inp.focus();
+    }
+
+    async function denyResetRequest(id, btn, reason) {
+      if (!can('requests.decide')) { toast('Insufficient rank', 'err'); return; }
+      setBtnLoading(btn, true);
+      try {
+        const res = await srpc('resetreq_deny', callerArgs({
+          request_id: id, input_reason: reason ? String(reason).slice(0, 200) : null
+        }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        toast('Reset request denied', 'ok');
+        loadResetRequests();
       } catch (e) {
         console.error(e);
         setBtnLoading(btn, false, 'Deny');
