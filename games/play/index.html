@@ -1634,11 +1634,37 @@ async function sha256hexFp(str) {
       return '';
     }
 
-    function logout() {
+    function logout(reason) {
+      // Remember WHY we booted so the login page can explain it instead of
+      // dumping the user on a blank form. Manual sign-out passes no reason.
+      try {
+        if (reason) localStorage.setItem('ls_booted', reason);
+        else localStorage.removeItem('ls_booted');
+      } catch (e) {}
       localStorage.removeItem(LS_TOKEN);
       localStorage.removeItem(LS_USER);
       try { sessionStorage.removeItem('ls_auth'); } catch (e) {}
       window.location.href = '../index.html';
+    }
+
+    // Session truth with three outcomes: 'valid' | 'invalid' | 'unknown'.
+    // An 'invalid' must be seen TWICE (2s apart) before anyone is logged
+    // out — one bad poll (PostgREST blip, slow school wifi) must never boot
+    // people. Network/RPC trouble ('unknown') never logs anyone out.
+    async function sessionState(me, token) {
+      for (let i = 0; i < 2; i++) {
+        let res = null;
+        try { res = await sb.rpc('verify_session', { input_username: me, input_token: token }); }
+        catch (e) { res = null; }
+        if (res && !res.error && res.data && res.data.valid) return { st: 'valid', data: res.data };
+        if (res && !res.error && res.data && res.data.valid === false) {
+          if (i === 0) { await new Promise(r => setTimeout(r, 2000)); continue; }
+          return { st: 'invalid' };
+        }
+        if (i === 0) { await new Promise(r => setTimeout(r, 2000)); continue; }
+        return { st: 'unknown' };
+      }
+      return { st: 'unknown' };
     }
 
     // Validate the stored session token against Supabase.
@@ -1651,13 +1677,19 @@ async function sha256hexFp(str) {
       }
       let me = '';
       try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
+      const s = await sessionState(me, token);
+      if (s.st === 'invalid') {
+        logout('elsewhere');
+        return null;
+      }
+      if (s.st !== 'valid') {
+        // Don't hard-redirect on transient network errors: show games but
+        // block chat until auth can be confirmed on next load.
+        document.getElementById('navUser').textContent = '';
+        return null;
+      }
       try {
-        const { data, error } = await sb.rpc('verify_session', { input_username: me, input_token: token });
-        if (error) throw error;
-        if (!data || !data.valid) {
-          logout();
-          return null;
-        }
+        const data = s.data;
         const name = localStorage.getItem(LS_USER) || data.used_by || 'player';
         const rank = data.rank || (data.is_admin ? 'admin' : 'user');
         try { localStorage.setItem(LS_RANK, rank); } catch (e) {}
@@ -3625,18 +3657,24 @@ async function sha256hexFp(str) {
       return lockState;
     }
 
+    let refreshBusy = false;
     async function refreshSession() {
-      let token = null;
-      try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
-      if (!token) return;
-      let me = '';
-      try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
+      // The 3s poller doesn't await us: guard against overlapping runs
+      // (each run can now take ~2s extra when it double-checks).
+      if (refreshBusy) return;
+      refreshBusy = true;
       try {
-        const { data, error } = await sb.rpc('verify_session', { input_username: me, input_token: token });
-        if (error) throw error;
-        if (!data || !data.valid) { logout(); return; }
+        let token = null;
+        try { token = localStorage.getItem(LS_TOKEN); } catch (e) {}
+        if (!token) return;
+        let me = '';
+        try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
+        const s = await sessionState(me, token);
+        if (s.st === 'invalid') { logout('elsewhere'); return; }
+        if (s.st !== 'valid') return; // blip: stay put, next tick retries
+        const data = s.data;
         const rank = data.rank || (data.is_admin ? 'admin' : 'user');
-        if (rank !== 'owner' && await checkSiteLock()) { logout(); return; }
+        if (rank !== 'owner' && await checkSiteLock()) { logout('locked'); return; }
         let cur = 'user';
         try { cur = localStorage.getItem(LS_RANK) || 'user'; } catch (e) {}
         if (rank !== cur) {
@@ -3645,8 +3683,8 @@ async function sha256hexFp(str) {
           toast('Your rank is now ' + rank.toUpperCase(), 'ok');
         }
         refreshModeration();
-      } catch (e) {
-        console.error('session refresh failed:', e);
+      } finally {
+        refreshBusy = false;
       }
     }
 

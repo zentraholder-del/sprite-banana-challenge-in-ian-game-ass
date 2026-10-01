@@ -1051,11 +1051,26 @@
       sv.classList.add('pane-in');
     }
 
+    // If the play page booted us (key used on another device, site lock),
+    // say so plainly instead of dumping the user on a blank login form.
+    // Returns true when a notice was shown.
+    function showBootedNotice() {
+      let r = null;
+      try { r = localStorage.getItem('ls_booted'); localStorage.removeItem('ls_booted'); } catch (e) {}
+      if (!r) return false;
+      try {
+        document.getElementById('status').textContent = r === 'locked'
+          ? 'You were signed out because the site is locked. Try again later.'
+          : 'You were signed out — this key was probably used on another device. Log in again to take the session back.';
+      } catch (e) {}
+      return true;
+    }
+
     // Auto-redirect if a valid session token is already stored.
     // Owner/admin/mod go to the admin panel, everyone else to games.
     async function checkExistingSession() {
       const token = localStorage.getItem(LS_TOKEN);
-      if (!token) return;
+      if (!token) { showBootedNotice(); return; }
       let me = '';
       try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
       showStatus('Checking saved session…');
@@ -1085,7 +1100,7 @@
           localStorage.removeItem(LS_TOKEN);
           localStorage.removeItem(LS_USER);
           try { localStorage.removeItem(LS_RANK); } catch (e) {}
-          document.getElementById('status').textContent = '';
+          if (!showBootedNotice()) document.getElementById('status').textContent = '';
         }
       } catch (e) {
         // Stay on login; surface only config-like errors, not the token itself
