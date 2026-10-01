@@ -967,6 +967,7 @@
         <button data-tab="reports" onclick="showTab('reports', this)">🚩 Reports</button>
         <button data-tab="troll" onclick="showTab('troll', this)">👻 Troll</button>
         <button data-tab="activity" onclick="showTab('activity', this)">📜 Activity</button>
+        <button data-tab="audit" onclick="showTab('audit', this)">🧾 Audit log</button>
         <button data-tab="perms" onclick="showTab('perms', this)">🔐 Permissions</button>
         <a class="tablink" href="../games/play/">▶ Play Games</a>
       </div>
@@ -1208,6 +1209,11 @@
         <h2>Activity log</h2>
         <p class="sub">Recent activations, blacklist actions, and troll events sent. Read-only.</p>
         <div id="activityList"><p class="muted">Loading…</p></div>
+      </div>
+      <div class="card section" id="sec-audit">
+        <h2>Staff audit log</h2>
+        <p class="sub">Every privileged staff action — who did what to whom, when. Owner only, newest first, append-only.</p>
+        <div id="auditList"><p class="muted">Loading…</p></div>
       </div>
       <div class="card section" id="sec-perms">
         <h2>Rank permissions</h2>
@@ -1578,6 +1584,7 @@ async function sha256hexFp(str) {
       { group: 'Tabs', id: 'tab.reports', label: 'Reports tab' },
       { group: 'Tabs', id: 'tab.troll', label: 'Troll tab' },
       { group: 'Tabs', id: 'tab.activity', label: 'Activity tab' },
+      { group: 'Tabs', id: 'tab.audit', label: 'Audit log tab (owner only)' },
       { group: 'Keys', id: 'keys.create', label: 'Create keys (bulk + single)' },
       { group: 'Keys', id: 'keys.modify_user', label: 'Toggle / reset / delete USER keys' },
       { group: 'Keys', id: 'keys.modify_staff', label: 'Toggle / reset / delete STAFF keys' },
@@ -1889,6 +1896,7 @@ async function sha256hexFp(str) {
       if (name === 'reports') startPoller('reports', loadReports, 3000);
       if (name === 'troll') { loadTrollTargets(); loadCustomScare(); startPoller('trollstates', refreshTrollStates, 10000); }
       if (name === 'activity') startPoller('activity', loadActivity, 5000);
+      if (name === 'audit') startPoller('audit', loadAudit, 5000);
       if (name === 'perms') renderPermsMatrix();
     }
 
@@ -2060,6 +2068,37 @@ async function sha256hexFp(str) {
       } catch (e) {
         console.error('activity log failed:', e);
         if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load activity.</div>';
+      }
+    }
+
+    /* ---------- staff audit log (owner only) ---------- */
+
+    async function loadAudit() {
+      const box = document.getElementById('auditList');
+      if (!box) return;
+      const firstAudit = !box.querySelector('table') && !box.querySelector('.empty-state');
+      if (firstAudit) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div><div class="skel" style="height:44px"></div>';
+      try {
+        const data = await srpc('audit_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
+        if (!data.length) {
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big">🧾</div>No staff actions logged yet.</div>');
+          return;
+        }
+        let html = '<div class="keys-table-wrap"><table><tr><th>When</th><th>Staff</th><th>Action</th><th>Target</th><th>Detail</th></tr>';
+        data.forEach(a => {
+          html += '<tr><td class="muted">' + esc(a.created_at ? new Date(a.created_at).toLocaleString() : '—') + '</td>' +
+            '<td><strong>' + esc(a.actor || '?') + '</strong></td>' +
+            '<td><span class="pill rank-user">' + esc(a.action || '') + '</span></td>' +
+            '<td class="mono">' + esc(a.target || '—') + '</td>' +
+            '<td>' + esc(a.detail || '') + '</td></tr>';
+        });
+        html += '</table></div>';
+        setHTMLifChanged(box, html);
+      } catch (e) {
+        console.error('audit log failed:', e);
+        if (firstAudit) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load audit log.</div>';
       }
     }
 

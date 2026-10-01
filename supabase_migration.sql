@@ -134,6 +134,18 @@ DO $$ BEGIN CREATE UNIQUE INDEX IF NOT EXISTS uq_typing_user ON typing(username)
 
 DO $$ BEGIN CREATE UNIQUE INDEX IF NOT EXISTS uq_cosmetics_user ON user_cosmetics(username); EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'uq_cosmetics_user skipped: %', SQLERRM; END $$;
 
+-- Staff audit trail: who did what to whom, when. Append-only (no UPDATE
+-- or DELETE path anywhere) and auto-pruned after 90 days. Created BEFORE
+-- the lockdown loop below so it gets the same deny-by-default RLS.
+CREATE TABLE IF NOT EXISTS staff_audit (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  actor TEXT NOT NULL DEFAULT '',
+  action TEXT NOT NULL DEFAULT '',
+  target TEXT NOT NULL DEFAULT '',
+  detail TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 
 -- ----------------------------------------------------------------------------
@@ -178,7 +190,8 @@ DECLARE
 
     'troll_settings', 'typing', 'user_cosmetics', 'warnings', 'xp_balances',
 
-    'xp_daily', 'xp_purchases', 'mutes', 'blacklist_devices', 'key_reset_requests'
+    'xp_daily', 'xp_purchases', 'mutes', 'blacklist_devices', 'key_reset_requests',
+    'staff_audit'
 
   ];
 
@@ -500,6 +513,9 @@ BEGIN
   INSERT INTO blacklist_devices (fp, reason)
   VALUES (f, left(COALESCE(reason, ''), 200))
   ON CONFLICT (fp) DO NOTHING;
+  PERFORM audit_log(caller_username, 'block_device',
+    COALESCE((SELECT name FROM key_requests WHERE id = request_id), 'request#' || request_id::text),
+    left(COALESCE(reason, ''), 200));
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -536,6 +552,7 @@ BEGIN
   INSERT INTO license_keys (key, is_active, is_admin, rank, request_id, plaintext_reveal, school, used_by)
   VALUES (final_key, true, key_rank IN ('admin', 'owner'), key_rank, request_id, final_key, req_school, req.name);
   UPDATE key_requests SET status = 'approved', status_updated_at = NOW() WHERE id = request_id;
+  PERFORM audit_log(caller_username, 'approve_key_request', req.name, final_key);
   RETURN json_build_object('success', true, 'key', final_key);
 END; $$;
 
@@ -551,6 +568,9 @@ BEGIN
   UPDATE key_requests SET status = 'denied', status_updated_at = NOW(),
     deny_reason = left(COALESCE(input_reason, ''), 200)
   WHERE id = request_id;
+  PERFORM audit_log(caller_username, 'deny_key_request',
+    COALESCE((SELECT name FROM key_requests WHERE id = request_id), 'request#' || request_id::text),
+    left(COALESCE(input_reason, ''), 200));
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -675,6 +695,7 @@ BEGIN
   UPDATE license_keys SET session_token = NULL, activated_at = NULL WHERE id = k.id;
   UPDATE key_reset_requests SET status = 'approved', status_updated_at = NOW(),
     decided_by = caller_username WHERE id = request_id;
+  PERFORM audit_log(caller_username, 'resetreq_approve', req.name, req.key_value);
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -691,6 +712,9 @@ BEGIN
     deny_reason = left(COALESCE(input_reason, ''), 200),
     decided_by = caller_username
   WHERE id = request_id;
+  PERFORM audit_log(caller_username, 'resetreq_deny',
+    COALESCE((SELECT name FROM key_reset_requests WHERE id = request_id), 'request#' || request_id::text),
+    left(COALESCE(input_reason, ''), 200));
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -721,6 +745,8 @@ BEGIN
   IF NOT has_perm(crank, 'adminreqs.decide') THEN
     RETURN json_build_object('success', false, 'error', 'Insufficient rank');
   END IF;
+  PERFORM audit_log(caller_username, CASE WHEN approve THEN 'adminreq_approve' ELSE 'adminreq_deny' END,
+    COALESCE((SELECT used_by FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text), '');
   IF approve THEN
     UPDATE license_keys SET rank = 'admin', is_admin = true, admin_request_status = 'approved'
     WHERE id = target_key_id;
@@ -781,6 +807,7 @@ BEGIN
       END;
     END IF;
   END LOOP;
+  PERFORM audit_log(caller_username, 'keys_create', n::text || ' keys', 'rank=' || key_rank);
   RETURN json_build_object('success', true, 'created', n);
 END; $$;
 
@@ -796,12 +823,21 @@ BEGIN
   END IF;
   IF crank = 'owner' THEN
     UPDATE license_keys SET is_active = next_active WHERE id = target_key_id;
+    PERFORM audit_log(caller_username, 'toggle_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text),
+      'active=' || next_active::text);
     RETURN json_build_object('success', true);
   ELSIF trank = 'user' AND has_perm(crank, 'keys.modify_user') THEN
     UPDATE license_keys SET is_active = next_active WHERE id = target_key_id;
+    PERFORM audit_log(caller_username, 'toggle_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text),
+      'active=' || next_active::text);
     RETURN json_build_object('success', true);
   ELSIF trank <> 'user' AND has_perm(crank, 'keys.modify_staff') THEN
     UPDATE license_keys SET is_active = next_active WHERE id = target_key_id;
+    PERFORM audit_log(caller_username, 'toggle_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text),
+      'active=' || next_active::text);
     RETURN json_build_object('success', true);
   ELSE
     RETURN json_build_object('success', false, 'error', 'Insufficient rank');
@@ -820,14 +856,20 @@ BEGIN
   IF crank = 'owner' THEN
     UPDATE license_keys SET used_by = NULL, session_token = NULL, activated_at = NULL, device_fp = NULL
     WHERE id = target_key_id;
+    PERFORM audit_log(caller_username, 'reset_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text), '');
     RETURN json_build_object('success', true);
   ELSIF trank = 'user' AND has_perm(crank, 'keys.modify_user') THEN
     UPDATE license_keys SET used_by = NULL, session_token = NULL, activated_at = NULL, device_fp = NULL
     WHERE id = target_key_id;
+    PERFORM audit_log(caller_username, 'reset_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text), '');
     RETURN json_build_object('success', true);
   ELSIF trank <> 'user' AND has_perm(crank, 'keys.modify_staff') THEN
     UPDATE license_keys SET used_by = NULL, session_token = NULL, activated_at = NULL, device_fp = NULL
     WHERE id = target_key_id;
+    PERFORM audit_log(caller_username, 'reset_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text), '');
     RETURN json_build_object('success', true);
   ELSE
     RETURN json_build_object('success', false, 'error', 'Insufficient rank');
@@ -847,12 +889,18 @@ BEGIN
     RETURN json_build_object('success', false, 'error', 'Owner key cannot be deleted here');
   END IF;
   IF crank = 'owner' THEN
+    PERFORM audit_log(caller_username, 'delete_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text), '');
     DELETE FROM license_keys WHERE id = target_key_id;
     RETURN json_build_object('success', true);
   ELSIF trank = 'user' AND has_perm(crank, 'keys.modify_user') THEN
+    PERFORM audit_log(caller_username, 'delete_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text), '');
     DELETE FROM license_keys WHERE id = target_key_id;
     RETURN json_build_object('success', true);
   ELSIF trank <> 'user' AND has_perm(crank, 'keys.modify_staff') THEN
+    PERFORM audit_log(caller_username, 'delete_key',
+      COALESCE((SELECT key FROM license_keys WHERE id = target_key_id), 'key#' || target_key_id::text), '');
     DELETE FROM license_keys WHERE id = target_key_id;
     RETURN json_build_object('success', true);
   ELSE
@@ -882,6 +930,7 @@ BEGIN
   IF aff = 0 THEN
     RETURN json_build_object('success', false, 'error', 'No key row matched that user');
   END IF;
+  PERFORM audit_log(caller_username, 'set_rank', target_username, 'rank=' || new_rank);
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -920,19 +969,23 @@ BEGIN
   IF action = 'warn' THEN
     INSERT INTO warnings (username, reason, warned_by)
     VALUES (target_username, left(COALESCE(reason, ''), 200), caller_username);
+    PERFORM audit_log(caller_username, 'warn', target_username, left(COALESCE(reason, ''), 200));
     RETURN json_build_object('success', true);
   ELSIF action = 'mute' THEN
     until_ts := NOW() + (GREATEST(minutes, 1) || ' minutes')::INTERVAL;
     INSERT INTO mutes (username, reason, muted_by, expires_at)
     VALUES (target_username, left(COALESCE(reason, 'Muted by staff'), 200), caller_username, until_ts);
+    PERFORM audit_log(caller_username, 'mute', target_username, left(COALESCE(reason, 'Muted by staff'), 200));
     RETURN json_build_object('success', true, 'until', until_ts);
   ELSIF action = 'unmute' THEN
     DELETE FROM mutes WHERE username = target_username AND expires_at > NOW();
+    PERFORM audit_log(caller_username, 'unmute', target_username, '');
     RETURN json_build_object('success', true);
   ELSIF action = 'ban' THEN
     until_ts := NOW() + (GREATEST(minutes, 1) || ' minutes')::INTERVAL;
     INSERT INTO game_bans (username, reason, banned_by, expires_at)
     VALUES (target_username, left(COALESCE(reason, 'Banned'), 200), caller_username, until_ts);
+    PERFORM audit_log(caller_username, 'game_ban', target_username, left(COALESCE(reason, 'Banned'), 200));
     RETURN json_build_object('success', true, 'until', until_ts);
   ELSE
     RETURN json_build_object('success', false, 'error', 'Bad action');
@@ -999,6 +1052,7 @@ BEGIN
     RETURN json_build_object('success', false, 'error', 'Bad username');
   END IF;
   INSERT INTO blacklist (username, reason) VALUES (target_username, left(COALESCE(reason, ''), 200));
+  PERFORM audit_log(caller_username, 'blacklist_add', target_username, left(COALESCE(reason, ''), 200));
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -1010,6 +1064,8 @@ BEGIN
   IF NOT has_perm(crank, 'blacklist.manage') THEN
     RETURN json_build_object('success', false, 'error', 'Insufficient rank');
   END IF;
+  PERFORM audit_log(caller_username, 'blacklist_remove',
+    COALESCE((SELECT username FROM blacklist WHERE id = target_id), 'bl#' || target_id::text), '');
   DELETE FROM blacklist WHERE id = target_id;
   RETURN json_build_object('success', true);
 END; $$;
@@ -1731,6 +1787,8 @@ BEGIN
   ELSE
     UPDATE app_config SET locked = new_locked, lock_message = left(COALESCE(new_message, ''), 200) WHERE id = 1;
   END IF;
+  PERFORM audit_log(caller_username, CASE WHEN new_locked THEN 'site_lock' ELSE 'site_unlock' END,
+    'site', left(COALESCE(new_message, ''), 200));
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -1916,8 +1974,34 @@ BEGIN
   RETURN json_build_object('success', true);
 END; $$;
 
+-- Staff audit trail: every privileged action lands here (who did what to
+-- whom, when). Append-only: no UPDATE/DELETE path exists anywhere, rows
+-- auto-prune after 90 days. Direct calls are revoked below (after STEP 8)
+-- so entries can only be written by the RPCs themselves, never forged.
+CREATE OR REPLACE FUNCTION audit_log(actor TEXT, action TEXT, target TEXT, detail TEXT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO staff_audit (actor, action, target, detail)
+  VALUES (left(COALESCE(actor, ''), 64), left(COALESCE(action, ''), 64),
+    left(COALESCE(target, ''), 200), left(COALESCE(detail, ''), 500));
+  DELETE FROM staff_audit WHERE created_at < NOW() - INTERVAL '90 days';
+EXCEPTION WHEN undefined_table THEN NULL;
+END; $$;
+
+CREATE OR REPLACE FUNCTION audit_list(input_username TEXT, input_token TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF caller_rank_of(input_username, input_token) <> 'owner' THEN
+    RETURN json_build_object('error', 'rank');
+  END IF;
+  RETURN COALESCE((SELECT json_agg(t ORDER BY t.id DESC) FROM (
+    SELECT id, actor, action, target, detail, created_at FROM staff_audit
+    ORDER BY id DESC LIMIT 200
+  ) t), '[]'::json);
+END; $$;
+
 -- ----------------------------------------------------------------------------
--- STEP 8: lock down function execution â€” anon may call ONLY these RPCs.
+-- STEP 8: lock down function execution — anon may call ONLY these RPCs.
 -- ----------------------------------------------------------------------------
 DO $$
 DECLARE f TEXT;
@@ -1941,12 +2025,16 @@ BEGIN
         'wall_check','user_delete','block_device_by_key','unblock_device','devices_list',
         'reset_my_key','block_requester_device','logout_session',
         'submit_reset_request','check_reset_status','resetreq_list',
-        'resetreq_approve','resetreq_deny')
+        'resetreq_approve','resetreq_deny','audit_list')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);
   END LOOP;
 END $$;
+
+-- audit_log is write-only infrastructure: callable from other RPCs only,
+-- never directly (otherwise anyone could forge staff-action entries).
+REVOKE ALL ON FUNCTION audit_log(TEXT, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 
 -- ----------------------------------------------------------------------------
 -- STEP 9: device blacklist + site-wide wall + user deletion
@@ -2005,6 +2093,7 @@ BEGIN
       RETURN json_build_object('success', false, 'error', 'Insufficient rank');
     END IF;
   END IF;
+  PERFORM audit_log(caller_username, 'user_delete', target_username, '');
   DELETE FROM active_sessions WHERE username = target_username;
   DELETE FROM license_keys WHERE used_by = target_username;
   RETURN json_build_object('success', true);
@@ -2027,6 +2116,7 @@ BEGIN
   INSERT INTO blacklist_devices (fp, reason)
   VALUES (f, left(COALESCE(reason, ''), 200))
   ON CONFLICT (fp) DO NOTHING;
+  PERFORM audit_log(caller_username, 'block_device', 'key#' || target_key_id::text, left(COALESCE(reason, ''), 200));
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -2038,6 +2128,7 @@ BEGIN
   IF NOT has_perm(crank, 'blacklist.manage') THEN
     RETURN json_build_object('success', false, 'error', 'Insufficient rank');
   END IF;
+  PERFORM audit_log(caller_username, 'unblock_device', '…' || right(fp, 8), '');
   DELETE FROM blacklist_devices WHERE blacklist_devices.fp = unblock_device.fp;
   RETURN json_build_object('success', true);
 END; $$;

@@ -1696,9 +1696,12 @@ async function sha256hexFp(str) {
         return null;
       }
       if (s.st !== 'valid') {
-        // Don't hard-redirect on transient network errors: show games but
-        // block chat until auth can be confirmed on next load.
-        document.getElementById('navUser').textContent = '';
+        // Fail CLOSED on initial load: the hub is login-gated, so an
+        // unverifiable session (Supabase unreachable, e.g. school firewall
+        // blocking it) must not get the games grid. sessionState already
+        // retried once, so this is not a blip. Mid-session polls
+        // (refreshSession) still stay put on trouble — only entry is strict.
+        window.location.href = '../index.html';
         return null;
       }
       try {
