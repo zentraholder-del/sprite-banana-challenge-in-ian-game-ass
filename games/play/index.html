@@ -258,7 +258,7 @@
     .friends-fab:active { transform: scale(0.97); }
     .friends-panel {
       position: fixed; left: 22px; bottom: 150px; z-index: 50;
-      width: 300px; max-height: 420px; display: none; flex-direction: column; overflow: hidden;
+      width: 300px; max-width: calc(100vw - 44px); max-height: 420px; display: none; flex-direction: column; overflow: hidden;
       background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
     }
     .friends-panel.open { display: flex; animation: panelUp 0.2s cubic-bezier(0.22,1,0.36,1); }
@@ -620,6 +620,7 @@
       bottom: 86px;
       z-index: 50;
       width: 320px;
+      max-width: calc(100vw - 44px);
       max-height: 440px;
       display: none;
       flex-direction: column;
@@ -801,6 +802,8 @@
     }
     @media (max-width: 640px) {
       .games-grid { grid-template-columns: repeat(2, 1fr); }
+      nav { padding: 0 16px; }
+      .nav-right { gap: 10px; }
     }
     /* GAME MODAL (games play in-page; hub listeners keep running) */
     #gameModal {
@@ -1162,6 +1165,18 @@
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
       margin-top: 10px; background: #1e242b; border: 1px solid #242b33;
       border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px; color: #ece9e2;
+      flex-wrap: wrap;
+    }
+    .keyline > span, .req-banner .keyline > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+    .keyline .mini-btn, .req-banner .keyline .mini-btn { flex: none; }
+    .req-banner .keyline { flex-wrap: wrap; }
+    /* Long unbroken strings (keys, names, URLs) wrap instead of stretching */
+    .req-banner, .pinned, .ban-card, .shout-box, .trivia-box, .quote-block,
+    .toast, .user-meta, .chat-msg .bubble, .dm-line .text, .ios-alert p,
+    .troll-toast, .chat-empty, .leader-row, .quest-row, .reply-bar .preview,
+    .typing-line, .chat-status, .profile-sub, .dm-note, .modal p,
+    .empty-state, .result-count, .sched-alert-card p {
+      overflow-wrap: anywhere;
     }
     #toastWrap { position: fixed; top: 16px; right: 16px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
     .toast {

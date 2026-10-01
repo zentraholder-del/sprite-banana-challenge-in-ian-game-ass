@@ -297,8 +297,16 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      flex-wrap: wrap;
       word-break: break-all;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 4px 20px rgba(124,58,237,0.25);
+    }
+    .newkey > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+    .newkey .btn { flex: none; }
+    /* Long unbroken strings (keys, names, URLs) wrap instead of stretching */
+    .rname, .rreason, .rmeta, .toast, .empty-state, .modal p.sub, .card p.sub,
+    .muted, .user-meta, .tl-item .tt, .mini-row, .dm-line .text, .keyrow {
+      overflow-wrap: anywhere;
     }
     .muted { font-size: 12px; color: #6b7280; margin-top: 10px; line-height: 1.6; }
     .check {
@@ -2758,8 +2766,22 @@ async function sha256hexFp(str) {
     let pendingApproveId = null;
 
     function openApproveModal(id, btn) {
-      const row = btn && btn.closest ? btn.closest('tr') : null;
-      const name = row ? row.cells[0].textContent : 'this requester';
+      // Request cards are divs (not table rows): read the name from .rname.
+      // First child node is the plain name (status pills come after it).
+      let name = 'this requester';
+      try {
+        const card = btn && btn.closest ? btn.closest('.req-card') : null;
+        if (card) {
+          const nm = card.querySelector('.rname');
+          if (nm) {
+            const first = nm.firstChild && nm.firstChild.nodeValue ? nm.firstChild.nodeValue.trim() : '';
+            name = first || nm.textContent.trim() || name;
+          }
+        } else {
+          const row = btn && btn.closest ? btn.closest('tr') : null;
+          if (row && row.cells[0] && row.cells[0].textContent.trim()) name = row.cells[0].textContent.trim();
+        }
+      } catch (e) {}
       pendingApproveId = id;
       document.getElementById('approveSub').textContent = 'Create a key for ' + name + '.';
       document.getElementById('approveCustomKey').value = '';

@@ -457,6 +457,13 @@
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
       margin-top: 10px; background: #1e242b; border: 1px solid #242b33;
       border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px;
+      flex-wrap: wrap;
+    }
+    .keyline > span, .req-banner .keyline > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+    .keyline .mini-btn, .req-banner .keyline .mini-btn { flex: none; }
+    /* Long unbroken strings (keys, names, URLs) wrap instead of stretching */
+    .req-banner, .rname, .rreason, .toast, .chat-empty, .modal p, .empty-state {
+      overflow-wrap: anywhere;
     }
     .req-banner button { min-height: 44px; }
     .mini-btn {
@@ -683,7 +690,7 @@
         <div class="field" style="margin-top:10px">
           <label>School</label>
           <div class="dd" id="dd-school" data-select="reqSchool">
-            <button type="button" class="dd-trigger" onclick="toggleSchoolDD(event)" aria-label="School"><span class="dd-label">Select school<em class="chev">▾</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleSchoolDD(event)" aria-label="School"><span class="dd-label">Select school</span><em class="chev">▾</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="reqSchool" style="display:none" aria-label="School">
@@ -760,7 +767,7 @@
   <!-- APPROVED MODAL (pops like the request form) -->
   <div class="overlay" id="approvedOverlay" onclick="if(event.target===this)closeApprovedModal()">
     <div class="modal" id="approvedModal">
-      <button class="modal-close" onclick="closeApprovedModal()">
+      <button class="modal-close" onclick="closeApprovedModal()" aria-label="Close">✕</button>
       <h2><span class="mi">celebration</span> Request Approved!</h2>
       <p>Use this key to log in:</p>
       <div class="keyline"><span id="approvedKeyText"></span><button class="mini-btn" onclick="copyApprovedKey()">Copy</button></div>
@@ -1512,7 +1519,7 @@
         if (!data || !data.found) { setHTMLifChanged(wrap, ''); return; }
         let html = '';
         if (data.status === 'pending') {
-          html = '<div class="req-banner muted-note">Your request is pending review';
+          html = '<div class="req-banner muted-note">Your request is pending review.</div>';
         } else if (data.status === 'denied') {
           if (dismissed) { setHTMLifChanged(wrap, ''); return; }
           html = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
