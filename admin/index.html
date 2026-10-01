@@ -19,27 +19,28 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <title>Lightspeed — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  <title>Lightspeed ? Admin</title>
   <style>
-    /* ===== SHARED DESIGN TOKENS (identical in all 4 files — do not drift) ===== */
+    /* ===== SHARED DESIGN TOKENS (identical in all 4 files ? do not drift) ===== */
     :root {
-      --bg-base: #08080c;
-      --surface: #111117;
-      --surface-2: #16161e;
-      --border-subtle: #1c1c26;
-      --border-strong: #7c3aed;
-      --text-primary: #f0f0f8;
-      --text-secondary: #9494ad;
-      --text-muted: #5c5c72;
-      --accent: #7c3aed;
-      --accent-hover: #6d28d9;
-      --accent-pressed: #5b21b6;
-      --success: #10b981;
+      --bg-base: #0e1113;
+      --surface: #161a1f;
+      --surface-2: #1e242b;
+      --border-subtle: #262c33;
+      --border-strong: #e1352b;
+      --text-primary: #ece9e2;
+      --text-secondary: #a7adb5;
+      --text-muted: #7d8590;
+      --accent: #e1352b;
+      --accent-hover: #c62a21;
+      --accent-pressed: #a3231b;
+      --success: #22c55e;
       --warning: #f59e0b;
       --danger: #ef4444;
       --rank-owner: #f59e0b;
-      --rank-admin: #7c3aed;
-      --rank-mod: #10b981;
+      --rank-admin: #60a5fa;
+      --rank-mod: #22c55e;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
       --radius-sm: 6px;
@@ -66,7 +67,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      background: #080810;
+      background: #0e1113;
       min-height: 100vh;
       color: #fff;
     }
@@ -83,8 +84,8 @@
       filter: blur(140px);
       opacity: 0.2;
     }
-    .blob1 { width: 560px; height: 560px; background: #7c3aed; top: -170px; left: -170px; }
-    .blob2 { width: 460px; height: 460px; background: #2563eb; bottom: -120px; right: -120px; }
+    .blob1 { width: 560px; height: 560px; background: #e1352b; top: -170px; left: -170px; }
+    .blob2 { width: 460px; height: 460px; background: #60a5fa; bottom: -120px; right: -120px; }
 
     nav {
       position: relative;
@@ -96,20 +97,16 @@
       height: 60px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
       background: rgba(10,10,22,0.55);
-      backdrop-filter: blur(28px) saturate(1.5);
-      -webkit-backdrop-filter: blur(28px) saturate(1.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), 0 8px 32px rgba(0,0,0,0.35);
     }
     .nav-logo {
       font-size: 16px;
       font-weight: 700;
-      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ece9e2;
     }
     .logout-btn {
-      background: linear-gradient(165deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 14px;
       padding: 7px 14px;
@@ -120,7 +117,6 @@
       transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
     .logout-btn:hover {
-      background: linear-gradient(165deg, rgba(255,255,255,0.14), rgba(124,58,237,0.12));
       color: #fff;
       border-color: rgba(255,255,255,0.2);
       transform: translateY(-1px);
@@ -136,13 +132,12 @@
     }
 
     .card {
-      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%, rgba(124,58,237,0.07));
       background-color: rgba(14,14,26,0.5);
       border: 1px solid rgba(255,255,255,0.11);
       border-radius: 24px;
       padding: 32px;
-      backdrop-filter: blur(32px) saturate(1.5);
-      -webkit-backdrop-filter: blur(32px) saturate(1.5);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.5), 0 32px 96px rgba(0,0,0,0.3),
         inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,255,255,0.04);
     }
@@ -163,7 +158,6 @@
     }
     .field input, .field textarea {
       width: 100%;
-      background: linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
       background-color: rgba(0,0,0,0.35);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
@@ -186,7 +180,7 @@
       padding: 12px 18px;
       border: 1px solid rgba(255,255,255,0.14);
       border-radius: 14px;
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      background: #e1352b;
       color: #fff;
       font-size: 14px;
       font-weight: 600;
@@ -196,7 +190,7 @@
       transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
     .btn:hover {
-      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      background: #60a5fa;
       transform: translateY(-1px);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), inset 0 -1px 0 rgba(0,0,0,0.2),
         0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(124,58,237,0.5);
@@ -206,27 +200,24 @@
     .btn.block { width: 100%; }
     .btn.small { padding: 7px 12px; font-size: 12px; }
     .btn.ghost {
-      background: linear-gradient(165deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
       border: 1px solid rgba(255,255,255,0.12);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.35);
     }
     .btn.ghost:hover {
-      background: linear-gradient(165deg, rgba(255,255,255,0.14), rgba(124,58,237,0.12));
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.4);
     }
     .btn.danger {
-      background: linear-gradient(135deg, #e03434, #8a2d12);
+      background: #e03434;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.2),
         0 2px 6px rgba(0,0,0,0.4), 0 8px 24px rgba(220,38,38,0.3);
     }
-    .btn.danger:hover { background: linear-gradient(135deg, #ef4444, #9a3412); }
+    .btn.danger:hover { background: #ef4444; }
 
     .error { margin-top: 12px; font-size: 13px; color: #f87171; min-height: 18px; }
     .ok { margin-top: 12px; font-size: 13px; color: #6ee7b7; min-height: 18px; word-break: break-all; }
 
     .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
     .tabs button, .tabs a.tablink {
-      background: linear-gradient(165deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
       padding: 9px 16px;
@@ -243,20 +234,20 @@
       transform: translateY(-1px);
     }
     .tabs button.active {
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      background: #e1352b;
       color: #fff;
       border-color: rgba(255,255,255,0.16);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 16px rgba(124,58,237,0.45);
     }
     .tabs a.tablink {
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      background: #e1352b;
       color: #fff;
       font-weight: 600;
       border-color: rgba(255,255,255,0.16);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 16px rgba(124,58,237,0.45);
     }
     .tabs a.tablink:hover {
-      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      background: #60a5fa;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), 0 8px 24px rgba(124,58,237,0.55);
     }
     .section { display: none; }
@@ -298,7 +289,6 @@
       margin: 14px 0;
       padding: 14px 16px;
       border-radius: 16px;
-      background: linear-gradient(165deg, rgba(124,58,237,0.2), rgba(124,58,237,0.07));
       border: 1px solid rgba(124,58,237,0.4);
       font-family: monospace;
       font-size: 16px;
@@ -319,12 +309,11 @@
       color: #9ca3af;
       cursor: pointer;
     }
-    .check input { width: 15px; height: 15px; accent-color: #7c3aed; cursor: pointer; }
+    .check input { width: 15px; height: 15px; accent-color: #e1352b; cursor: pointer; }
     .inline-form { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
     .inline-form input {
       flex: 1;
       min-width: 140px;
-      background: linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
       background-color: rgba(0,0,0,0.35);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
@@ -349,13 +338,12 @@
       padding: 4px 2px;
     }
     .dm-line { font-size: 13px; line-height: 1.45; }
-    .dm-line .who { font-size: 11px; color: #a78bfa; font-weight: 600; }
+    .dm-line .who { font-size: 11px; color: #a7adb5; font-weight: 600; }
     .dm-line.me .who { color: #f472b6; }
     .dm-line .when { font-size: 10.5px; color: #4b5563; margin-left: 6px; }
     .dm-line .text {
       display: inline-block;
       margin-top: 2px;
-      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
       padding: 7px 10px;
@@ -388,15 +376,14 @@
     }
     .overlay.show { display: flex; }
     .modal {
-      background: linear-gradient(165deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02) 45%, rgba(124,58,237,0.08));
       background-color: rgba(17,17,24,0.72);
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 24px;
       padding: 32px 28px;
       width: 100%;
       max-width: 420px;
-      backdrop-filter: blur(32px) saturate(1.5);
-      -webkit-backdrop-filter: blur(32px) saturate(1.5);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.35),
         inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04);
       text-align: center;
@@ -416,7 +403,6 @@
       gap: 12px;
     }
     .stat-card {
-      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
       border: 1px solid rgba(255,255,255,0.11);
       border-radius: 20px;
       padding: 18px 14px;
@@ -427,10 +413,7 @@
       font-size: 30px;
       font-weight: 800;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ece9e2;
     }
     .stat-label {
       margin-top: 6px;
@@ -447,7 +430,6 @@
       flex: 1;
       min-width: 140px;
       min-height: 48px;
-      background: linear-gradient(165deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
       padding: 12px 16px;
@@ -459,7 +441,7 @@
       transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
     .seg-btn.active {
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      background: #e1352b;
       color: #fff;
       border-color: rgba(255,255,255,0.16);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 16px rgba(124,58,237,0.45);
@@ -482,7 +464,7 @@
       border-color: rgba(124,58,237,0.65);
       box-shadow: 0 0 0 4px rgba(124,58,237,0.16);
     }
-    .field select option { background: #111118; color: #fff; }
+    .field select option { background: #161a1f; color: #fff; }
     #trollMsg, #keySearch, #userSearch { font-size: 16px; }
 
     /* TRICK GRID */
@@ -500,7 +482,6 @@
       gap: 8px;
       min-height: 88px;
       padding: 14px 10px;
-      background: linear-gradient(165deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 20px;
       font-size: 26px;
@@ -511,10 +492,9 @@
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
-    .trick-btn span { font-size: 12px; font-weight: 600; color: #c4b5fd; }
+    .trick-btn span { font-size: 12px; font-weight: 600; color: #a7adb5; }
     .trick-btn:active { transform: scale(0.96); }
     .trick-btn.selected {
-      background: linear-gradient(165deg, rgba(124,58,237,0.35), rgba(37,99,235,0.25));
       border-color: rgba(139,92,246,0.7);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 20px rgba(124,58,237,0.45);
     }
@@ -527,7 +507,6 @@
       color: #6b7280;
     }
     .trick-btn.on {
-      background: linear-gradient(165deg, rgba(34,197,94,0.4), rgba(37,99,235,0.3));
       border-color: rgba(52,211,153,0.8);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 0 2px rgba(52,211,153,0.25), 0 4px 24px rgba(52,211,153,0.4);
     }
@@ -541,8 +520,8 @@
       gap: 10px;
       padding: 10px 12px;
       margin-top: 8px;
-      background: #1a1a24;
-      border: 1px solid #2a2a3d;
+      background: #1e242b;
+      border: 1px solid #242b33;
       border-radius: 10px;
       font-family: monospace;
       font-size: 14px;
@@ -551,58 +530,58 @@
     }
 
     /* ===== FLAT DESIGN OVERRIDE (no glow, no blur, no shadow) ===== */
-    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.3s ease-out; }
+    body { background: #0a0a0f !important; color: #ece9e2 !important; animation: pageIn 0.3s ease-out; }
     @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .bg, .blob { display: none !important; }
     * { text-shadow: none !important; }
     nav {
-      background: #13131a !important; border-bottom: 1px solid #1e1e2e !important;
+      background: #161a1f !important; border-bottom: 1px solid #262c33 !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
     }
-    .nav-logo { background: none !important; -webkit-text-fill-color: #e2e2f0 !important; color: #e2e2f0 !important; }
+    .nav-logo { background: none !important; -webkit-text-fill-color: #ece9e2 !important; color: #ece9e2 !important; }
     .logout-btn {
-      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
-      border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important;
+      background: #1e242b !important; border: 1.5px solid #242b33 !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #ece9e2 !important;
       min-height: 44px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .logout-btn:hover { background: #2a2a3d !important; color: #fff !important; transform: none !important; box-shadow: none !important; }
+    .logout-btn:hover { background: #242b33 !important; color: #fff !important; transform: none !important; box-shadow: none !important; }
     .logout-btn:active { transform: scale(0.97) !important; }
     .card {
-      background: #13131a !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important;
+      background: #161a1f !important; border: 1px solid #262c33 !important; border-radius: 16px !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
     }
-    .card h1, .card h2 { color: #e2e2f0 !important; }
-    .card p.sub { color: #6b6b8a !important; }
-    .field label { color: #6b6b8a !important; }
+    .card h1, .card h2 { color: #ece9e2 !important; }
+    .card p.sub { color: #7d8590 !important; }
+    .field label { color: #7d8590 !important; }
     .field input, .field textarea, .field select, .inline-form input {
-      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
-      border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important;
+      background: #1e242b !important; border: 1.5px solid #242b33 !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #ece9e2 !important;
       min-height: 44px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
     .field input:focus, .field textarea:focus, .field select:focus, .inline-form input:focus {
-      border-color: #7c3aed !important; box-shadow: none !important;
+      border-color: #e1352b !important; box-shadow: none !important;
     }
     .btn {
-      background: #7c3aed !important; border: none !important; border-radius: 10px !important;
+      background: #e1352b !important; border: none !important; border-radius: 10px !important;
       box-shadow: none !important; min-height: 44px;
       transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .btn:hover { background: #6d28d9 !important; transform: none !important; box-shadow: none !important; }
+    .btn:hover { background: #c62a21 !important; transform: none !important; box-shadow: none !important; }
     .btn:active { transform: scale(0.97) !important; }
-    .btn.ghost { background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important; box-shadow: none !important; }
-    .btn.ghost:hover { background: #2a2a3d !important; box-shadow: none !important; }
+    .btn.ghost { background: #1e242b !important; border: 1.5px solid #242b33 !important; box-shadow: none !important; }
+    .btn.ghost:hover { background: #242b33 !important; box-shadow: none !important; }
     .btn.danger { background: #ef4444 !important; box-shadow: none !important; }
     .btn.danger:hover { background: #dc2626 !important; }
     .btn:disabled { opacity: 0.55; cursor: wait; transform: none !important; }
     .tabs button, .tabs a.tablink {
-      background: #1a1a24 !important; border: 1px solid #2a2a3d !important;
-      border-radius: 10px !important; box-shadow: none !important; color: #6b6b8a !important;
+      background: #1e242b !important; border: 1px solid #242b33 !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #7d8590 !important;
       min-height: 44px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .tabs button:hover, .tabs a.tablink:hover { color: #e2e2f0 !important; border-color: #7c3aed !important; transform: none !important; }
-    .tabs button.active { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; box-shadow: none !important; }
-    .tabs a.tablink { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; box-shadow: none !important; }
-    .tabs a.tablink:hover { background: #6d28d9 !important; box-shadow: none !important; }
+    .tabs button:hover, .tabs a.tablink:hover { color: #ece9e2 !important; border-color: #e1352b !important; transform: none !important; }
+    .tabs button.active { background: #e1352b !important; color: #fff !important; border-color: #e1352b !important; box-shadow: none !important; }
+    .tabs a.tablink { background: #e1352b !important; color: #fff !important; border-color: #e1352b !important; box-shadow: none !important; }
+    .tabs a.tablink:hover { background: #c62a21 !important; box-shadow: none !important; }
     .section.active { animation: tabIn 0.3s ease-out !important; }
     @keyframes tabIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
     .section.tab-exit {
@@ -611,67 +590,67 @@
       transform: translateX(-16px);
       transition: opacity 0.15s ease-out, transform 0.15s ease-out;
     }
-    th { color: #6b6b8a !important; }
-    td { color: #e2e2f0 !important; }
-    th, td { border-bottom: 1px solid #1e1e2e !important; }
+    th { color: #7d8590 !important; }
+    td { color: #ece9e2 !important; }
+    th, td { border-bottom: 1px solid #262c33 !important; }
     .pill { border-radius: 20px; }
-    .pill.on { background: #10b981 !important; color: #000 !important; }
-    .pill.off { background: #1a1a24 !important; color: #6b6b8a !important; border: 1px solid #2a2a3d; }
+    .pill.on { background: #22c55e !important; color: #000 !important; }
+    .pill.off { background: #1e242b !important; color: #7d8590 !important; border: 1px solid #242b33; }
     .pill.rank-owner { background: #f59e0b !important; color: #000 !important; }
-    .pill.rank-admin { background: #7c3aed !important; color: #fff !important; }
-    .pill.rank-mod { background: #10b981 !important; color: #000 !important; }
-    .pill.rank-user { background: #1a1a24 !important; color: #6b6b8a !important; border: 1px solid #2a2a3d; }
-    .newkey { background: #1a1a24 !important; border: 1px solid #2a2a3d !important; border-radius: 10px !important; box-shadow: none !important; }
-    .muted { color: #6b6b8a !important; }
-    .check { color: #6b6b8a !important; min-height: 44px; }
-    .dm-line .text { background: #1a1a24 !important; border: 1px solid #2a2a3d !important; border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important; }
-    footer { color: #6b6b8a !important; }
+    .pill.rank-admin { background: #60a5fa !important; color: #fff !important; }
+    .pill.rank-mod { background: #22c55e !important; color: #000 !important; }
+    .pill.rank-user { background: #1e242b !important; color: #7d8590 !important; border: 1px solid #242b33; }
+    .newkey { background: #1e242b !important; border: 1px solid #242b33 !important; border-radius: 10px !important; box-shadow: none !important; }
+    .muted { color: #7d8590 !important; }
+    .check { color: #7d8590 !important; min-height: 44px; }
+    .dm-line .text { background: #1e242b !important; border: 1px solid #242b33 !important; border-radius: 10px !important; box-shadow: none !important; color: #ece9e2 !important; }
+    footer { color: #7d8590 !important; }
     .overlay { background: rgba(0,0,0,0.7) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
     .overlay.show { display: flex; }
     .modal {
-      background: #13131a !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important;
+      background: #161a1f !important; border: 1px solid #262c33 !important; border-radius: 16px !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
       animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
     @keyframes modalUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .stat-card { background: #1a1a24 !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important; box-shadow: none !important; }
-    .stat-num { background: none !important; -webkit-text-fill-color: #e2e2f0 !important; color: #e2e2f0 !important; }
-    .stat-label { color: #6b6b8a !important; }
+    .stat-card { background: #1e242b !important; border: 1px solid #262c33 !important; border-radius: 16px !important; box-shadow: none !important; }
+    .stat-num { background: none !important; -webkit-text-fill-color: #ece9e2 !important; color: #ece9e2 !important; }
+    .stat-label { color: #7d8590 !important; }
     .seg-btn {
-      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
-      border-radius: 10px !important; box-shadow: none !important; color: #6b6b8a !important;
+      background: #1e242b !important; border: 1.5px solid #242b33 !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #7d8590 !important;
       min-height: 48px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .seg-btn.active { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; box-shadow: none !important; }
-    .field select option { background: #13131a !important; color: #e2e2f0 !important; }
+    .seg-btn.active { background: #e1352b !important; color: #fff !important; border-color: #e1352b !important; box-shadow: none !important; }
+    .field select option { background: #161a1f !important; color: #ece9e2 !important; }
     .trick-btn {
-      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
+      background: #1e242b !important; border: 1.5px solid #242b33 !important;
       border-radius: 16px !important; box-shadow: none !important;
       min-height: 88px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
       touch-action: manipulation;
     }
-    .trick-btn span { color: #6b6b8a !important; }
+    .trick-btn span { color: #7d8590 !important; }
     .trick-btn:active { transform: scale(0.97) !important; }
-    .trick-btn.selected { background: #1a1a24 !important; border-color: #7c3aed !important; box-shadow: none !important; }
-    .trick-btn.selected span { color: #e2e2f0 !important; }
-    .trick-btn.on { background: #7c3aed !important; border-color: #7c3aed !important; box-shadow: none !important; }
+    .trick-btn.selected { background: #1e242b !important; border-color: #e1352b !important; box-shadow: none !important; }
+    .trick-btn.selected span { color: #ece9e2 !important; }
+    .trick-btn.on { background: #e1352b !important; border-color: #e1352b !important; box-shadow: none !important; }
     .trick-btn.on span, .trick-btn.on .tstate { color: #fff !important; }
     ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track { background: #2a2a3d; }
-    ::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: #242b33; }
+    ::-webkit-scrollbar-thumb { background: #e1352b; border-radius: 8px; }
     #toastWrap { position: fixed; top: 16px; right: 16px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
     .toast {
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
-      padding: 12px 16px; font-size: 13px; color: #e2e2f0; max-width: 300px;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
+      padding: 12px 16px; font-size: 13px; color: #ece9e2; max-width: 300px;
       animation: toastIn 0.25s ease-out;
       transition: opacity 0.2s ease-out, transform 0.2s ease-out;
     }
     .toast.err { border-left: 4px solid #ef4444; }
-    .toast.ok { border-left: 4px solid #10b981; }
+    .toast.ok { border-left: 4px solid #22c55e; }
     .toast.out { opacity: 0; transform: translateX(110%); }
     @keyframes toastIn { from { opacity: 0; transform: translateX(110%); } to { opacity: 1; transform: translateX(0); } }
     .skel {
-      background: linear-gradient(90deg, #1a1a24 25%, #23232f 50%, #1a1a24 75%);
+      background: linear-gradient(90deg, #1e242b 25%, #242b33 50%, #1e242b 75%);
       background-size: 200% 100%;
       border-radius: 10px; min-height: 44px;
       animation: skelShimmer 1.2s linear infinite;
@@ -680,7 +659,7 @@
     .arow { animation: itemIn 0.3s ease-out backwards; }
     @keyframes itemIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .btn.restricted { opacity: 0.45; cursor: not-allowed; }
-    .empty-state { text-align: center; padding: 32px 16px; color: #6b6b8a; font-size: 13px; }
+    .empty-state { text-align: center; padding: 32px 16px; color: #7d8590; font-size: 13px; }
     .empty-state .big { font-size: 32px; margin-bottom: 8px; }
     /* CUSTOM DROPDOWN (replaces native selects; mirrors a hidden select) */
     .dd { position: relative; }
@@ -688,19 +667,19 @@
     .dd-trigger {
       width: 100%; min-height: 48px;
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px;
-      padding: 12px 14px; font-size: 16px; color: #e2e2f0; cursor: pointer; font-family: inherit;
+      background: #1e242b; border: 1.5px solid #242b33; border-radius: 10px;
+      padding: 12px 14px; font-size: 16px; color: #ece9e2; cursor: pointer; font-family: inherit;
       transition: border-color 0.2s ease-out;
       touch-action: manipulation;
     }
-    .dd-trigger:hover { border-color: #7c3aed; }
-    .dd.open .dd-trigger { border-color: #7c3aed; }
+    .dd-trigger:hover { border-color: #e1352b; }
+    .dd.open .dd-trigger { border-color: #e1352b; }
     .dd-trigger.sm { min-height: 44px; font-size: 13px; padding: 8px 12px; min-width: 120px; }
-    .dd-trigger .chev { font-style: normal; color: #6b6b8a; transition: transform 0.2s ease-out, color 0.2s ease-out; }
-    .dd.open .chev { transform: rotate(180deg); color: #e2e2f0; }
+    .dd-trigger .chev { font-style: normal; color: #7d8590; transition: transform 0.2s ease-out, color 0.2s ease-out; }
+    .dd.open .chev { transform: rotate(180deg); color: #ece9e2; }
     .dd-panel {
       position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60;
-      background: #13131a; border: 1px solid #2a2a3d; border-radius: 12px;
+      background: #161a1f; border: 1px solid #242b33; border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.4);
       display: none; max-height: 240px; overflow-y: auto;
       transform-origin: top;
@@ -710,13 +689,13 @@
     .dd-opt {
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
       width: 100%; padding: 10px 14px; background: none; border: none;
-      font-size: 14px; color: #e2e2f0; cursor: pointer; min-height: 44px; text-align: left;
+      font-size: 14px; color: #ece9e2; cursor: pointer; min-height: 44px; text-align: left;
       font-family: inherit;
       transition: background 0.15s ease-out;
       touch-action: manipulation;
     }
-    .dd-opt:hover { background: #1e1e2e; }
-    .dd-opt.sel { color: #7c3aed; font-weight: 600; }
+    .dd-opt:hover { background: #262c33; }
+    .dd-opt.sel { color: #e1352b; font-weight: 600; }
     .dd-opt .tick { visibility: hidden; }
     .dd-opt.sel .tick { visibility: visible; }
     /* CUSTOM CHECKBOX (hides native input, keeps it functional) */
@@ -725,7 +704,7 @@
     .check.cx .cx-input { width: 1px; height: 1px; margin: 0; }
     .cx-box {
       flex: 0 0 auto; width: 18px; height: 18px;
-      border: 1.5px solid #2a2a3d; border-radius: 5px; background: #1a1a24;
+      border: 1.5px solid #242b33; border-radius: 5px; background: #1e242b;
       display: inline-flex; align-items: center; justify-content: center;
       transition: background 0.2s ease-out, border-color 0.2s ease-out;
     }
@@ -734,10 +713,10 @@
       fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
       stroke-dasharray: 20; stroke-dashoffset: 20;
     }
-    .cx-input:checked + .cx-box { background: #7c3aed; border-color: #7c3aed; }
+    .cx-input:checked + .cx-box { background: #e1352b; border-color: #e1352b; }
     .cx-input:checked + .cx-box path { animation: cxDraw 0.2s ease-out forwards; }
     @keyframes cxDraw { to { stroke-dashoffset: 0; } }
-    .cx-input:focus-visible + .cx-box { border-color: #7c3aed; }
+    .cx-input:focus-visible + .cx-box { border-color: #e1352b; }
     /* TOGGLE SWITCH (troll on/off indicator + key active/inactive) */
     .tswitch {
       position: relative; width: 40px; height: 22px; min-height: 44px; min-width: 52px;
@@ -747,60 +726,60 @@
     }
     .tswitch .track {
       position: relative; width: 40px; height: 22px; border-radius: 20px;
-      background: #2a2a3d;
+      background: #242b33;
       transition: background 0.2s cubic-bezier(0.22,1,0.36,1);
     }
     .tswitch .thumb {
       position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
-      background: #e2e2f0;
+      background: #ece9e2;
       transition: transform 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .tswitch.on .track { background: #7c3aed; }
+    .tswitch.on .track { background: #e1352b; }
     .tswitch.on .thumb { transform: translateX(18px); }
     .tswitch:disabled { opacity: 0.55; cursor: wait; }
     /* mini pill toggle inside trick buttons mirrors ON/OFF */
     .trick-btn .tpill {
-      width: 40px; height: 22px; border-radius: 20px; background: #2a2a3d; position: relative;
+      width: 40px; height: 22px; border-radius: 20px; background: #242b33; position: relative;
       transition: background 0.2s cubic-bezier(0.22,1,0.36,1);
     }
     .trick-btn .tpill::after {
       content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
-      border-radius: 50%; background: #e2e2f0;
+      border-radius: 50%; background: #ece9e2;
       transition: transform 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .trick-btn.on .tpill { background: #7c3aed; }
+    .trick-btn.on .tpill { background: #e1352b; }
     .trick-btn.on .tpill::after { transform: translateX(18px); }
     /* brief confirm pulse when an INSTANT card fires */
     .trick-btn.flash { animation: trickFlash 0.35s ease-out; }
     @keyframes trickFlash {
-      0% { transform: scale(1); border-color: #7c3aed; }
-      40% { transform: scale(1.06); border-color: #7c3aed; }
+      0% { transform: scale(1); border-color: #e1352b; }
+      40% { transform: scale(1.06); border-color: #e1352b; }
       100% { transform: scale(1); }
     }
     /* ===== SECTION 5: admin shell (sidebar + topbar + main) ===== */
     .topbar {
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
-      padding: 12px 18px; margin-bottom: 16px; font-size: 13px; color: #6b6b8a;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
+      padding: 12px 18px; margin-bottom: 16px; font-size: 13px; color: #7d8590;
     }
-    .topbar .who { display: flex; align-items: center; gap: 8px; color: #e2e2f0; font-weight: 600; }
+    .topbar .who { display: flex; align-items: center; gap: 8px; color: #ece9e2; font-weight: 600; }
     .ticker { display: flex; gap: 14px; margin-left: auto; flex-wrap: wrap; font-size: 12px; }
-    .ticker b { color: #e2e2f0; }
+    .ticker b { color: #ece9e2; }
     .icon-btn {
       min-width: 44px; min-height: 44px;
       display: inline-flex; align-items: center; justify-content: center;
-      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px;
-      color: #e2e2f0; font-size: 16px; cursor: pointer;
+      background: #1e242b; border: 1.5px solid #242b33; border-radius: 10px;
+      color: #ece9e2; font-size: 16px; cursor: pointer;
       transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .icon-btn:hover { border-color: #7c3aed; }
+    .icon-btn:hover { border-color: #e1352b; }
     .admin-shell { display: flex; align-items: flex-start; gap: 16px; }
     .admin-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0; }
     .tabs.sidebar {
       flex: 0 0 210px;
       position: sticky; top: 16px;
       flex-direction: column; align-items: stretch;
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
       padding: 12px; margin-bottom: 0;
     }
     .tabs.sidebar button, .tabs.sidebar a.tablink {
@@ -809,48 +788,48 @@
       border-radius: 10px;
     }
     .tabs.sidebar button.active {
-      border-left-color: #7c3aed;
-      background: #7c3aed;
+      border-left-color: #e1352b;
+      background: #e1352b;
     }
-    .dash-preview { margin-top: 18px; border-top: 1px solid #1e1e2e; padding-top: 14px; }
+    .dash-preview { margin-top: 18px; border-top: 1px solid #262c33; padding-top: 14px; }
     .dash-preview h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
-    .mini-row { display: flex; gap: 8px; align-items: baseline; font-size: 12px; color: #6b6b8a; padding: 5px 0; border-bottom: 1px solid #1e1e2e; }
+    .mini-row { display: flex; gap: 8px; align-items: baseline; font-size: 12px; color: #7d8590; padding: 5px 0; border-bottom: 1px solid #262c33; }
     .mini-row:last-child { border-bottom: none; }
-    .linklike { background: none; border: none; color: #7c3aed; font-size: 12px; font-weight: 600; cursor: pointer; padding: 8px 0; min-height: 44px; }
+    .linklike { background: none; border: none; color: #e1352b; font-size: 12px; font-weight: 600; cursor: pointer; padding: 8px 0; min-height: 44px; }
     .req-card {
-      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 12px;
+      background: #1e242b; border: 1px solid #242b33; border-radius: 12px;
       padding: 14px 16px; margin-bottom: 10px;
       animation: pageIn 0.25s ease-out backwards;
     }
-    .req-card.flash { border-color: #7c3aed; animation: cardFlash 1.2s ease-out; }
+    .req-card.flash { border-color: #e1352b; animation: cardFlash 1.2s ease-out; }
     @keyframes cardFlash {
-      0% { border-color: #7c3aed; background: #1e1b2e; }
-      100% { border-color: #2a2a3d; background: #1a1a24; }
+      0% { border-color: #e1352b; background: #1e1b2e; }
+      100% { border-color: #242b33; background: #1e242b; }
     }
-    .req-card .rname { font-size: 14px; font-weight: 700; color: #e2e2f0; }
-    .req-card .rmeta { font-size: 11px; color: #6b6b8a; margin: 4px 0 6px; }
-    .req-card .rreason { font-size: 13px; color: #e2e2f0; line-height: 1.5; margin-bottom: 10px; }
+    .req-card .rname { font-size: 14px; font-weight: 700; color: #ece9e2; }
+    .req-card .rmeta { font-size: 11px; color: #7d8590; margin: 4px 0 6px; }
+    .req-card .rreason { font-size: 13px; color: #ece9e2; line-height: 1.5; margin-bottom: 10px; }
     .deny-box { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     .deny-box input {
-      flex: 1; min-width: 160px; background: #0a0a0f; border: 1.5px solid #2a2a3d;
-      border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #e2e2f0; outline: none; min-height: 44px;
+      flex: 1; min-width: 160px; background: #0a0a0f; border: 1.5px solid #242b33;
+      border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #ece9e2; outline: none; min-height: 44px;
     }
-    .deny-box input:focus { border-color: #7c3aed; }
+    .deny-box input:focus { border-color: #e1352b; }
     .keys-table-wrap { overflow-x: auto; }
     table.keys-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-    table.keys-table th.sortable:hover { color: #e2e2f0; }
-    thead th { position: sticky; top: 0; background: #13131a; z-index: 1; }
+    table.keys-table th.sortable:hover { color: #ece9e2; }
+    thead th { position: sticky; top: 0; background: #161a1f; z-index: 1; }
     .rankpills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
     .rankpills button {
       min-height: 44px; padding: 8px 14px; border-radius: 20px;
-      background: #1a1a24; border: 1.5px solid #2a2a3d; color: #6b6b8a;
+      background: #1e242b; border: 1.5px solid #242b33; color: #7d8590;
       font-size: 12px; font-weight: 700; cursor: pointer;
       transition: all 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .rankpills button.active { border-color: #7c3aed; color: #fff; background: #7c3aed; }
+    .rankpills button.active { border-color: #e1352b; color: #fff; background: #e1352b; }
     .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
     .user-card {
-      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 12px;
+      background: #1e242b; border: 1px solid #242b33; border-radius: 12px;
       padding: 14px; animation: pageIn 0.25s ease-out backwards;
     }
     .user-card.stale { opacity: 0.55; }
@@ -860,36 +839,36 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; font-weight: 800; color: #fff;
     }
-    .user-top .un { font-size: 14px; font-weight: 700; color: #e2e2f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .user-meta { font-size: 12px; color: #6b6b8a; margin-bottom: 4px; }
+    .user-top .un { font-size: 14px; font-weight: 700; color: #ece9e2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-meta { font-size: 12px; color: #7d8590; margin-bottom: 4px; }
     .user-card .row-actions { margin-top: 10px; }
-    .dm-layout { display: flex; gap: 12px; margin-top: 20px; border-top: 1px solid #1e1e2e; padding-top: 20px; }
+    .dm-layout { display: flex; gap: 12px; margin-top: 20px; border-top: 1px solid #262c33; padding-top: 20px; }
     .dm-contacts {
       flex: 0 0 200px; display: flex; flex-direction: column; gap: 6px;
       max-height: 300px; overflow-y: auto;
     }
     .dm-contact {
-      text-align: left; background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px;
-      padding: 10px 12px; font-size: 13px; font-weight: 600; color: #e2e2f0; cursor: pointer;
+      text-align: left; background: #1e242b; border: 1.5px solid #242b33; border-radius: 10px;
+      padding: 10px 12px; font-size: 13px; font-weight: 600; color: #ece9e2; cursor: pointer;
       min-height: 44px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .dm-contact:hover { border-color: #7c3aed; }
-    .dm-contact.active { border-color: #7c3aed; background: #1e1b2e; }
+    .dm-contact:hover { border-color: #e1352b; }
+    .dm-contact.active { border-color: #e1352b; background: #1e1b2e; }
     .dm-threadpane { flex: 1; min-width: 0; }
     .timeline { position: relative; padding-left: 26px; }
     .timeline::before {
       content: ''; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px;
-      background: #2a2a3d; border-radius: 2px;
+      background: #242b33; border-radius: 2px;
     }
     .tl-item { position: relative; padding: 0 0 16px; animation: pageIn 0.25s ease-out backwards; }
     .tl-dot {
       position: absolute; left: -24px; top: 2px; width: 12px; height: 12px; border-radius: 50%;
-      background: #7c3aed; border: 2px solid #13131a;
+      background: #e1352b; border: 2px solid #161a1f;
     }
-    .tl-item .tt { font-size: 13px; color: #e2e2f0; line-height: 1.5; }
-    .tl-item .tw { font-size: 11px; color: #6b6b8a; margin-top: 2px; }
+    .tl-item .tt { font-size: 13px; color: #ece9e2; line-height: 1.5; }
+    .tl-item .tw { font-size: 11px; color: #7d8590; margin-top: 2px; }
     .active-strip {
-      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 12px;
+      background: #1e242b; border: 1px solid #242b33; border-radius: 12px;
       padding: 12px 14px; margin-bottom: 14px; font-size: 13px;
     }
     .active-strip:empty { display: none; }
@@ -903,7 +882,7 @@
       .tabs.sidebar button, .tabs.sidebar a.tablink {
         white-space: nowrap; border-left: none; border-bottom: 3px solid transparent;
       }
-      .tabs.sidebar button.active { border-bottom-color: #7c3aed; }
+      .tabs.sidebar button.active { border-bottom-color: #e1352b; }
       .dm-layout { flex-direction: column; }
       .dm-contacts { flex: none; max-height: 160px; }
     }
@@ -911,8 +890,8 @@
       .tabs.sidebar {
         position: fixed; left: 0; right: 0; bottom: 0; top: auto;
         border-radius: 0; border-left: none; border-right: none; border-bottom: none;
-        border-top: 1px solid #1e1e2e;
-        background: #13131a;
+        border-top: 1px solid #262c33;
+        background: #161a1f;
         padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
       }
       .wrap { padding-bottom: 96px; }
@@ -927,6 +906,16 @@
         max-height: 92vh; overflow-y: auto;
       }
     }
+  
+    body { font-weight: 500; }
+    .mi {
+      font-family: 'Material Symbols Rounded';
+      font-weight: 400; font-style: normal; line-height: 1;
+      display: inline-block; vertical-align: middle;
+      font-size: 20px; letter-spacing: normal; text-transform: none;
+      -webkit-font-smoothing: antialiased; user-select: none;
+    }
+    button .mi { pointer-events: none; }
   </style>
 </head>
 <body>
@@ -937,7 +926,7 @@
   </div>
 
   <nav>
-    <div class="nav-logo">⚡ Lightspeed · Admin</div>
+    <div class="nav-logo">? Lightspeed ? Admin</div>
     <div><button class="logout-btn" id="adminLogout" onclick="adminLogout()" style="display:none">Sign out</button></div>
   </nav>
 
@@ -946,7 +935,7 @@
     <!-- GATE (replaced by shared-login check; shown only while verifying) -->
     <div class="card center" id="gate">
       <h1>Admin</h1>
-      <p class="sub" id="gateStatus">Checking admin session…</p>
+      <p class="sub" id="gateStatus">Checking admin session?</p>
     </div>
 
     <!-- DASHBOARD -->
@@ -955,66 +944,66 @@
         <span class="who" id="topbarUser">Admin</span>
         <button class="icon-btn" onclick="openRankGuide()" aria-label="Rank guide" title="What can each rank do?">?</button>
         <div class="ticker" aria-live="polite">
-          <span>Keys <b id="tickKeys">…</b></span>
-          <span>Requests <b id="tickPending">…</b></span>
-          <span>Online <b id="tickOnline">…</b></span>
+          <span>Keys <b id="tickKeys">?</b></span>
+          <span>Requests <b id="tickPending">?</b></span>
+          <span>Online <b id="tickOnline">?</b></span>
         </div>
       </div>
       <div class="admin-shell">
       <div class="tabs sidebar">
-        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">📊 Dashboard</button>
-        <button data-tab="requests" onclick="showTab('requests', this)">📥 Key requests</button>
-        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">🛡️ Admin requests</button>
-        <button data-tab="keys" onclick="showTab('keys', this)">🔑 Manage keys</button>
-        <button data-tab="blacklist" onclick="showTab('blacklist', this)">🚫 Blacklist</button>
-        <button data-tab="messages" onclick="showTab('messages', this)">💬 Messaging</button>
-        <button data-tab="users" onclick="showTab('users', this)">👥 Users</button>
-        <button data-tab="playerdms" onclick="showTab('playerdms', this)">✉️ Player DMs</button>
-        <button data-tab="reports" onclick="showTab('reports', this)">🚩 Reports</button>
-        <button data-tab="troll" onclick="showTab('troll', this)">👻 Troll</button>
-        <button data-tab="activity" onclick="showTab('activity', this)">📜 Activity</button>
-        <button data-tab="perms" onclick="showTab('perms', this)">🔐 Permissions</button>
-        <a class="tablink" href="../games/play/">▶ Play Games</a>
+        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">?? Dashboard</button>
+        <button data-tab="requests" onclick="showTab('requests', this)">?? Key requests</button>
+        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">??? Admin requests</button>
+        <button data-tab="keys" onclick="showTab('keys', this)">?? Manage keys</button>
+        <button data-tab="blacklist" onclick="showTab('blacklist', this)">?? Blacklist</button>
+        <button data-tab="messages" onclick="showTab('messages', this)">?? Messaging</button>
+        <button data-tab="users" onclick="showTab('users', this)">?? Users</button>
+        <button data-tab="playerdms" onclick="showTab('playerdms', this)">?? Player DMs</button>
+        <button data-tab="reports" onclick="showTab('reports', this)">?? Reports</button>
+        <button data-tab="troll" onclick="showTab('troll', this)">?? Troll</button>
+        <button data-tab="activity" onclick="showTab('activity', this)">?? Activity</button>
+        <button data-tab="perms" onclick="showTab('perms', this)">?? Permissions</button>
+        <a class="tablink" href="../games/play/">? Play Games</a>
       </div>
       <div class="admin-main">
       <p class="muted" id="rankNote" style="margin-bottom:12px"></p>
 
       <div class="card section active" id="sec-dashboard">
         <h2>Overview</h2>
-        <p class="sub">Live snapshot — stats refresh every 3 seconds, counts animate only the change.</p>
+        <p class="sub">Live snapshot ? stats refresh every 3 seconds, counts animate only the change.</p>
         <div class="stat-grid" id="statGrid">
-          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Active keys</div></div>
-          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Users activated</div></div>
-          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Online now</div></div>
-          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Pending requests</div></div>
+          <div class="stat-card"><div class="stat-num">?</div><div class="stat-label">Active keys</div></div>
+          <div class="stat-card"><div class="stat-num">?</div><div class="stat-label">Users activated</div></div>
+          <div class="stat-card"><div class="stat-num">?</div><div class="stat-label">Online now</div></div>
+          <div class="stat-card"><div class="stat-num">?</div><div class="stat-label">Pending requests</div></div>
           <div class="stat-card"><div class="stat-num">100</div><div class="stat-label">Games available</div></div>
         </div>
         <div class="dash-preview">
           <h3>Recent activity</h3>
-          <div id="dashPreview"><p class="muted">Loading…</p></div>
-          <button class="linklike" onclick="showTab('activity', document.querySelector('.tabs button[data-tab=&quot;activity&quot;]'))">View full log →</button>
+          <div id="dashPreview"><p class="muted">Loading?</p></div>
+          <button class="linklike" onclick="showTab('activity', document.querySelector('.tabs button[data-tab=&quot;activity&quot;]'))">View full log ?</button>
         </div>
         <div class="dash-preview" id="lockPanel" style="display:none">
-          <h3>🔒 Site lock (kill-switch)</h3>
+          <h3>?? Site lock (kill-switch)</h3>
           <p class="sub">While locked, only you can log in or stay online. Everyone else is signed out with your message.</p>
           <div class="inline-form" style="margin-top:8px">
             <input id="lockMsg" placeholder="Locked message (optional)" maxlength="200" style="flex:1;min-width:0" />
             <button class="btn small danger" onclick="setSiteLock(true)">Lock site</button>
             <button class="btn small ghost" onclick="setSiteLock(false)">Unlock</button>
           </div>
-          <span class="muted" id="lockStatus">Checking…</span>
+          <span class="muted" id="lockStatus">Checking?</span>
         </div>
       </div>
 
       <div class="card section" id="sec-requests">
         <h2>Pending key requests</h2>
-        <div id="reqList"><p class="muted">Loading…</p></div>
+        <div id="reqList"><p class="muted">Loading?</p></div>
       </div>
 
       <div class="card section" id="sec-adminreqs">
         <h2>Admin requests</h2>
-        <p class="sub">Rank-upgrade requests on existing keys — one per account, ever. Owner and admin only.</p>
-        <div id="adminReqList"><p class="muted">Loading…</p></div>
+        <p class="sub">Rank-upgrade requests on existing keys ? one per account, ever. Owner and admin only.</p>
+        <div id="adminReqList"><p class="muted">Loading?</p></div>
       </div>
 
       <div class="card section" id="sec-keys">
@@ -1023,7 +1012,7 @@
         <div class="inline-form" style="align-items:center">
           <input id="customKey" placeholder="Custom Key (leave blank to auto-generate)" maxlength="64" style="flex:1; min-width:180px" aria-label="Custom key" />
           <div class="dd" id="dd-genrank" data-select="genRank">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-genrank')" aria-label="Rank for new key"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-genrank')" aria-label="Rank for new key"><span class="dd-label"></span><em class="chev">?</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="genRank" aria-label="Rank for new key" style="display:none">
@@ -1046,9 +1035,9 @@
           <button onclick="setKeyRankFilter('owner', this)">owner</button>
         </div>
         <div class="inline-form">
-          <input id="keySearch" placeholder="Filter by username…" maxlength="32" oninput="renderKeys()" aria-label="Filter keys by username" />
+          <input id="keySearch" placeholder="Filter by username?" maxlength="32" oninput="renderKeys()" aria-label="Filter keys by username" />
         </div>
-        <div id="keyList"><p class="muted">Loading…</p></div>
+        <div id="keyList"><p class="muted">Loading?</p></div>
       </div>
 
       <div class="card section" id="sec-blacklist">
@@ -1058,17 +1047,17 @@
           <input id="blReason" placeholder="reason (optional)" maxlength="200" />
           <button class="btn small" onclick="addBlacklist()">Add</button>
         </div>
-        <div id="blList"><p class="muted">Loading…</p></div>
+        <div id="blList"><p class="muted">Loading?</p></div>
         <h2 style="margin-top:24px">Blocked devices</h2>
-        <p class="sub">Device fingerprints blocked here (or via a key's Block device button) can't log in on any page — every page shows them a fake error instead.</p>
-        <div id="devList"><p class="muted">Loading…</p></div>
+        <p class="sub">Device fingerprints blocked here (or via a key's Block device button) can't log in on any page ? every page shows them a fake error instead.</p>
+        <div id="devList"><p class="muted">Loading?</p></div>
       </div>
 
       <div class="card section" id="sec-messages">
         <h2>Post announcement</h2>
-        <p class="sub">Pinned banner on the play page for everyone — separate from global chat.</p>
+        <p class="sub">Pinned banner on the play page for everyone ? separate from global chat.</p>
         <div class="inline-form">
-          <input id="adminMsg" placeholder="Announcement or troll…" maxlength="500" />
+          <input id="adminMsg" placeholder="Announcement or troll?" maxlength="500" />
           <button class="btn small" onclick="postAdminMessage()">Post</button>
         </div>
         <div class="inline-form" style="align-items:center;margin-top:12px">
@@ -1088,17 +1077,17 @@
         <div class="error" id="msgError"></div>
         <div class="ok" id="msgOk"></div>
         <h2 style="margin-top:24px">Recent announcements</h2>
-        <div id="recentMsgs"><p class="muted">Loading…</p></div>
+        <div id="recentMsgs"><p class="muted">Loading?</p></div>
         <h2 style="margin-top:24px">Recent chat (moderation)</h2>
         <p class="sub">Global chat messages live on the play page. Delete removes them for everyone.</p>
-        <div id="chatModList"><p class="muted">Loading…</p></div>
+        <div id="chatModList"><p class="muted">Loading?</p></div>
       </div>
 
       <div class="card section" id="sec-users">
         <h2>Active users</h2>
         <p class="sub">Live from active_sessions, most recent first. "Stale" means no heartbeat for 90+ seconds.</p>
         <div class="inline-form">
-          <input id="userSearch" placeholder="Filter by username…" maxlength="32" oninput="renderUsers()" aria-label="Filter users by username" />
+          <input id="userSearch" placeholder="Filter by username?" maxlength="32" oninput="renderUsers()" aria-label="Filter users by username" />
         </div>
         <div class="inline-form" id="xpGrantPanel" style="align-items:center;display:none">
           <input id="xpGrantAmount" type="number" inputmode="numeric" min="1" max="10000" value="100" style="flex:0 0 100px;min-width:100px" aria-label="XP amount" />
@@ -1106,11 +1095,11 @@
           <button class="btn small" id="xpAllBtn" onclick="grantXpEveryone('all', this)">Give everyone</button>
           <span class="muted">Owner-only XP grants</span>
         </div>
-        <div id="userList"><p class="muted">Loading…</p></div>
-        <div id="watchPanel" style="display:none; margin-top:20px; border-top:1px solid #1e1e2e; padding-top:20px;">
-          <h2>👁 Watching <span id="watchName"></span></h2>
+        <div id="userList"><p class="muted">Loading?</p></div>
+        <div id="watchPanel" style="display:none; margin-top:20px; border-top:1px solid #262c33; padding-top:20px;">
+          <h2>?? Watching <span id="watchName"></span></h2>
           <div class="inline-form"><button class="btn small ghost" onclick="closeWatch()">Close</button></div>
-          <div id="watchBody"><p class="muted">Loading…</p></div>
+          <div id="watchBody"><p class="muted">Loading?</p></div>
         </div>
         <div class="dm-layout" id="dmThread" style="display:none">
           <div>
@@ -1121,7 +1110,7 @@
             <h2>DM with <span id="dmUser"></span></h2>
             <div class="dm-hist" id="dmHistory"></div>
             <div class="inline-form" style="margin-top:12px">
-              <input id="dmInput" placeholder="Message as admin…" maxlength="500" />
+              <input id="dmInput" placeholder="Message as admin?" maxlength="500" />
               <button class="btn small" onclick="sendDm()">Send</button>
             </div>
           </div>
@@ -1130,8 +1119,8 @@
 
       <div class="card section" id="sec-playerdms">
         <h2>Player DMs</h2>
-        <p class="sub">Read-only moderation view. Owner and admin only — players are told DMs are moderated.</p>
-        <div id="spyList"><p class="muted">Loading…</p></div>
+        <p class="sub">Read-only moderation view. Owner and admin only ? players are told DMs are moderated.</p>
+        <div id="spyList"><p class="muted">Loading?</p></div>
         <div id="spyThread" style="display:none; margin-top:20px; border-top:1px solid rgba(255,255,255,0.07); padding-top:20px;">
           <h2>Thread: <span id="spyPair"></span></h2>
           <div class="dm-hist" id="spyHistory"></div>
@@ -1141,12 +1130,12 @@
       <div class="card section" id="sec-reports">
         <h2>Player reports</h2>
         <p class="sub">Flagged chat messages. Dismiss, delete the message, or mute the author.</p>
-        <div id="reportList"><p class="muted">Loading…</p></div>
+        <div id="reportList"><p class="muted">Loading?</p></div>
       </div>
 
       <div class="card section" id="sec-troll">
         <h2>Troll control</h2>
-        <p class="sub">Effects play live on games/play/. Target everyone or one user. Everything auto-clears or dismisses — nothing locks anyone out.</p>
+        <p class="sub">Effects play live on games/play/. Target everyone or one user. Everything auto-clears or dismisses ? nothing locks anyone out.</p>
         <div class="segrow" role="radiogroup" aria-label="Trick target">
           <button class="seg-btn active" id="tgtEveryone" onclick="setTrollTarget('everyone')">Everyone</button>
           <button class="seg-btn" id="tgtUser" onclick="setTrollTarget('user')">Specific user</button>
@@ -1154,7 +1143,7 @@
         <div class="field" id="trollUserWrap" style="display:none">
           <label>Target user</label>
           <div class="dd" id="dd-target" data-select="trollTarget">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-target')" aria-label="Target user"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-target')" aria-label="Target user"><span class="dd-label"></span><em class="chev">?</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="trollTarget" aria-label="Target user" style="display:none" onchange="paintTrickButtons(); refreshTrollStates();"></select>
@@ -1162,7 +1151,7 @@
         <div class="field">
           <label>Scare image (jumpscare only)</label>
           <div class="dd" id="dd-scare" data-select="scareImg">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-scare')" aria-label="Scare image"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-scare')" aria-label="Scare image"><span class="dd-label"></span><em class="chev">?</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="scareImg" aria-label="Scare image" style="display:none">
@@ -1174,7 +1163,7 @@
         </div>
         <div class="field" id="customScareWrap" style="display:none">
           <label>Custom jumpscare image</label>
-          <img id="customScarePreview" alt="Custom scare preview" style="display:none;max-width:220px;border-radius:12px;border:1px solid #1e1e2e" />
+          <img id="customScarePreview" alt="Custom scare preview" style="display:none;max-width:220px;border-radius:12px;border:1px solid #262c33" />
           <div class="inline-form" style="margin-top:8px">
             <input id="customScareFile" type="file" accept="image/*" aria-label="Upload custom scare image" />
             <button class="btn small" onclick="uploadCustomScare()">Upload</button>
@@ -1184,20 +1173,20 @@
         </div>
         <div class="field">
           <label>Message (iOS alert &amp; popup spam)</label>
-          <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing 🎉" maxlength="200" />
+          <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing ??" maxlength="200" />
         </div>
         <div class="active-strip" id="activeNow" aria-live="polite"></div>
         <div class="trick-grid" id="trickGrid">
-          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">✨<span>Ripple chaos</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">🔔<span>Fake iOS alert</span><em class="tstate">INSTANT</em></button>
-          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">🎨<span>Color invert</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">💬<span>Popup spam</span><em class="tstate">INSTANT</em></button>
-          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">??<span>Jumpscare</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">??<span>Screen shake</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">??<span>Fake disconnect</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">??<span>Upside down</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">?<span>Ripple chaos</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">??<span>Fake iOS alert</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">??<span>Color invert</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">??<span>Popup spam</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">?<span>Loading forever</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">??<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
         <p class="muted">Tap a TOGGLE card to switch it on/off instantly. Tap an INSTANT card to fire it once. Jumpscare uses the image picker above when toggled ON.</p>
         <div class="error" id="trollErr"></div>
@@ -1207,12 +1196,12 @@
       <div class="card section" id="sec-activity">
         <h2>Activity log</h2>
         <p class="sub">Recent activations, blacklist actions, and troll events sent. Read-only.</p>
-        <div id="activityList"><p class="muted">Loading…</p></div>
+        <div id="activityList"><p class="muted">Loading?</p></div>
       </div>
       <div class="card section" id="sec-perms">
         <h2>Rank permissions</h2>
-        <p class="sub">Owner-only. Tick what each rank may do — applies instantly on save. Your own owner powers can never be restricted.</p>
-        <div id="permsMatrix"><p class="muted">Loading…</p></div>
+        <p class="sub">Owner-only. Tick what each rank may do ? applies instantly on save. Your own owner powers can never be restricted.</p>
+        <div id="permsMatrix"><p class="muted">Loading?</p></div>
         <div class="inline-form" style="margin-top:12px">
           <button class="btn small" onclick="savePerms()">Save permissions</button>
           <button class="btn small ghost" onclick="resetPerms()">Reset to defaults</button>
@@ -1229,9 +1218,9 @@
   <div class="overlay" id="bulkOverlay" onclick="if(event.target===this)closeBulkModal()">
     <div class="modal" style="text-align:left;max-width:460px">
       <h2 style="text-align:center">Bulk generate</h2>
-      <p class="sub" style="text-align:center">Up to 20 keys — set a count, or paste one custom key per line.</p>
+      <p class="sub" style="text-align:center">Up to 20 keys ? set a count, or paste one custom key per line.</p>
       <div class="field">
-        <label>Count (1–20)</label>
+        <label>Count (1?20)</label>
         <input id="bulkCountM" type="number" inputmode="numeric" min="1" max="20" value="5" />
       </div>
       <div class="field">
@@ -1257,8 +1246,8 @@
     <div class="modal" style="text-align:left;max-width:460px">
       <h2 style="text-align:center">What can each rank do?</h2>
       <p class="sub" style="text-align:center">Owner outranks admin outranks mod outranks user.</p>
-      <div class="mini-row"><span><span class="pill rank-owner">owner</span></span><span>Everything. Only one owner key exists — it can never be deleted or edited from this site.</span></div>
-      <div class="mini-row"><span><span class="pill rank-admin">admin</span></span><span>Everything except owner-only actions. Can only modify <b>user</b> keys — never admin, mod, or owner keys.</span></div>
+      <div class="mini-row"><span><span class="pill rank-owner">owner</span></span><span>Everything. Only one owner key exists ? it can never be deleted or edited from this site.</span></div>
+      <div class="mini-row"><span><span class="pill rank-admin">admin</span></span><span>Everything except owner-only actions. Can only modify <b>user</b> keys ? never admin, mod, or owner keys.</span></div>
       <div class="mini-row"><span><span class="pill rank-mod">mod</span></span><span>Blacklist, chat/mod messages, view users. No keys, requests, troll, or activity tabs.</span></div>
       <div class="mini-row"><span><span class="pill rank-user">user</span></span><span>Plays games. No admin access at all.</span></div>
       <button class="btn block" style="margin-top:16px" onclick="closeRankGuide()">Got it</button>
@@ -1270,7 +1259,7 @@
   <!-- ONE-TIME KEY REVEAL (plaintext is never stored) -->  <div class="overlay" id="keyOverlay" onclick="if(event.target===this)closeKeyModal()">
     <div class="modal">
       <h2>New key created</h2>
-      <p class="sub">Send this to the requester now — it is shown only once.</p>
+      <p class="sub">Send this to the requester now ? it is shown only once.</p>
       <div class="newkey"><span id="keyModalText"></span><button class="btn small" id="keyCopyBtn" onclick="copyRevealedKey()">Copy</button></div>
       <div id="keyModalList"></div>
       <button class="btn block" style="margin-top:16px" onclick="closeKeyModal()">Done</button>
@@ -1296,10 +1285,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ── Fill these in (same values as games/*.html) ────────────────
+    // -- Fill these in (same values as games/*.html) ----------------
     const SUPABASE_URL = "https://hqjclkkwsepdhtwnwsvp.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxamNsa2t3c2VwZGh0d253c3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTY5NTMsImV4cCI6MjEwNTc3Mjk1M30.-OXxTRYmIi4snwJSiThFsAPr5YgVbwz4kwUY_DURFRA";
-    // ───────────────────────────────────────────────────────────────
+    // ---------------------------------------------------------------
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1326,7 +1315,7 @@
     }
     function callerArgs(extra) {
       // Staff RPCs take caller_username/caller_token (PostgREST matches
-      // parameter names exactly — input_* names do NOT match these).
+      // parameter names exactly ? input_* names do NOT match these).
       let u = '', t = '';
       try {
         u = localStorage.getItem(LS_USER) || '';
@@ -1399,7 +1388,7 @@ async function sha256hexFp(str) {
     }
 
     function audioFp() {
-      // Offline-rendered oscillator fingerprint — no sound ever plays.
+      // Offline-rendered oscillator fingerprint ? no sound ever plays.
       try {
         const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
         if (!AC) return Promise.resolve('noaudioctx');
@@ -1438,7 +1427,7 @@ async function sha256hexFp(str) {
           x.font = '72px "' + f + '", ' + b;
           return x.measureText(probe).width !== widths[b];
         }));
-        // NOTE: document.fonts.size intentionally excluded — it changes as
+        // NOTE: document.fonts.size intentionally excluded ? it changes as
         // webfonts finish loading, which would destabilise the fingerprint.
         return present.sort().join(',');
       } catch (e) { return 'fonts-err'; }
@@ -1525,7 +1514,7 @@ async function sha256hexFp(str) {
       if (loading) {
         btn.disabled = true;
         btn.setAttribute('data-label', btn.textContent);
-        btn.textContent = '…';
+        btn.textContent = '?';
       } else {
         btn.disabled = false;
         const orig = btn.getAttribute('data-label');
@@ -1653,9 +1642,9 @@ async function sha256hexFp(str) {
         }
       });
       if (note) {
-        if (myRank === 'owner') note.textContent = 'Signed in as OWNER — full access. Your powers cannot be restricted.';
-        else if (myRank === 'admin') note.textContent = 'Signed in as ADMIN — your access is set by the owner on the Permissions tab.';
-        else if (myRank === 'mod') note.textContent = 'Signed in as MOD — your access is set by the owner on the Permissions tab.';
+        if (myRank === 'owner') note.textContent = 'Signed in as OWNER ? full access. Your powers cannot be restricted.';
+        else if (myRank === 'admin') note.textContent = 'Signed in as ADMIN ? your access is set by the owner on the Permissions tab.';
+        else if (myRank === 'mod') note.textContent = 'Signed in as MOD ? your access is set by the owner on the Permissions tab.';
         else note.textContent = '';
       }
       const xpPanel = document.getElementById('xpGrantPanel');
@@ -1670,8 +1659,8 @@ async function sha256hexFp(str) {
       if (!st || myRank !== 'owner') return;
       try {
         const r = await sb.from('app_config').select('locked').eq('id', 1).maybeSingle();
-        if (!r.error && r.data) st.textContent = r.data.locked ? '🔒 LOCKED' : 'Unlocked';
-        else st.textContent = 'Not set up yet — run the SQL, then lock/unlock here.';
+        if (!r.error && r.data) st.textContent = r.data.locked ? '?? LOCKED' : 'Unlocked';
+        else st.textContent = 'Not set up yet ? run the SQL, then lock/unlock here.';
       } catch (e) { console.error('lock status failed:', e); }
     }
     async function setSiteLock(locked) {
@@ -1681,7 +1670,7 @@ async function sha256hexFp(str) {
       try {
         const res = await srpc('lock_set', callerArgs({ new_locked: locked, new_message: msg.slice(0, 200) }));
         if (!res || !res.success) throw new Error((res && res.error) || 'failed');
-        if (st) st.textContent = locked ? '🔒 LOCKED' : 'Unlocked';
+        if (st) st.textContent = locked ? '?? LOCKED' : 'Unlocked';
         toast(locked ? 'Site locked' : 'Site unlocked', locked ? undefined : 'ok');
       } catch (e) { console.error('set lock failed:', e); toast('Lock change failed', 'err'); }
     }
@@ -1706,7 +1695,7 @@ async function sha256hexFp(str) {
     }
     async function savePerms() {
       const st = document.getElementById('permsStatus');
-      if (st) st.textContent = 'Saving…';
+      if (st) st.textContent = 'Saving?';
       try {
         const perms = { admin: {}, mod: {} };
         document.querySelectorAll('#permsMatrix input[type="checkbox"]').forEach(cb => {
@@ -1719,7 +1708,7 @@ async function sha256hexFp(str) {
         await loadPerms();
         applyRankGating();
         renderPermsMatrix();
-        if (st) st.textContent = 'Saved ✓';
+        if (st) st.textContent = 'Saved ?';
         toast('Permissions saved', 'ok');
       } catch (e) { console.error('save perms failed:', e); if (st) st.textContent = 'Save failed.'; toast('Save failed', 'err'); }
     }
@@ -1741,7 +1730,7 @@ async function sha256hexFp(str) {
 
     // Typing-safe rendering: only touch the DOM when the markup actually
     // changed, so heartbeat polls never steal focus or reset scroll.
-    // (Timers stay exactly as they are — same cadence, quieter DOM.)
+    // (Timers stay exactly as they are ? same cadence, quieter DOM.)
     function setHTMLifChanged(el, html) {
       if (!el) return false;
       if (el._lastHtml === html) return false;
@@ -1830,7 +1819,7 @@ async function sha256hexFp(str) {
         if (can('tab.' + t)) { landed = t; break; }
       }
       showTab(landed, document.querySelector('.tabs button[data-tab="' + landed + '"]'));
-      // Realtime setup must never abort dashboard init — guard each one.
+      // Realtime setup must never abort dashboard init ? guard each one.
       try {
         subscribeUsers();
       } catch (e) {
@@ -1898,7 +1887,7 @@ async function sha256hexFp(str) {
       if (from === target) { el.textContent = String(target); return; }
       let done = false;
       const finish = () => { if (!done) { done = true; el.textContent = String(target); } };
-      // Watchdog: rAF stalls in background tabs — never leave a stale number.
+      // Watchdog: rAF stalls in background tabs ? never leave a stale number.
       const watchdog = setTimeout(finish, 1200);
       const dur = 800;
       let t0 = null;
@@ -1915,7 +1904,7 @@ async function sha256hexFp(str) {
 
     function setTick(id, v) {
       const el = document.getElementById(id);
-      if (el) el.textContent = (v == null ? '—' : String(v));
+      if (el) el.textContent = (v == null ? '?' : String(v));
     }
 
     async function loadDashboard() {
@@ -1927,10 +1916,10 @@ async function sha256hexFp(str) {
         if (!data || data.error) throw new Error((data && data.error) || 'failed');
         const keys = data.keys, used = data.used, online = data.online, pending = data.pending;
         const vals = [
-          String(keys != null ? keys : '—'),
-          String(used != null ? used : '—'),
-          String(online != null ? online : '—'),
-          String(pending != null ? pending : '—'),
+          String(keys != null ? keys : '?'),
+          String(used != null ? used : '?'),
+          String(online != null ? online : '?'),
+          String(pending != null ? pending : '?'),
           '100'
         ];
         cards.forEach((el, i) => setStat(el, i, vals[i]));
@@ -1954,7 +1943,7 @@ async function sha256hexFp(str) {
         const rows = await fetchActivityRows();
         const top = rows.slice(0, 5);
         if (top.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No activity yet.</div>';
           return;
         }
         let html = '';
@@ -1969,17 +1958,17 @@ async function sha256hexFp(str) {
     }
 
     function activityIcon(kind) {
-      if (!kind) return '•';
-      if (kind.indexOf('activation') !== -1) return '🔑';
-      if (kind.indexOf('blacklist') !== -1) return '🚫';
-      if (kind.indexOf('troll') !== -1) return '👻';
-      if (kind.indexOf('approved') !== -1) return '✅';
-      if (kind.indexOf('denied') !== -1) return '❌';
-      return '•';
+      if (!kind) return '?';
+      if (kind.indexOf('activation') !== -1) return '??';
+      if (kind.indexOf('blacklist') !== -1) return '??';
+      if (kind.indexOf('troll') !== -1) return '??';
+      if (kind.indexOf('approved') !== -1) return '?';
+      if (kind.indexOf('denied') !== -1) return '?';
+      return '?';
     }
 
     function activityWhen(when) {
-      if (!when) return '—';
+      if (!when) return '?';
       try {
         const s = Math.max(0, Math.floor((Date.now() - new Date(when).getTime()) / 1000));
         if (s < 10) return 'just now';
@@ -1989,7 +1978,7 @@ async function sha256hexFp(str) {
         const h = Math.floor(m / 60);
         if (h < 24) return h + 'h ago';
         return new Date(when).toLocaleString();
-      } catch (e) { return '—'; }
+      } catch (e) { return '?'; }
     }
 
     /* ---------- activity log (read-only) ---------- */
@@ -2014,7 +2003,7 @@ async function sha256hexFp(str) {
       const box = document.getElementById('activityList');
       const top = activityRows.slice(0, activityShown);
       if (top.length === 0) {
-        box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
+        box.innerHTML = '<div class="empty-state"><div class="big">??</div>No activity yet.</div>';
         return;
       }
       let html = '<div class="timeline">';
@@ -2022,7 +2011,7 @@ async function sha256hexFp(str) {
         html += '<div class="tl-item" style="animation-delay:' + Math.min(ai, 10) * 40 + 'ms">' +
           '<span class="tl-dot"></span>' +
           '<div class="tt">' + activityIcon(r.kind) + ' ' + esc(r.detail) + '</div>' +
-          '<div class="tw">' + esc(r.kind) + ' · ' + esc(activityWhen(r.when)) + '</div></div>';
+          '<div class="tw">' + esc(r.kind) + ' ? ' + esc(activityWhen(r.when)) + '</div></div>';
       });
       html += '</div>';
       if (activityShown < activityRows.length) {
@@ -2048,7 +2037,7 @@ async function sha256hexFp(str) {
         renderActivityRows();
       } catch (e) {
         console.error('activity log failed:', e);
-        if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load activity.</div>';
+        if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big">??</div>Failed to load activity.</div>';
       }
     }
 
@@ -2104,7 +2093,7 @@ async function sha256hexFp(str) {
     const INSTANT_TRICKS = ['confetti', 'popups', 'alert'];
     let trollStates = {}; // "type|scope" -> 'on' / 'off' / null (scope '*' = Everyone)
     let trollStateRows = {}; // "type|scope" -> { type, scope } for the Active-now list
-    const TRICK_EMOJI = { jumpscare: '👻', shake: '📳', disconnect: '📡', flip: '🙃', ripples: '✨', invert: '🎨', loading: '⏳', alert: '🔔', popups: '💬', confetti: '🎉' };
+    const TRICK_EMOJI = { jumpscare: '??', shake: '??', disconnect: '??', flip: '??', ripples: '?', invert: '??', loading: '?', alert: '??', popups: '??', confetti: '??' };
 
     function currentScope() {
       if (trollMode === 'user') {
@@ -2141,10 +2130,10 @@ async function sha256hexFp(str) {
         box.innerHTML = '';
         return;
       }
-      let html = '<div class="muted" style="margin-bottom:8px">Live now — tap Stop to kill one:</div>';
+      let html = '<div class="muted" style="margin-bottom:8px">Live now ? tap Stop to kill one:</div>';
       keys.forEach(k => {
         const r = trollStateRows[k];
-        html += '<div class="keyrow"><span>' + (TRICK_EMOJI[r.type] || '⚡') + ' <b>' + esc(r.type) + '</b> → ' +
+        html += '<div class="keyrow"><span>' + (TRICK_EMOJI[r.type] || '?') + ' <b>' + esc(r.type) + '</b> ? ' +
           esc(r.scope === '*' ? 'Everyone' : r.scope) + '</span>' +
       '<button class="btn small ghost" data-t="' + esc(r.type) + '" data-s="' + esc(r.scope) +
       '" onclick="stopScopeBtn(this)">Stop</button></div>';
@@ -2236,7 +2225,7 @@ async function sha256hexFp(str) {
           payload: payload
         }));
         if (!res || !res.success) throw new Error((res && res.error) || 'failed');
-        okBox.textContent = 'Sent ' + trick + ' → ' + (scope.target || 'Everyone') + ' ✓';
+        okBox.textContent = 'Sent ' + trick + ' ? ' + (scope.target || 'Everyone') + ' ?';
         toast('Trick sent', 'ok');
       } catch (e) {
         console.error('send trick failed:', e, { trick: trick, scope: scope.key });
@@ -2276,7 +2265,7 @@ async function sha256hexFp(str) {
         trollStates[trick + '|' + scope.key] = next;
         trollStateRows[trick + '|' + scope.key] = { type: trick, scope: scope.key };
         paintTrickButtons();
-        okBox.textContent = trick + ' → ' + (scope.target || 'Everyone') + ': ' + next.toUpperCase() + ' ✓';
+        okBox.textContent = trick + ' ? ' + (scope.target || 'Everyone') + ': ' + next.toUpperCase() + ' ?';
         toast(trick + ' ' + next.toUpperCase(), next === 'on' ? 'ok' : undefined);
       } catch (e) {
         console.error('toggle trick failed:', e);
@@ -2304,7 +2293,7 @@ async function sha256hexFp(str) {
           else prev.style.display = 'none';
         }
         const st = document.getElementById('customScareStatus');
-        if (st && !st.textContent) st.textContent = url ? 'Custom image set — pick "Custom upload" above to use it.' : 'No custom image yet.';
+        if (st && !st.textContent) st.textContent = url ? 'Custom image set ? pick "Custom upload" above to use it.' : 'No custom image yet.';
       } catch (e) { console.error('load custom scare failed:', e); }
     }
     function downscaleImage(file, maxDim) {
@@ -2335,16 +2324,16 @@ async function sha256hexFp(str) {
       if (!f) { if (st) st.textContent = 'Choose an image file first.'; return; }
       if (!/^image\//.test(f.type || '')) { if (st) st.textContent = 'That is not an image file.'; return; }
       if (f.size > 8 * 1024 * 1024) { if (st) st.textContent = 'File too big (max 8MB).'; return; }
-      if (st) st.textContent = 'Uploading…';
+      if (st) st.textContent = 'Uploading?';
       try {
         const dataUrl = await downscaleImage(f, 800);
-        if (dataUrl.length > 700000) { if (st) st.textContent = 'Still too big after shrinking — try a smaller image.'; return; }
+        if (dataUrl.length > 700000) { if (st) st.textContent = 'Still too big after shrinking ? try a smaller image.'; return; }
         const res = await srpc('scare_set', callerArgs({ image_data: dataUrl }));
         if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         customScareReady = true;
         const prev = document.getElementById('customScarePreview');
         if (prev) { prev.src = dataUrl; prev.style.display = ''; }
-        if (st) st.textContent = 'Custom image saved ✓ — select "Custom upload" in the picker to fire it.';
+        if (st) st.textContent = 'Custom image saved ? ? select "Custom upload" in the picker to fire it.';
         toast('Custom scare saved', 'ok');
       } catch (e) { console.error('upload custom scare failed:', e); if (st) st.textContent = 'Upload failed.'; toast('Upload failed', 'err'); }
     }
@@ -2365,7 +2354,7 @@ async function sha256hexFp(str) {
       } catch (e) { console.error('remove custom scare failed:', e); if (st) st.textContent = 'Remove failed.'; }
     }
 
-    /* Send Trick button removed — cards fire directly via toggleTrick (toggles) and fireInstant (one-shots). */
+    /* Send Trick button removed ? cards fire directly via toggleTrick (toggles) and fireInstant (one-shots). */
 
     /* ---------- custom dropdowns (mirror hidden native selects) ---------- */
 
@@ -2383,7 +2372,7 @@ async function sha256hexFp(str) {
       if (!sel || !dd) return;
       const label = dd.querySelector('.dd-label');
       const cur = sel.options[sel.selectedIndex];
-      if (label) label.textContent = cur ? cur.textContent : 'Select…';
+      if (label) label.textContent = cur ? cur.textContent : 'Select?';
       const panel = dd.querySelector('.dd-panel');
       panel.innerHTML = '';
       Array.from(sel.options).forEach(o => {
@@ -2394,7 +2383,7 @@ async function sha256hexFp(str) {
         s.textContent = o.textContent;
         const tick = document.createElement('span');
         tick.className = 'tick';
-        tick.textContent = '✓';
+        tick.textContent = '?';
         b.appendChild(s);
         b.appendChild(tick);
         b.onclick = (function (val) {
@@ -2447,7 +2436,7 @@ async function sha256hexFp(str) {
         .map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 20);
       for (const line of rawLines) {
         if (!/^[A-Za-z0-9-]{4,64}$/.test(line)) {
-          errBox.textContent = 'Bad custom key: ' + line + ' (letters, numbers, dashes, 4–64 chars).';
+          errBox.textContent = 'Bad custom key: ' + line + ' (letters, numbers, dashes, 4?64 chars).';
           return;
         }
       }
@@ -2472,7 +2461,7 @@ async function sha256hexFp(str) {
         loadKeys();
       } catch (e) {
         console.error('bulk generate failed:', e);
-        toast('Bulk generate failed partway — some keys may have been created.', 'err');
+        toast('Bulk generate failed partway ? some keys may have been created.', 'err');
       } finally {
         setBtnLoading(btn, false, 'Generate');
       }
@@ -2556,7 +2545,7 @@ async function sha256hexFp(str) {
         if (data.error) throw new Error(data.error);
         const pending = (data || []).filter(r => r.status === 'pending');
         if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending requests.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No pending requests.</div>';
           knownReqIds = {};
           return;
         }
@@ -2566,8 +2555,8 @@ async function sha256hexFp(str) {
           const isNew = !isFirst && !knownReqIds[r.id];
           knownReqIds[r.id] = true;
           html += '<div class="req-card' + (isNew ? ' flash' : '') + '" style="animation-delay:' + Math.min(ri, 8) * 40 + 'ms">' +
-            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off">🚫 device blocked</span>' : '') + '</div>' +
-            '<div class="rmeta">' + esc(r.school || '—') + ' · ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '—') + '</div>' +
+            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off">?? device blocked</span>' : '') + '</div>' +
+            '<div class="rmeta">' + esc(r.school || '?') + ' ? ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '?') + '</div>' +
             '<div class="rreason">' + esc(r.reason || '(no reason given)') + '</div>' +
             '<div class="row-actions">' +
             '<button class="btn small" onclick="approveRequest(' + r.id + ', this)">Approve</button>' +
@@ -2582,7 +2571,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html);
       } catch (e) {
         console.error(e);
-        if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
+        if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">??</div>Failed to load requests.</div>';
       }
     }
 
@@ -2625,11 +2614,11 @@ async function sha256hexFp(str) {
         const decided = data.decided || [];
         let html = '';
         if (pending.length === 0) {
-          html += '<div class="empty-state"><div class="big">📭</div>No pending admin requests.</div>';
+          html += '<div class="empty-state"><div class="big">??</div>No pending admin requests.</div>';
         } else {
           html += '<table><tr><th>User</th><th>Key</th><th>Rank</th><th></th></tr>';
           pending.forEach((r, ri) => {
-            html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.used_by || '—') +
+            html += '<tr class="arow" style="animation-delay:' + (ri * 40) + 'ms"><td>' + esc(r.used_by || '?') +
               '</td><td class="mono">' + maskKey(r.key) +
               '</td><td>' + rankPill(r.rank || 'user') +
               '</td><td><div class="row-actions">' +
@@ -2642,7 +2631,7 @@ async function sha256hexFp(str) {
         if (decided.length > 0) {
           html += '<h2 style="margin-top:24px">Recently decided</h2><table><tr><th>User</th><th>Outcome</th></tr>';
           decided.forEach(d => {
-            html += '<tr><td>' + esc(d.used_by || '—') +
+            html += '<tr><td>' + esc(d.used_by || '?') +
               '</td><td><span class="pill ' + (d.admin_request_status === 'approved' ? 'on' : 'off') + '">' +
               esc(d.admin_request_status) + '</span></td></tr>';
           });
@@ -2653,9 +2642,9 @@ async function sha256hexFp(str) {
         console.error('load admin requests failed:', e);
         if (first) {
           const msg = /column/i.test((e && e.message) || '')
-            ? 'Admin requests need a database update — run the SQL migration, then reload.'
+            ? 'Admin requests need a database update ? run the SQL migration, then reload.'
             : 'Failed to load admin requests.';
-          const errHtml = '<div class="empty-state"><div class="big">⚠️</div>' + esc(msg) + '</div>';
+          const errHtml = '<div class="empty-state"><div class="big">??</div>' + esc(msg) + '</div>';
           setHTMLifChanged(box, errHtml);
         }
       }
@@ -2736,7 +2725,7 @@ async function sha256hexFp(str) {
       if (!pendingApproveId) { errBox.textContent = 'No request selected.'; return; }
       const custom = document.getElementById('approveCustomKey').value;
       if (custom.trim() && !/^[A-Za-z0-9-]{4,64}$/.test(custom.trim())) {
-        errBox.textContent = 'Custom key: letters, numbers and dashes only (4–64 chars).';
+        errBox.textContent = 'Custom key: letters, numbers and dashes only (4?64 chars).';
         return;
       }
       setBtnLoading(btn, true);
@@ -2778,7 +2767,7 @@ async function sha256hexFp(str) {
       document.getElementById('keyModalText').textContent = '';
       document.getElementById('keyModalList').innerHTML = '';
       // Keys stay stored (plaintext column IS the key) so approved players
-      // always see their key instantly — nothing is ever "being prepared".
+      // always see their key instantly ? nothing is ever "being prepared".
       lastCreatedIds = [];
     }
 
@@ -2814,7 +2803,7 @@ async function sha256hexFp(str) {
       if (isAdminBox && rank === 'user') rank = 'admin';
       const custom = document.getElementById('customKey').value;
       if (custom.trim() && !/^[A-Za-z0-9-]{4,64}$/.test(custom.trim())) {
-        toast('Custom key: letters, numbers and dashes only (4–64 chars).', 'err');
+        toast('Custom key: letters, numbers and dashes only (4?64 chars).', 'err');
         return;
       }
       // Only one owner key may exist at any time (enforced server-side too).
@@ -2857,8 +2846,8 @@ async function sha256hexFp(str) {
     /* ---------- manage keys ---------- */
 
     function maskKey(hash) {
-      if (!hash) return '—';
-      return esc(String(hash).slice(0, 6)) + '…';
+      if (!hash) return '?';
+      return esc(String(hash).slice(0, 6)) + '?';
     }
 
     let lastKeys = [];
@@ -2893,13 +2882,13 @@ async function sha256hexFp(str) {
         if (data.error) throw new Error(data.error);
         lastKeys = data || [];
         if (lastKeys.length === 0) {
-          setHTMLifChanged(box, '<div class="empty-state"><div class="big">🔑</div>No keys yet — generate one above.</div>');
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>No keys yet ? generate one above.</div>');
           return;
         }
         renderKeys();
       } catch (e) {
         console.error(e);
-        if (firstKeys) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load keys.</div>';
+        if (firstKeys) box.innerHTML = '<div class="empty-state"><div class="big">??</div>Failed to load keys.</div>';
       }
     }
 
@@ -2920,11 +2909,11 @@ async function sha256hexFp(str) {
         return 0;
       });
       if (rows.length === 0) {
-        box.innerHTML = '<div class="empty-state"><div class="big">🔑</div>' +
-          (lastKeys.length === 0 ? 'No keys yet — generate one above.' : 'No keys match the current filters.') + '</div>';
+        box.innerHTML = '<div class="empty-state"><div class="big">??</div>' +
+          (lastKeys.length === 0 ? 'No keys yet ? generate one above.' : 'No keys match the current filters.') + '</div>';
         return;
       }
-      const arrow = col => keySort.col === col ? (keySort.dir === 1 ? ' ▲' : ' ▼') : '';
+      const arrow = col => keySort.col === col ? (keySort.dir === 1 ? ' ?' : ' ?') : '';
       let html = '<div class="keys-table-wrap"><table class="keys-table"><tr><th>Key</th>' +
         '<th class="sortable" onclick="setKeySort(\'username\')">User' + arrow('username') + '</th>' +
         '<th class="sortable" onclick="setKeySort(\'rank\')">Rank' + arrow('rank') + '</th>' +
@@ -2938,10 +2927,10 @@ async function sha256hexFp(str) {
           '</td><td>' + esc(k.used_by) + '</td><td>' + rankPill(trank) + '</td>' +
           '<td><span class="pill ' + (k.is_active ? 'on' : 'off') + '">' +
           (k.is_active ? 'active' : 'off') + '</span></td>' +
-          '<td class="muted">' + (k.created_at ? esc(new Date(k.created_at).toLocaleString()) : '—') + '</td>' +
+          '<td class="muted">' + (k.created_at ? esc(new Date(k.created_at).toLocaleString()) : '?') + '</td>' +
           '<td><div class="row-actions">' +
           (editable
-            ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active — tap to disable' : 'Inactive — tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +
+            ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active ? tap to disable' : 'Inactive ? tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +
               '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this, \'' + esc(trank) + '\')">Reset</button>' +
               (can('blacklist.manage') ? '<button class="btn small ghost" onclick="blockDevice(' + k.id + ', this)">Block device</button>' : '')
             : '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Locked</button>') +
@@ -3012,7 +3001,7 @@ async function sha256hexFp(str) {
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">🚫</div>Blacklist is empty.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">??</div>Blacklist is empty.</div>';
           return;
         }
         let html = '<table><tr><th>Username</th><th>Reason</th><th></th></tr>';
@@ -3024,7 +3013,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error(e);
-      if (firstBl) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load blacklist.</div>');
+      if (firstBl) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load blacklist.</div>');
     }
     }
 
@@ -3070,19 +3059,19 @@ async function sha256hexFp(str) {
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         if (!data.length) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📵</div>No blocked devices.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No blocked devices.</div>';
           return;
         }
         let html = '<table><tr><th>Device</th><th>Reason</th><th>When</th><th></th></tr>';
         data.forEach(d => {
-          html += '<tr><td class="mono">' + esc(String(d.fp || '').slice(0, 12)) + '…</td><td>' + esc(d.reason || '—') +
-            '</td><td class="muted">' + esc(d.created_at ? new Date(d.created_at).toLocaleString() : '—') +
+          html += '<tr><td class="mono">' + esc(String(d.fp || '').slice(0, 12)) + '?</td><td>' + esc(d.reason || '?') +
+            '</td><td class="muted">' + esc(d.created_at ? new Date(d.created_at).toLocaleString() : '?') +
             '</td><td><button class="btn small ghost" onclick="unblockDevice(\'' + esc(d.fp) + '\', this)">Unblock</button></td></tr>';
         });
         setHTMLifChanged(box, html + '</table>');
       } catch (e) {
         console.error('devices failed:', e);
-        setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load devices.</div>');
+        setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load devices.</div>');
       }
     }
     async function unblockDevice(fp, btn) {
@@ -3111,7 +3100,7 @@ async function sha256hexFp(str) {
       } catch (e) {
         console.error(e);
         setBtnLoading(btn, false, 'Block device');
-        toast(e && e.message === 'no-device' ? 'No device recorded on that key yet — they must log in once first.' : 'Block failed.', 'err');
+        toast(e && e.message === 'no-device' ? 'No device recorded on that key yet ? they must log in once first.' : 'Block failed.', 'err');
       }
     }
 
@@ -3200,17 +3189,17 @@ async function sha256hexFp(str) {
           .limit(10);
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📢</div>No announcements yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No announcements yet.</div>';
           return;
         }
         let html = '<table><tr><th>Announcement</th><th>By</th><th>When</th><th></th></tr>';
         data.forEach((a, ai) => {
           let tag = '';
-          if (a.pinned) tag = '<div class="muted">📌 sticky — stays until deleted</div>';
+          if (a.pinned) tag = '<div class="muted">?? sticky ? stays until deleted</div>';
           else if (a.scheduled_for) {
             const t = new Date(a.scheduled_for).getTime();
-            tag = '<div class="muted">⏰ ' + esc(new Date(a.scheduled_for).toLocaleString());
-            tag += (Date.now() >= t - 300000) ? (a.reminded ? ' • alerted' : ' • live') : ' • upcoming';
+            tag = '<div class="muted">? ' + esc(new Date(a.scheduled_for).toLocaleString());
+            tag += (Date.now() >= t - 300000) ? (a.reminded ? ' ? alerted' : ' ? live') : ' ? upcoming';
             tag += '</div>';
           }
           html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td>' + esc(a.content) + tag +
@@ -3223,7 +3212,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load announcements failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load announcements.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load announcements.</div>');
     }
     }
 
@@ -3305,7 +3294,7 @@ async function sha256hexFp(str) {
         const { data, error } = res;
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No chat messages yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No chat messages yet.</div>';
           return;
         }
         let html = '<table><tr><th>User</th><th>Message</th><th>When</th><th></th></tr>';
@@ -3321,7 +3310,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load chat mod failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load chat.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load chat.</div>');
     }
     }
 
@@ -3374,7 +3363,7 @@ async function sha256hexFp(str) {
         if (error) throw error;
         if (!data || data.length === 0) {
           lastUsers.rows = [];
-          setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>');
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>No active sessions.</div>');
           return;
         }
 // Rank map for whoever can set ranks (owner by default).
@@ -3399,7 +3388,7 @@ try {
         renderUsers();
       } catch (e) {
         console.error(e);
-        if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load users.</div>';
+        if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big">??</div>Failed to load users.</div>';
       }
     }
 
@@ -3409,7 +3398,7 @@ try {
       const q = ((document.getElementById('userSearch') || {}).value || '').trim().toLowerCase();
       const rows = lastUsers.rows.filter(u => !q || (u.username || '').toLowerCase().indexOf(q) !== -1);
       if (rows.length === 0) {
-        setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>' +
+        setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>' +
           (lastUsers.rows.length === 0 ? 'No active sessions.' : 'No users match.') + '</div>');
         return;
       }
@@ -3423,7 +3412,7 @@ try {
         const av = avatarFor(u.username);
         let rankCell;
         if (can('users.set_rank') && !isMe && urank !== 'owner') {
-          rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>';
+          rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">?</em></button><div class="dd-panel"></div></div>';
         } else {
           rankCell = rankPill(urank) + (isMe ? ' <span class="muted">you</span>' : '');
         }
@@ -3432,20 +3421,20 @@ try {
         const canMod = canModerateTarget(u.username);
         const warnBtn = canMod
           ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="warnUser(this)">Warn' + (wc > 0 ? ' (' + wc + ')' : '') + '</button>'
-          : (wc > 0 ? '<span class="pill rank-user">⚠ ' + wc + '</span>' : '');
+          : (wc > 0 ? '<span class="pill rank-user">? ' + wc + '</span>' : '');
         const muteBtn = !canMod ? '' : (mutedMap[u.username]
           ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="unmuteUser(this)" title="Muted until ' + esc(mutedMap[u.username]) + '">Unmute</button>'
-          : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>');
+          : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev">?</em></button><div class="dd-panel"></div></div>');
         const banBtns = (canMod && wc >= 3)
           ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 5)">Ban 5m</button>' +
             '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
             '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 60)">Ban 1h</button>'
           : '';
           const xpBtn = (can('users.give_xp') && !isMe && urank !== 'owner')
-            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">＋XP</button>'
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">+XP</button>'
             : '';
           const watchBtn = (can('users.watch') && !isMe)
-            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="openWatch(this.getAttribute(\'data-user\'))">👁 Watch</button>'
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="openWatch(this.getAttribute(\'data-user\'))">?? Watch</button>'
             : '';
           const delUserBtn = (!isMe && canModify(urank))
             ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="deleteUserAccount(this.getAttribute(\'data-user\'), this)">Delete user</button>'
@@ -3454,8 +3443,8 @@ try {
           '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
           '<span class="un">' + esc(u.username) + '</span>' + presencePill(u.last_seen) + '</div>' +
           '<div class="user-meta">' + rankCell + '</div>' +
-          '<div class="user-meta">🎮 ' + esc(u.current_game || 'Browsing') + '</div>' +
-          '<div class="user-meta">🕐 ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '—') + '</div>' +
+          '<div class="user-meta">?? ' + esc(u.current_game || 'Browsing') + '</div>' +
+          '<div class="user-meta">?? ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '?') + '</div>' +
           '<div class="row-actions">' +
             '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
             warnBtn + muteBtn + banBtns + xpBtn + watchBtn + delUserBtn +
@@ -3489,7 +3478,7 @@ try {
         s.textContent = r;
         const tick = document.createElement('span');
         tick.className = 'tick';
-        tick.textContent = '✓';
+        tick.textContent = '?';
         b.appendChild(s);
         b.appendChild(tick);
         b.onclick = (function (val) {
@@ -3528,7 +3517,7 @@ try {
       const username = btn.getAttribute('data-user');
       if (!username) return;
       if (!canModerateTarget(username)) { toast('Insufficient rank', 'err'); return; }
-      const reason = prompt('Warn ' + username + ' — reason (optional):');
+      const reason = prompt('Warn ' + username + ' ? reason (optional):');
       if (reason === null) return;
       try {
         const res = await srpc('mod_action', callerArgs({ target_username: username, action: 'warn', reason: reason || null }));
@@ -3639,7 +3628,7 @@ try {
       const raw = prompt('Give how much XP to ' + username + '?');
       if (raw === null) return;
       const amount = parseInt(raw, 10);
-      if (isNaN(amount) || amount <= 0 || amount > 100000) { toast('Enter 1–100000 XP.', 'err'); return; }
+      if (isNaN(amount) || amount <= 0 || amount > 100000) { toast('Enter 1?100000 XP.', 'err'); return; }
       if (await grantXp(username, amount)) toast('Gave ' + amount + ' XP to ' + username, 'ok');
       else toast('Grant failed.', 'err');
     }
@@ -3648,7 +3637,7 @@ try {
       if (!can('users.give_xp')) { toast('Insufficient rank', 'err'); return; }
       const inp = document.getElementById('xpGrantAmount');
       let amount = inp ? parseInt(inp.value, 10) : NaN;
-      if (isNaN(amount) || amount <= 0 || amount > 10000) { toast('Enter 1–10000 XP.', 'err'); return; }
+      if (isNaN(amount) || amount <= 0 || amount > 10000) { toast('Enter 1?10000 XP.', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const res = await srpc('xp_grant_all', callerArgs({ which: which, amount: amount }));
@@ -3676,7 +3665,7 @@ try {
         if (data.error) throw new Error(data.error);
         const pending = (data || []).filter(r => r.status === 'pending');
         if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending reports.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No pending reports.</div>';
           return;
         }
         const ids = pending.map(r => r.message_id).filter(Boolean);
@@ -3702,7 +3691,7 @@ try {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load reports failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load reports.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load reports.</div>');
     }
     }
 
@@ -3764,7 +3753,7 @@ try {
       const box = document.getElementById('spyList');
       if (!box) return;
       if (!can('tab.playerdms')) {
-        box.innerHTML = '<div class="empty-state"><div class="big">🔒</div>Insufficient rank.</div>';
+        box.innerHTML = '<div class="empty-state"><div class="big">??</div>Insufficient rank.</div>';
         return;
       }
       const first = !box.querySelector('table') && !box.querySelector('.empty-state');
@@ -3783,7 +3772,7 @@ try {
         });
         const keys = Object.keys(pairs).slice(0, 30);
         if (keys.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No DM threads yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No DM threads yet.</div>';
           return;
         }
         let html = '<table><tr><th>Thread</th><th>Latest</th><th></th></tr>';
@@ -3797,7 +3786,7 @@ try {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('spy list failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load threads.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load threads.</div>');
     }
     }
 
@@ -3809,7 +3798,7 @@ try {
       document.getElementById('spyPair').textContent = a + ' <> ' + b;
       document.getElementById('spyThread').style.display = 'block';
       const box = document.getElementById('spyHistory');
-      box.innerHTML = '<p class="muted">Loading…</p>';
+      box.innerHTML = '<p class="muted">Loading?</p>';
       try {
         const data = await srpc('dm_spy_thread', Object.assign(staffCreds(), { u1: a, u2: b }));
         if (!data) throw new Error('failed');
@@ -3854,7 +3843,7 @@ try {
       dmTarget = name;
       document.getElementById('dmUser').textContent = dmTarget;
       document.getElementById('dmThread').style.display = 'flex';
-      document.getElementById('dmHistory').innerHTML = '<p class="muted">Loading…</p>';
+      document.getElementById('dmHistory').innerHTML = '<p class="muted">Loading?</p>';
       loadDmContacts();
       loadDmHistory();
     }
@@ -3893,7 +3882,7 @@ try {
     async function loadDmHistory(background) {
       if (!dmTarget) return;
       const box = document.getElementById('dmHistory');
-      if (!background && !box.querySelector('.dm-line')) box.innerHTML = '<p class="muted">Loading…</p>';
+      if (!background && !box.querySelector('.dm-line')) box.innerHTML = '<p class="muted">Loading?</p>';
       // Don't yank the scroll position on background refreshes unless the
       // admin is already at the bottom reading the latest messages.
       const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
@@ -3943,7 +3932,7 @@ try {
         .subscribe();
     }
 
-    /* ---------- Watch mode (owner only — live user activity) ----------
+    /* ---------- Watch mode (owner only ? live user activity) ----------
        Browsers never allow silent screen viewing, so this is the closest
        honest equivalent: everything the user does, live in one panel. */
 
@@ -3955,7 +3944,7 @@ try {
       watchTarget = username;
       document.getElementById('watchName').textContent = username;
       document.getElementById('watchPanel').style.display = 'block';
-      document.getElementById('watchBody').innerHTML = '<p class="muted">Loading…</p>';
+      document.getElementById('watchBody').innerHTML = '<p class="muted">Loading?</p>';
       loadWatch();
     }
 
@@ -3983,25 +3972,25 @@ try {
         let html = '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
           '<span class="un">' + esc(u) + '</span> ' + rankPill((k && k.rank) || 'user') + ' ' +
           presencePill(s ? s.last_seen : null) + '</div>';
-        html += '<div class="user-meta">🎮 ' + esc((s && s.current_game) || 'offline') + '</div>';
-        html += '<div class="user-meta">🕐 last seen ' + esc(s && s.last_seen ? new Date(s.last_seen).toLocaleString() : '—') + '</div>';
-        html += '<div class="user-meta">⏱️ today ' + fmtDur(secs) + ' · ⭐ level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
-        html += '<div class="user-meta">⚠ ' + ((w.warnings || []).length) + ' warning(s)' +
-          ((w.mute && w.mute.expires_at) ? ' · 🔇 muted until ' + esc(new Date(w.mute.expires_at).toLocaleString()) : '') +
-          ((w.ban && w.ban.expires_at) ? ' · ⛔ game-banned until ' + esc(new Date(w.ban.expires_at).toLocaleString()) : '') + '</div>';
+        html += '<div class="user-meta">?? ' + esc((s && s.current_game) || 'offline') + '</div>';
+        html += '<div class="user-meta">?? last seen ' + esc(s && s.last_seen ? new Date(s.last_seen).toLocaleString() : '?') + '</div>';
+        html += '<div class="user-meta">?? today ' + fmtDur(secs) + ' ? ? level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
+        html += '<div class="user-meta">? ' + ((w.warnings || []).length) + ' warning(s)' +
+          ((w.mute && w.mute.expires_at) ? ' ? ?? muted until ' + esc(new Date(w.mute.expires_at).toLocaleString()) : '') +
+          ((w.ban && w.ban.expires_at) ? ' ? ? game-banned until ' + esc(new Date(w.ban.expires_at).toLocaleString()) : '') + '</div>';
         html += '<div class="sec-label">Recent chat</div>';
         const msgs = w.messages || [];
         if (msgs.length === 0) html += '<div class="user-meta">No messages.</div>';
         msgs.forEach(m => {
-          html += '<div class="user-meta">💬 ' + esc(String(m.content || '').slice(0, 80)) +
-            ' <span class="muted">· ' + esc(m.created_at ? new Date(m.created_at).toLocaleString() : '') + '</span></div>';
+          html += '<div class="user-meta">?? ' + esc(String(m.content || '').slice(0, 80)) +
+            ' <span class="muted">? ' + esc(m.created_at ? new Date(m.created_at).toLocaleString() : '') + '</span></div>';
         });
         html += '<div class="sec-label">Recent tricks aimed at them</div>';
         const trs = w.trolls || [];
         if (trs.length === 0) html += '<div class="user-meta">None.</div>';
         trs.forEach(t => {
           const st = (t.payload && t.payload.state) ? t.payload.state.toUpperCase() : 'FIRED';
-          html += '<div class="user-meta">👻 ' + esc(t.event_type || '?') + ' — ' + esc(st) + '</div>';
+          html += '<div class="user-meta">?? ' + esc(t.event_type || '?') + ' ? ' + esc(st) + '</div>';
         });
         setHTMLifChanged(body, html);
       } catch (e) {

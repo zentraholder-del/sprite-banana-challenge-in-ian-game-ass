@@ -6,27 +6,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <title>Lightspeed — Games</title>
+  <title>Lightspeed ? Games</title>
   <style>
-    /* ===== SHARED DESIGN TOKENS (identical in all 4 files — do not drift) ===== */
+    /* ===== SHARED DESIGN TOKENS (identical in all 4 files ? do not drift) ===== */
     :root {
-      --bg-base: #08080c;
-      --surface: #111117;
-      --surface-2: #16161e;
-      --border-subtle: #1c1c26;
-      --border-strong: #7c3aed;
-      --text-primary: #f0f0f8;
-      --text-secondary: #9494ad;
-      --text-muted: #5c5c72;
-      --accent: #7c3aed;
-      --accent-hover: #6d28d9;
-      --accent-pressed: #5b21b6;
-      --success: #10b981;
+      --bg-base: #0e1113;
+      --surface: #161a1f;
+      --surface-2: #1e242b;
+      --border-subtle: #262c33;
+      --border-strong: #e1352b;
+      --text-primary: #ece9e2;
+      --text-secondary: #a7adb5;
+      --text-muted: #7d8590;
+      --accent: #e1352b;
+      --accent-hover: #c62a21;
+      --accent-pressed: #a3231b;
+      --success: #22c55e;
       --warning: #f59e0b;
       --danger: #ef4444;
       --rank-owner: #f59e0b;
-      --rank-admin: #7c3aed;
-      --rank-mod: #10b981;
+      --rank-admin: #e1352b;
+      --rank-mod: #22c55e;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
       --radius-sm: 6px;
@@ -53,7 +53,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      background: #080810;
+      background: #0e1113;
       min-height: 100vh;
       color: #fff;
     }
@@ -71,8 +71,8 @@
       filter: blur(140px);
       opacity: 0.2;
     }
-    .blob1 { width: 560px; height: 560px; background: #7c3aed; top: -170px; left: -170px; }
-    .blob2 { width: 460px; height: 460px; background: #2563eb; bottom: -120px; right: -120px; }
+    .blob1 { width: 560px; height: 560px; background: #e1352b; top: -170px; left: -170px; }
+    .blob2 { width: 460px; height: 460px; background: #60a5fa; bottom: -120px; right: -120px; }
 
     /* NAV */
     nav {
@@ -85,17 +85,15 @@
       height: 60px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
       background: rgba(10,10,22,0.55);
-      backdrop-filter: blur(28px) saturate(1.5);
-      -webkit-backdrop-filter: blur(28px) saturate(1.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), 0 8px 32px rgba(0,0,0,0.35);
     }
 
     .nav-logo {
       font-size: 16px;
       font-weight: 700;
-      background: linear-gradient(135deg, #c4b5fd, #93c5fd);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ece9e2;
       letter-spacing: -0.3px;
     }
 
@@ -111,12 +109,11 @@
     }
 
     .nav-user strong {
-      color: #c4b5fd;
+      color: #a7adb5;
       font-weight: 600;
     }
 
     .logout-btn {
-      background: linear-gradient(165deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 14px;
       padding: 7px 14px;
@@ -127,7 +124,6 @@
       transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
     .logout-btn:hover {
-      background: linear-gradient(165deg, rgba(255,255,255,0.14), rgba(124,58,237,0.12));
       color: #fff;
       border-color: rgba(255,255,255,0.2);
       transform: translateY(-1px);
@@ -156,137 +152,137 @@
 
     .page-header p {
       font-size: 13px;
-      color: #6b6b8a;
+      color: #7d8590;
       margin-top: 4px;
     }
-    .online-line { display: flex; align-items: center; font-size: 12px; color: #6b6b8a; margin-top: 8px; }
-    .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 8px; }
-    .reqadmin-note { font-size: 12px; color: #6b6b8a; }
+    .online-line { display: flex; align-items: center; font-size: 12px; color: #7d8590; margin-top: 8px; }
+    .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-right: 8px; }
+    .reqadmin-note { font-size: 12px; color: #7d8590; }
     /* moderation + leaderboard */
     #banBanner { margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
     .ban-card {
-      background: #13131a; border: 1px solid #1e1e2e; border-left: 4px solid #ef4444;
-      border-radius: 16px; padding: 14px 16px; font-size: 13px; color: #e2e2f0; line-height: 1.5;
+      background: #161a1f; border: 1px solid #262c33; border-left: 4px solid #ef4444;
+      border-radius: 16px; padding: 14px 16px; font-size: 13px; color: #ece9e2; line-height: 1.5;
       animation: pageIn 0.2s ease-out;
     }
     .staff-bar {
       display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-      margin-bottom: 14px; font-size: 12px; color: #6b6b8a;
+      margin-bottom: 14px; font-size: 12px; color: #7d8590;
     }
     .staff-pill {
       display: inline-flex; align-items: center; gap: 6px;
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 20px;
-      padding: 6px 12px; font-size: 12px; color: #e2e2f0;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 20px;
+      padding: 6px 12px; font-size: 12px; color: #ece9e2;
     }
-    .staff-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
+    .staff-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
     .leader-card {
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
       padding: 16px; margin-bottom: 18px;
     }
-    .leader-card h3 { font-size: 14px; font-weight: 700; color: #e2e2f0; margin-bottom: 10px; }
+    .leader-card h3 { font-size: 14px; font-weight: 700; color: #ece9e2; margin-bottom: 10px; }
     .leader-row {
       display: flex; align-items: center; gap: 10px; padding: 7px 0;
-      border-bottom: 1px solid #1e1e2e; font-size: 13px; color: #e2e2f0;
+      border-bottom: 1px solid #262c33; font-size: 13px; color: #ece9e2;
     }
     .leader-row:last-child { border-bottom: none; }
-    .leader-rank { font-weight: 800; color: #7c3aed; min-width: 28px; }
-    .leader-time { margin-left: auto; color: #6b6b8a; font-variant-numeric: tabular-nums; }
+    .leader-rank { font-weight: 800; color: #e1352b; min-width: 28px; }
+    .leader-time { margin-left: auto; color: #7d8590; font-variant-numeric: tabular-nums; }
     .fav-btn {
-      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 10px; color: #6b6b8a;
+      background: #1e242b; border: 1.5px solid #242b33; border-radius: 10px; color: #7d8590;
       font-size: 13px; padding: 8px 14px; cursor: pointer; min-height: 44px;
       transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1);
       touch-action: manipulation;
     }
-    .fav-btn.active { border-color: #7c3aed; color: #7c3aed; }
+    .fav-btn.active { border-color: #e1352b; color: #e1352b; }
     .game-card .fav-star {
       position: absolute; top: 10px; right: 10px; width: 44px; height: 44px;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(10,10,15,0.7); border: 1px solid #2a2a3d; border-radius: 10px;
-      color: #6b6b8a; font-size: 18px; cursor: pointer;
+      background: rgba(10,10,15,0.7); border: 1px solid #242b33; border-radius: 10px;
+      color: #7d8590; font-size: 18px; cursor: pointer;
     }
     .game-card .fav-star.on { color: #f59e0b; border-color: #f59e0b; }
     .game-card { position: relative; }
-    .result-count { font-size: 12px; color: #6b6b8a; margin: 12px 0; }
+    .result-count { font-size: 12px; color: #7d8590; margin: 12px 0; }
     .flag-btn {
-      background: none; border: none; color: #6b6b8a; font-size: 12px; cursor: pointer;
+      background: none; border: none; color: #7d8590; font-size: 12px; cursor: pointer;
       min-width: 44px; min-height: 44px; margin-left: 2px;
     }
     .flag-btn:hover { color: #ef4444; }
     /* XP / shop / quests / trivia / friends */
     .xp-chip {
       display: inline-flex; align-items: center; gap: 6px;
-      background: #1a1a24; border: 1.5px solid #2a2a3d; border-radius: 20px;
+      background: #1e242b; border: 1.5px solid #242b33; border-radius: 20px;
       padding: 6px 12px; font-size: 12px; font-weight: 700; color: #f59e0b;
     }
     .nav-right .xp-chip { margin-right: 4px; }
     .shop-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
     .shop-item {
       display: flex; align-items: center; gap: 12px; text-align: left;
-      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 12px;
-      padding: 12px; width: 100%; color: #e2e2f0; cursor: pointer; min-height: 44px;
+      background: #1e242b; border: 1px solid #242b33; border-radius: 12px;
+      padding: 12px; width: 100%; color: #ece9e2; cursor: pointer; min-height: 44px;
       transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
       font-family: inherit;
     }
-    .shop-item:hover { border-color: #7c3aed; }
+    .shop-item:hover { border-color: #e1352b; }
     .shop-item .emoji { font-size: 22px; }
     .shop-item .info { flex: 1; }
     .shop-item .info b { display: block; font-size: 13px; }
-    .shop-item .info span { font-size: 11px; color: #6b6b8a; }
+    .shop-item .info span { font-size: 11px; color: #7d8590; }
     .shop-item .cost { font-weight: 800; color: #f59e0b; font-size: 13px; white-space: nowrap; }
     .swatches { display: flex; gap: 8px; margin-top: 8px; }
     .swatches button {
-      width: 44px; height: 44px; border-radius: 10px; border: 2px solid #2a2a3d; cursor: pointer;
+      width: 44px; height: 44px; border-radius: 10px; border: 2px solid #242b33; cursor: pointer;
     }
-    .swatches button:hover { border-color: #7c3aed; }
-    .quest-row { padding: 8px 0; border-bottom: 1px solid #1e1e2e; font-size: 13px; }
+    .swatches button:hover { border-color: #e1352b; }
+    .quest-row { padding: 8px 0; border-bottom: 1px solid #262c33; font-size: 13px; }
     .quest-row:last-child { border-bottom: none; }
     .quest-row .qtop { display: flex; align-items: center; gap: 8px; }
     .quest-row .qxp { margin-left: auto; color: #f59e0b; font-weight: 700; font-size: 12px; white-space: nowrap; }
-    .quest-bar { height: 6px; background: #1a1a24; border-radius: 6px; margin-top: 6px; overflow: hidden; }
-    .quest-bar i { display: block; height: 100%; background: #7c3aed; border-radius: 6px; transition: width 0.3s ease-out; }
-    .quest-done { color: #10b981; font-size: 12px; font-weight: 700; }
+    .quest-bar { height: 6px; background: #1e242b; border-radius: 6px; margin-top: 6px; overflow: hidden; }
+    .quest-bar i { display: block; height: 100%; background: #e1352b; border-radius: 6px; transition: width 0.3s ease-out; }
+    .quest-done { color: #22c55e; font-size: 12px; font-weight: 700; }
     .trivia-box {
-      border-left: 3px solid #f59e0b; background: #1a1a24; border-radius: 0 10px 10px 0;
-      padding: 8px 12px; margin: 0 0 8px 0; font-size: 12px; color: #e2e2f0;
+      border-left: 3px solid #f59e0b; background: #1e242b; border-radius: 0 10px 10px 0;
+      padding: 8px 12px; margin: 0 0 8px 0; font-size: 12px; color: #ece9e2;
     }
-    .trivia-box small { color: #6b6b8a; display: block; margin-top: 2px; }
-    .typing-line { font-size: 11px; color: #6b6b8a; min-height: 16px; padding: 0 14px 4px; font-style: italic; }
+    .trivia-box small { color: #7d8590; display: block; margin-top: 2px; }
+    .typing-line { font-size: 11px; color: #7d8590; min-height: 16px; padding: 0 14px 4px; font-style: italic; }
     .friends-fab {
       position: fixed; left: 22px; bottom: 86px; z-index: 50;
       width: 52px; height: 52px; border: none; border-radius: 50%;
-      background: #7c3aed; color: #fff; font-size: 22px; cursor: pointer;
+      background: #e1352b; color: #fff; font-size: 22px; cursor: pointer;
       transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .friends-fab:hover { background: #6d28d9; }
+    .friends-fab:hover { background: #c62a21; }
     .friends-fab:active { transform: scale(0.97); }
     .friends-panel {
       position: fixed; left: 22px; bottom: 150px; z-index: 50;
       width: 300px; max-height: 420px; display: none; flex-direction: column; overflow: hidden;
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
     }
     .friends-panel.open { display: flex; animation: panelUp 0.2s cubic-bezier(0.22,1,0.36,1); }
     .friend-row {
       display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-      font-size: 13px; color: #e2e2f0; border-bottom: 1px solid #1e1e2e;
+      font-size: 13px; color: #ece9e2; border-bottom: 1px solid #262c33;
     }
     .friend-row:last-child { border-bottom: none; }
     .friend-row .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .mini-act {
-      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 8px; color: #e2e2f0;
+      background: #1e242b; border: 1px solid #242b33; border-radius: 8px; color: #ece9e2;
       font-size: 11px; padding: 8px 10px; cursor: pointer; min-height: 44px;
     }
-    .mini-act:hover { border-color: #7c3aed; }
-    .sec-label { font-size: 11px; font-weight: 700; color: #6b6b8a; text-transform: uppercase; letter-spacing: 0.6px; padding: 10px 12px 4px; }
+    .mini-act:hover { border-color: #e1352b; }
+    .sec-label { font-size: 11px; font-weight: 700; color: #7d8590; text-transform: uppercase; letter-spacing: 0.6px; padding: 10px 12px 4px; }
     .spec-badge {
       display: inline-block; margin-top: 8px; padding: 3px 10px;
-      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 20px;
-      font-size: 11px; color: #10b981; font-weight: 600;
+      background: #1e242b; border: 1px solid #242b33; border-radius: 20px;
+      font-size: 11px; color: #22c55e; font-weight: 600;
     }
-    .chat-status { font-size: 11px; color: #6b6b8a; font-style: italic; margin-top: 2px; }
+    .chat-status { font-size: 11px; color: #7d8590; font-style: italic; margin-top: 2px; }
     .uname-glow { text-shadow: 0 0 8px currentColor; font-weight: 700; }
     .shout-box {
-      border-left: 3px solid #f59e0b; background: #1a1a24; border-radius: 0 10px 10px 0;
-      padding: 8px 12px; margin-bottom: 8px; font-size: 12.5px; color: #e2e2f0;
+      border-left: 3px solid #f59e0b; background: #1e242b; border-radius: 0 10px 10px 0;
+      padding: 8px 12px; margin-bottom: 8px; font-size: 12.5px; color: #ece9e2;
     }
 
     .search-wrap {
@@ -296,7 +292,6 @@
     .search-wrap input {
       width: 100%;
       max-width: 340px;
-      background: linear-gradient(165deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
       background-color: rgba(10,10,22,0.5);
       border: 1px solid rgba(255,255,255,0.11);
       border-radius: 14px;
@@ -325,7 +320,6 @@
 
     /* GAME CARD */
     .game-card {
-      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%, rgba(124,58,237,0.06));
       background-color: rgba(14,14,26,0.5);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 22px;
@@ -342,7 +336,6 @@
     .game-card:hover {
       transform: translateY(-6px);
       border-color: rgba(139,92,246,0.5);
-      background: linear-gradient(165deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03) 45%, rgba(124,58,237,0.14));
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 18px 48px rgba(0,0,0,0.5), 0 8px 32px rgba(124,58,237,0.25),
         inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.05);
     }
@@ -355,12 +348,21 @@
     .game-thumb {
       width: 100%;
       aspect-ratio: 16/9;
-      background: linear-gradient(135deg, #1e1b4b, #1e3a5f);
+      background: #101315;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 40px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -12px 24px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+    .game-thumb img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .mono-tile {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-sans); font-weight: 800; font-size: 34px;
+      letter-spacing: 0.5px; color: #fff;
     }
 
     .game-info {
@@ -384,11 +386,10 @@
       display: inline-block;
       margin-top: 10px;
       padding: 3px 10px;
-      background: linear-gradient(165deg, rgba(124,58,237,0.22), rgba(124,58,237,0.1));
       border: 1px solid rgba(124,58,237,0.3);
       border-radius: 20px;
       font-size: 11px;
-      color: #a78bfa;
+      color: #a7adb5;
       font-weight: 500;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);
     }
@@ -413,7 +414,7 @@
       height: 52px;
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 50%;
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      background: #e1352b;
       color: #fff;
       font-size: 22px;
       cursor: pointer;
@@ -423,7 +424,7 @@
     }
     .chat-fab:hover {
       transform: scale(1.08);
-      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      background: #60a5fa;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.2),
         0 2px 6px rgba(0,0,0,0.4), 0 16px 40px rgba(124,58,237,0.6);
     }
@@ -439,12 +440,11 @@
       display: none;
       flex-direction: column;
       overflow: hidden;
-      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%, rgba(124,58,237,0.06));
       background-color: rgba(17,17,24,0.6);
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 22px;
-      backdrop-filter: blur(32px) saturate(1.5);
-      -webkit-backdrop-filter: blur(32px) saturate(1.5);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.3),
         inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,255,255,0.04);
     }
@@ -490,11 +490,10 @@
       color: #6b7280;
       margin-bottom: 2px;
     }
-    .chat-msg .meta strong { color: #a78bfa; font-weight: 600; }
+    .chat-msg .meta strong { color: #a7adb5; font-weight: 600; }
     .chat-msg.admin .meta strong { color: #f472b6; }
     .chat-msg .bubble {
       display: inline-block;
-      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
       padding: 7px 10px;
@@ -517,7 +516,6 @@
     }
     .chat-form input {
       flex: 1;
-      background: linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
       background-color: rgba(0,0,0,0.35);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
@@ -535,7 +533,7 @@
       border: 1px solid rgba(255,255,255,0.14);
       border-radius: 14px;
       padding: 0 14px;
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      background: #e1352b;
       color: #fff;
       font-size: 13px;
       font-weight: 600;
@@ -544,7 +542,7 @@
       transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
     }
     .chat-form button:hover {
-      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      background: #60a5fa;
       transform: translateY(-1px);
     }
     .chat-form button:active { transform: scale(0.97); }
@@ -558,12 +556,11 @@
       display: none;
       padding: 8px 14px;
       border-radius: 22px;
-      background: linear-gradient(165deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
       background-color: rgba(17,17,24,0.6);
       border: 1px solid rgba(124,58,237,0.45);
-      backdrop-filter: blur(28px) saturate(1.5);
-      -webkit-backdrop-filter: blur(28px) saturate(1.5);
-      color: #c4b5fd;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #a7adb5;
       font-size: 12px;
       font-weight: 600;
       text-decoration: none;
@@ -588,7 +585,7 @@
       height: 52px;
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 50%;
-      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      background: #e1352b;
       color: #fff;
       font-size: 22px;
       cursor: pointer;
@@ -598,7 +595,7 @@
     }
     .dm-fab:hover {
       transform: scale(1.08);
-      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      background: #60a5fa;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.2),
         0 2px 6px rgba(0,0,0,0.4), 0 16px 40px rgba(124,58,237,0.6);
     }
@@ -611,7 +608,7 @@
       height: 12px;
       border-radius: 50%;
       background: #f472b6;
-      border: 2px solid #080810;
+      border: 2px solid #0e1113;
       display: none;
     }
     .dm-dot.show { display: block; }
@@ -626,12 +623,11 @@
       display: none;
       flex-direction: column;
       overflow: hidden;
-      background: linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 45%, rgba(244,114,182,0.06));
       background-color: rgba(17,17,24,0.6);
       border: 1px solid rgba(244,114,182,0.3);
       border-radius: 22px;
-      backdrop-filter: blur(32px) saturate(1.5);
-      -webkit-backdrop-filter: blur(32px) saturate(1.5);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.3),
         inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,255,255,0.04);
     }
@@ -682,31 +678,31 @@
       gap: 12px;
     }
     .profile-card {
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
       padding: 16px;
     }
     .profile-row { display: flex; align-items: center; gap: 10px; }
-    .online-dot-lg { width: 10px; height: 10px; border-radius: 50%; background: #10b981; flex: none; }
-    .profile-card .nav-user { font-size: 13px; color: #6b6b8a; }
-    .profile-card .nav-user strong { color: #e2e2f0; }
-    .profile-sub { font-size: 12px; color: #6b6b8a; margin-top: 8px; }
+    .online-dot-lg { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; flex: none; }
+    .profile-card .nav-user { font-size: 13px; color: #7d8590; }
+    .profile-card .nav-user strong { color: #ece9e2; }
+    .profile-sub { font-size: 12px; color: #7d8590; margin-top: 8px; }
     .side-nav { display: flex; flex-direction: column; gap: 8px; }
     .side-link {
       display: flex; align-items: center; gap: 10px;
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 12px;
-      padding: 12px 14px; font-size: 14px; font-weight: 600; color: #e2e2f0;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 12px;
+      padding: 12px 14px; font-size: 14px; font-weight: 600; color: #ece9e2;
       cursor: pointer; min-height: 48px; font-family: inherit; text-align: left;
       transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
       touch-action: manipulation;
     }
-    .side-link:hover { border-color: #7c3aed; }
+    .side-link:hover { border-color: #e1352b; }
     .side-link:active { transform: scale(0.97); }
     .side-link.chat-only { display: none; }
     .side-stat {
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
-      padding: 14px 16px; font-size: 13px; color: #6b6b8a;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
+      padding: 14px 16px; font-size: 13px; color: #7d8590;
     }
-    .side-stat b { color: #e2e2f0; }
+    .side-stat b { color: #ece9e2; }
     .side-stat .logout-btn { width: 100%; margin-top: 10px; }
     #chatSide { flex: 0 0 360px; position: sticky; top: 84px; min-width: 0; }
     #chatSide { display: contents; }
@@ -727,30 +723,30 @@
     .chat-count.show { display: inline-flex; }
     .new-msg-pill {
       position: absolute; left: 50%; bottom: 78px; transform: translateX(-50%);
-      display: none; background: #7c3aed; border: none; border-radius: 20px;
+      display: none; background: #e1352b; border: none; border-radius: 20px;
       color: #fff; font-size: 12px; font-weight: 600; padding: 10px 16px;
       cursor: pointer; min-height: 40px; white-space: nowrap; z-index: 2;
       animation: pageIn 0.2s ease-out;
     }
     .new-msg-pill.show { display: block; }
     .chat-form textarea {
-      flex: 1; background: #1a1a24; border: 1.5px solid #2a2a3d;
-      border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #e2e2f0;
+      flex: 1; background: #1e242b; border: 1.5px solid #242b33;
+      border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #ece9e2;
       outline: none; resize: none; min-height: 44px; max-height: 120px;
       font-family: inherit; line-height: 1.4;
       transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .chat-form textarea:focus { border-color: #7c3aed; }
+    .chat-form textarea:focus { border-color: #e1352b; }
     #chatAnnounce { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px 0; }
     #chatAnnounce:empty { display: none; }
     .pinned {
-      background: #1a1a2e; border: 1px solid #1e1e2e; border-left: 4px solid #7c3aed;
-      border-radius: 12px; padding: 10px 12px; font-size: 12px; color: #e2e2f0; line-height: 1.5;
+      background: #1a1a2e; border: 1px solid #262c33; border-left: 4px solid #e1352b;
+      border-radius: 12px; padding: 10px 12px; font-size: 12px; color: #ece9e2; line-height: 1.5;
       animation: pageIn 0.2s ease-out;
     }
-    .pinned .ahead { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; font-size: 11px; color: #6b6b8a; }
-    .pinned .ahead button { margin-left: auto; background: none; border: none; color: #6b6b8a; font-size: 14px; cursor: pointer; min-width: 44px; min-height: 44px; }
-    .pinned .ahead button:hover { color: #e2e2f0; }
+    .pinned .ahead { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; font-size: 11px; color: #7d8590; }
+    .pinned .ahead button { margin-left: auto; background: none; border: none; color: #7d8590; font-size: 14px; cursor: pointer; min-width: 44px; min-height: 44px; }
+    .pinned .ahead button:hover { color: #ece9e2; }
     /* Sticky site-wide announcement bar: stays glued to the viewport top
        while scrolling. Empty (no announcements) = hidden, no layout shift. */
     #announceBar { position: sticky; top: 0; z-index: 95; }
@@ -762,14 +758,14 @@
       background: rgba(0, 0, 0, 0.7);
     }
     .sched-alert-card {
-      background: #13131a; border: 1px solid #7c3aed; border-radius: 16px;
+      background: #161a1f; border: 1px solid #e1352b; border-radius: 16px;
       padding: 28px 24px; max-width: 420px; width: 100%; text-align: center;
       display: flex; flex-direction: column; gap: 12px; align-items: center;
       animation: pageIn 0.25s ease-out;
     }
     .sched-alert-card h2 { font-size: 18px; }
     .sched-alert-card p { font-size: 15px; line-height: 1.5; }
-    .sched-alert-card .muted { color: #6b6b8a; font-size: 13px; }
+    .sched-alert-card .muted { color: #7d8590; font-size: 13px; }
     .sched-alert-card button { min-height: 48px; min-width: 140px; font-size: 15px; }
     .games-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
     @media (min-width: 1150px) {
@@ -787,8 +783,8 @@
       .shell { padding: 16px 16px 32px; }
       #sidebar {
         position: fixed; left: 0; top: 0; bottom: 0; z-index: 110;
-        width: 280px; padding: 20px 16px; background: #13131a;
-        border-right: 1px solid #1e1e2e; border-radius: 0;
+        width: 280px; padding: 20px 16px; background: #161a1f;
+        border-right: 1px solid #262c33; border-radius: 0;
         transform: translateX(-105%);
         transition: transform 0.25s cubic-bezier(0.22,1,0.36,1);
       }
@@ -819,8 +815,8 @@
     #gameModal.open { display: flex; }
     #gameModal:fullscreen { padding: 0; background: #0a0a0f; }
     .game-modal-card {
-      background: #13131a;
-      border: 1px solid #1e1e2e;
+      background: #161a1f;
+      border: 1px solid #262c33;
       border-radius: 16px;
       width: min(1100px, 100%);
       height: min(780px, 94vh);
@@ -840,10 +836,10 @@
       align-items: center;
       gap: 8px;
       padding: 8px 8px 8px 16px;
-      border-bottom: 1px solid #1e1e2e;
+      border-bottom: 1px solid #262c33;
       font-size: 14px;
       font-weight: 600;
-      color: #e2e2f0;
+      color: #ece9e2;
     }
     .game-modal-head span {
       flex: 1;
@@ -857,16 +853,16 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: #1a1a24;
-      border: 1.5px solid #2a2a3d;
+      background: #1e242b;
+      border: 1.5px solid #242b33;
       border-radius: 10px;
-      color: #e2e2f0;
+      color: #ece9e2;
       font-size: 17px;
       cursor: pointer;
       touch-action: manipulation;
       transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .gm-btn:hover { background: #7c3aed; }
+    .gm-btn:hover { background: #e1352b; }
     .gm-btn:active { transform: scale(0.97); }
     .game-frame-wrap {
       position: relative;
@@ -924,7 +920,7 @@
       height: 46px;
       border-radius: 50%;
       border: 4px solid rgba(255,255,255,0.15);
-      border-top-color: #a78bfa;
+      border-top-color: #a7adb5;
       animation: trollSpin 0.9s linear infinite;
     }
     @keyframes trollSpin { to { transform: rotate(360deg); } }
@@ -1025,125 +1021,125 @@
     .ios-alert button:active { background: rgba(0,0,0,0.06); }
 
     /* ===== FLAT DESIGN OVERRIDE (no glow, no blur, no shadow) ===== */
-    body { background: #0a0a0f !important; color: #e2e2f0 !important; animation: pageIn 0.3s ease-out; }
+    body { background: #0a0a0f !important; color: #ece9e2 !important; animation: pageIn 0.3s ease-out; }
     @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .bg, .blob { display: none !important; }
     * { text-shadow: none !important; }
     nav {
-      background: #13131a !important; border-bottom: 1px solid #1e1e2e !important;
+      background: #161a1f !important; border-bottom: 1px solid #262c33 !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
     }
-    .nav-logo { background: none !important; -webkit-text-fill-color: #e2e2f0 !important; color: #e2e2f0 !important; }
-    .nav-user { color: #6b6b8a !important; }
-    .nav-user strong { color: #e2e2f0 !important; }
+    .nav-logo { background: none !important; -webkit-text-fill-color: #ece9e2 !important; color: #ece9e2 !important; }
+    .nav-user { color: #7d8590 !important; }
+    .nav-user strong { color: #ece9e2 !important; }
     .logout-btn, .admin-fab {
-      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
-      border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important;
+      background: #1e242b !important; border: 1.5px solid #242b33 !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #ece9e2 !important;
       min-height: 44px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .logout-btn:hover, .admin-fab:hover { background: #2a2a3d !important; color: #fff !important; border-color: #2a2a3d !important; transform: none !important; box-shadow: none !important; }
+    .logout-btn:hover, .admin-fab:hover { background: #242b33 !important; color: #fff !important; border-color: #242b33 !important; transform: none !important; box-shadow: none !important; }
     .logout-btn:active, .admin-fab:active { transform: scale(0.97) !important; }
-    .page-header h1 { color: #e2e2f0 !important; }
-    .page-header p { color: #6b6b8a !important; }
+    .page-header h1 { color: #ece9e2 !important; }
+    .page-header p { color: #7d8590 !important; }
     .search-wrap input, .chat-form input {
-      background: #1a1a24 !important; border: 1.5px solid #2a2a3d !important;
-      border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important;
+      background: #1e242b !important; border: 1.5px solid #242b33 !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #ece9e2 !important;
       min-height: 44px; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
       transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .search-wrap input:focus, .chat-form input:focus { border-color: #7c3aed !important; box-shadow: none !important; }
+    .search-wrap input:focus, .chat-form input:focus { border-color: #e1352b !important; box-shadow: none !important; }
     .game-card {
-      background: #13131a !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important;
+      background: #161a1f !important; border: 1px solid #262c33 !important; border-radius: 16px !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
       animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1) backwards !important;
       transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .game-card:hover { transform: none !important; border-color: #7c3aed !important; background: #13131a !important; box-shadow: none !important; }
+    .game-card:hover { transform: none !important; border-color: #e1352b !important; background: #161a1f !important; box-shadow: none !important; }
     .game-thumb { box-shadow: none !important; }
-    .game-info h3 { color: #e2e2f0 !important; }
-    .game-info p { color: #6b6b8a !important; }
-    .game-tag { background: #1a1a24 !important; border: 1px solid #2a2a3d !important; color: #7c3aed !important; box-shadow: none !important; }
+    .game-info h3 { color: #ece9e2 !important; }
+    .game-info p { color: #7d8590 !important; }
+    .game-tag { background: #1e242b !important; border: 1px solid #242b33 !important; color: #e1352b !important; box-shadow: none !important; }
     .chat-fab, .dm-fab {
-      background: #7c3aed !important; border: none !important; box-shadow: none !important;
+      background: #e1352b !important; border: none !important; box-shadow: none !important;
       min-width: 52px; min-height: 52px;
       transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .chat-fab:hover, .dm-fab:hover { background: #6d28d9 !important; transform: none !important; box-shadow: none !important; }
+    .chat-fab:hover, .dm-fab:hover { background: #c62a21 !important; transform: none !important; box-shadow: none !important; }
     .chat-fab:active, .dm-fab:active { transform: scale(0.97) !important; }
     .chat-panel, .dm-panel {
-      background: #13131a !important; border: 1px solid #1e1e2e !important; border-radius: 16px !important;
+      background: #161a1f !important; border: 1px solid #262c33 !important; border-radius: 16px !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
     }
     .chat-panel.open, .dm-panel.open { animation: panelUp 0.2s cubic-bezier(0.22,1,0.36,1) !important; }
     @keyframes panelUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .chat-head small, .dm-note { color: #6b6b8a !important; }
-    .chat-msg .meta { color: #6b6b8a !important; }
-    .chat-msg .meta strong { color: #e2e2f0 !important; }
+    .chat-head small, .dm-note { color: #7d8590 !important; }
+    .chat-msg .meta { color: #7d8590 !important; }
+    .chat-msg .meta strong { color: #ece9e2 !important; }
     .chat-msg .bubble {
-      background: #1a1a24 !important; border: 1px solid #2a2a3d !important;
-      border-radius: 10px !important; box-shadow: none !important; color: #e2e2f0 !important;
+      background: #1e242b !important; border: 1px solid #242b33 !important;
+      border-radius: 10px !important; box-shadow: none !important; color: #ece9e2 !important;
     }
     .chat-form button {
-      background: #7c3aed !important; border: none !important; border-radius: 10px !important;
+      background: #e1352b !important; border: none !important; border-radius: 10px !important;
       box-shadow: none !important; min-height: 44px; min-width: 44px;
       transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
     }
-    .chat-form button:hover { background: #6d28d9 !important; transform: none !important; }
+    .chat-form button:hover { background: #c62a21 !important; transform: none !important; }
     .chat-form button:active { transform: scale(0.97) !important; }
     .troll-toast { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; }
     .ios-alert { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; }
     ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track { background: #2a2a3d; }
-    ::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: #242b33; }
+    ::-webkit-scrollbar-thumb { background: #e1352b; border-radius: 8px; }
     /* rank badges */
     .rank-badge {
       display: inline-block; padding: 1px 8px; border-radius: 20px;
       font-size: 10px; font-weight: 800; letter-spacing: 0.5px; margin-left: 6px; vertical-align: middle;
     }
     .rank-owner { background: #f59e0b; color: #000; }
-    .rank-admin { background: #7c3aed; color: #fff; }
-    .rank-mod { background: #10b981; color: #000; }
+    .rank-admin { background: #60a5fa; color: #fff; }
+    .rank-mod { background: #22c55e; color: #000; }
     /* reply */
     .reply-btn {
-      background: #1a1a24; border: 1px solid #2a2a3d; border-radius: 10px; color: #6b6b8a;
+      background: #1e242b; border: 1px solid #242b33; border-radius: 10px; color: #7d8590;
       font-size: 12px; padding: 6px 10px; cursor: pointer; min-height: 44px; min-width: 44px; margin-left: 6px;
       transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .reply-btn:hover { border-color: #7c3aed; color: #e2e2f0; }
+    .reply-btn:hover { border-color: #e1352b; color: #ece9e2; }
     .reply-bar {
       display: none; align-items: center; gap: 8px; padding: 8px 12px;
-      background: #1a1a24; border-bottom: 1px solid #2a2a3d; font-size: 12px; color: #6b6b8a;
+      background: #1e242b; border-bottom: 1px solid #242b33; font-size: 12px; color: #7d8590;
     }
     .reply-bar.show { display: flex; animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1); }
-    .reply-bar .preview { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e2e2f0; }
-    .reply-bar button { background: none; border: none; color: #6b6b8a; font-size: 16px; cursor: pointer; min-width: 44px; min-height: 44px; }
+    .reply-bar .preview { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ece9e2; }
+    .reply-bar button { background: none; border: none; color: #7d8590; font-size: 16px; cursor: pointer; min-width: 44px; min-height: 44px; }
     .quote-block {
-      border-left: 3px solid #7c3aed; background: #1a1a24; border-radius: 0 10px 10px 0;
-      padding: 6px 10px; margin-bottom: 6px; font-size: 11.5px; color: #6b6b8a;
+      border-left: 3px solid #e1352b; background: #1e242b; border-radius: 0 10px 10px 0;
+      padding: 6px 10px; margin-bottom: 6px; font-size: 11.5px; color: #7d8590;
     }
-    .quote-block strong { color: #e2e2f0; }
+    .quote-block strong { color: #ece9e2; }
     /* request banner */
     #reqBanner { margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
     .req-banner {
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
-      padding: 14px 16px; font-size: 13px; color: #e2e2f0; line-height: 1.5;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
+      padding: 14px 16px; font-size: 13px; color: #ece9e2; line-height: 1.5;
       animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1);
     }
     .req-banner.denied { border-left: 4px solid #ef4444; }
-    .req-banner.approved { border-left: 4px solid #10b981; }
+    .req-banner.approved { border-left: 4px solid #22c55e; }
     .req-banner .keyline {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      margin-top: 10px; background: #1a1a24; border: 1px solid #2a2a3d;
+      margin-top: 10px; background: #1e242b; border: 1px solid #242b33;
       border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px;
     }
     .mini-btn {
-      background: #7c3aed; border: none; border-radius: 10px; color: #fff;
+      background: #e1352b; border: none; border-radius: 10px; color: #fff;
       font-size: 13px; font-weight: 600; padding: 10px 14px; cursor: pointer; min-height: 44px;
       transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
     }
-    .mini-btn:hover { background: #6d28d9; }
+    .mini-btn:hover { background: #c62a21; }
     .mini-btn:active { transform: scale(0.97); }
-    .mini-btn.ghost { background: #1a1a24; border: 1.5px solid #2a2a3d; }
+    .mini-btn.ghost { background: #1e242b; border: 1.5px solid #242b33; }
     /* approved popup modal */
     .overlay {
       display: none; position: fixed; inset: 0; z-index: 250;
@@ -1154,31 +1150,31 @@
     .overlay.closing { opacity: 0; }
     .overlay.closing .modal { opacity: 0; transform: translateY(20px); transition: opacity 0.2s ease-out, transform 0.2s ease-out; }
     .modal {
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
       padding: 32px 28px; width: calc(100% - 48px); max-width: 360px; text-align: center;
       animation: modalUp 0.25s ease-out;
     }
     @keyframes modalUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .modal h2 { font-size: 18px; font-weight: 700; color: #e2e2f0; margin-bottom: 6px; }
-    .modal p { font-size: 13px; color: #6b6b8a; margin-bottom: 14px; line-height: 1.5; }
+    .modal h2 { font-size: 18px; font-weight: 700; color: #ece9e2; margin-bottom: 6px; }
+    .modal p { font-size: 13px; color: #7d8590; margin-bottom: 14px; line-height: 1.5; }
     .keyline {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      margin-top: 10px; background: #1a1a24; border: 1px solid #2a2a3d;
-      border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px; color: #e2e2f0;
+      margin-top: 10px; background: #1e242b; border: 1px solid #242b33;
+      border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px; color: #ece9e2;
     }
     #toastWrap { position: fixed; top: 16px; right: 16px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
     .toast {
-      background: #13131a; border: 1px solid #1e1e2e; border-radius: 16px;
-      padding: 12px 16px; font-size: 13px; color: #e2e2f0; max-width: 300px;
+      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
+      padding: 12px 16px; font-size: 13px; color: #ece9e2; max-width: 300px;
       animation: toastIn 0.25s ease-out;
       transition: opacity 0.2s ease-out, transform 0.2s ease-out;
     }
     .toast.err { border-left: 4px solid #ef4444; }
-    .toast.ok { border-left: 4px solid #10b981; }
+    .toast.ok { border-left: 4px solid #22c55e; }
     .toast.out { opacity: 0; transform: translateX(110%); }
     @keyframes toastIn { from { opacity: 0; transform: translateX(110%); } to { opacity: 1; transform: translateX(0); } }
     .skel {
-      background: linear-gradient(90deg, #1a1a24 25%, #23232f 50%, #1a1a24 75%);
+      background: linear-gradient(90deg, #1e242b 25%, #242b33 50%, #1e242b 75%);
       background-size: 200% 100%;
       border-radius: 10px; min-height: 44px;
       animation: skelShimmer 1.2s linear infinite;
@@ -1188,6 +1184,8 @@
     @keyframes itemIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .chat-msg { animation: itemIn 0.3s ease-out backwards; }
     .chat-fab, .dm-fab, .reply-btn, .chat-form button { touch-action: manipulation; }
+  
+    body { font-weight: 500; }
   </style>
 </head>
 <body>
@@ -1199,12 +1197,12 @@
 
   <nav>
     <div style="display:flex;align-items:center;gap:12px">
-      <button class="logout-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
-      <div class="nav-logo">⚡ Lightspeed</div>
+      <button class="logout-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Open menu">?</button>
+      <div class="nav-logo"><span class="mi">bolt</span> Lightspeed</div>
     </div>
     <div class="nav-right">
-      <span class="xp-chip" id="xpChip" title="Your XP">⭐ <span id="xpBal">0</span></span>
-      <button class="mini-btn" onclick="openShop()">🛒 Shop</button>
+      <span class="xp-chip" id="xpChip" title="Your XP"><span class="mi">star</span> <span id="xpBal">0</span></span>
+      <button class="mini-btn" onclick="openShop()"><span class="mi">shopping_cart</span> Shop</button>
     </div>
   </nav>
 
@@ -1222,10 +1220,10 @@
         <div class="profile-sub" id="adminReqWrap"></div>
       </div>
       <div class="side-nav">
-        <button class="side-link" onclick="goGames()">🎮 Games</button>
-        <button class="side-link chat-only" onclick="toggleChat(true)">💬 Chat</button>
+        <button class="side-link" onclick="goGames()"><span class="mi">sports_esports</span> Games</button>
+        <button class="side-link chat-only" onclick="toggleChat(true)"><span class="mi">chat_bubble</span> Chat</button>
       </div>
-      <div class="side-stat">🟢 <b><span id="onlineCount">…</span></b> online</div>
+      <div class="side-stat"><span class="mi" style="font-size:13px;color:#22c55e">fiber_manual_record</span> <b><span id="onlineCount">?</span></b> online</div>
       <div class="side-stat"><button class="logout-btn" onclick="logout()">Sign out</button></div>
     </aside>
 
@@ -1248,36 +1246,36 @@
       </div>
     </div>
 
-    <div class="staff-bar" id="staffBar"><span>Checking staff…</span></div>
+    <div class="staff-bar" id="staffBar"><span>Checking staff?</span></div>
 
     <div class="leader-card" id="leaderCard">
-      <h3>🏆 Most played today</h3>
+      <h3><span class="mi">leaderboard</span> Most played today</h3>
       <div id="leaderList"><div class="skel" style="height:32px"></div></div>
     </div>
 
     <div class="leader-card" id="questCard">
-      <h3>📜 Daily quests</h3>
+      <h3><span class="mi">assignment</span> Daily quests</h3>
       <div id="questList"><div class="skel" style="height:32px"></div></div>
     </div>
 
     <div class="leader-card" id="xpBoardCard">
-      <h3>⭐ XP leaders <small style="color:#6b6b8a;font-weight:400">(<a href="#" id="xpBoardToggle" onclick="toggleXpBoard(event)" style="color:#7c3aed">week</a>)</small></h3>
+      <h3><span class="mi">emoji_events</span> XP leaders <small style="color:#7d8590;font-weight:400">(<a href="#" id="xpBoardToggle" onclick="toggleXpBoard(event)" style="color:#e1352b">week</a>)</small></h3>
       <div id="xpBoardList"><div class="skel" style="height:32px"></div></div>
     </div>
 
     <div class="leader-card" id="schoolBoardCard">
-      <h3>🏫 SST vs Lenham</h3>
-      <div id="schoolScore" style="font-size:20px;font-weight:800;color:#e2e2f0;text-align:center;margin-bottom:10px">…</div>
-      <div style="height:12px;border-radius:8px;overflow:hidden;display:flex;background:#1a1a24">
-        <div id="schoolBarSST" style="background:#7c3aed;width:50%;transition:width 0.4s ease-out"></div>
-        <div id="schoolBarLen" style="background:#10b981;width:50%;transition:width 0.4s ease-out"></div>
+      <h3><span class="mi">school</span> SST vs Lenham</h3>
+      <div id="schoolScore" style="font-size:20px;font-weight:800;color:#ece9e2;text-align:center;margin-bottom:10px">?</div>
+      <div style="height:12px;border-radius:8px;overflow:hidden;display:flex;background:#1e242b">
+        <div id="schoolBarSST" style="background:#e1352b;width:50%;transition:width 0.4s ease-out"></div>
+        <div id="schoolBarLen" style="background:#22c55e;width:50%;transition:width 0.4s ease-out"></div>
       </div>
-      <div id="schoolCounts" style="font-size:12px;color:#6b6b8a;text-align:center;margin-top:8px">…</div>
+      <div id="schoolCounts" style="font-size:12px;color:#7d8590;text-align:center;margin-top:8px">?</div>
     </div>
 
     <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()">★ Favorites</button>
+      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()">? Favorites</button>
     </div>
     <div class="result-count" id="resultCount"></div>
 
@@ -1290,37 +1288,37 @@
   <footer>LIGHTSPEED &copy; 2026</footer>
 
   <!-- ADMIN (shown only when the logged-in user is_admin) -->
-  <a class="admin-fab" id="adminFab" href="../../admin/index.html">⚙ Admin Panel</a>
+  <a class="admin-fab" id="adminFab" href="../../admin/index.html"><span class="mi">settings</span> Admin Panel</a>
 
   <!-- GLOBAL CHAT -->
-  <button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Global chat">💬<span class="chat-count" id="chatCount"></span></button>
+  <button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Global chat"><span class="mi">chat_bubble</span><span class="chat-count" id="chatCount"></span></button>
   <aside id="chatSide" aria-label="Chat">
   <div class="chat-panel" id="chatPanel">
     <div class="chat-head">
       <span>Global Chat</span>
-      <small id="chatStatus">connecting…</small>
+      <small id="chatStatus">connecting?</small>
     </div>
     <div id="chatAnnounce" aria-live="polite"></div>
     <div class="chat-msgs" id="chatMsgs">
-      <div class="chat-empty">Loading messages…</div>
+      <div class="chat-empty">Loading?</div>
     </div>
-    <button class="new-msg-pill" id="newMsgPill" onclick="jumpToLatest()">↓ New messages</button>
+    <button class="new-msg-pill" id="newMsgPill" onclick="jumpToLatest()">? New messages</button>
     <div class="trivia-box" id="triviaBox" style="display:none"></div>
     <div id="shoutBox"></div>
     <div class="typing-line" id="typingLine"></div>
     <div class="reply-bar" id="replyBar">
-      <span>↩</span><span class="preview" id="replyPreview"></span>
-      <button onclick="cancelReply()" aria-label="Cancel reply">✕</button>
+      <span>?</span><span class="preview" id="replyPreview"></span>
+      <button onclick="cancelReply()" aria-label="Cancel reply">?</button>
     </div>
     <form class="chat-form" onsubmit="return sendChat(event)">
-      <textarea id="chatInput" rows="1" placeholder="Say something…" maxlength="500" autocomplete="off"></textarea>
+      <textarea id="chatInput" rows="1" placeholder="Say something?" maxlength="500" autocomplete="off"></textarea>
       <button type="submit">Send</button>
     </form>
   </div>
   </aside>
 
-  <!-- DIRECT MESSAGES (admin ↔ you, separate from global chat) -->
-  <button class="dm-fab" id="dmFab" onclick="toggleDm()" title="Messages from admin">✉️<span class="dm-dot" id="dmDot"></span></button>
+  <!-- DIRECT MESSAGES (admin ? you, separate from global chat) -->
+  <button class="dm-fab" id="dmFab" onclick="toggleDm()" title="Messages from admin"><span class="mi">mail</span><span class="dm-dot" id="dmDot"></span></button>
   <div class="chat-panel dm-panel" id="dmPanel">
     <div class="chat-head">
       <span id="dmPeerName">Admin DMs</span>
@@ -1328,31 +1326,31 @@
     </div>
     <div class="dm-note" id="dmNote">Only you and the admin see this thread.</div>
     <div class="chat-msgs" id="dmMsgs">
-      <div class="chat-empty">No messages yet.</div>
+      <div class="chat-empty"><span class="mi">chat_bubble</span>No messages yet.</div>
     </div>
     <div class="typing-line" id="dmTypingLine"></div>
     <form class="chat-form" onsubmit="return sendDmReply(event)">
-      <input id="dmInput" type="text" placeholder="Reply…" maxlength="500" autocomplete="off" />
+      <input id="dmInput" type="text" placeholder="Reply?" maxlength="500" autocomplete="off" />
       <button type="submit">Send</button>
     </form>
   </div>
 
   <!-- FRIENDS -->
-  <button class="friends-fab" id="friendsFab" onclick="toggleFriends()" title="Friends">👥</button>
+  <button class="friends-fab" id="friendsFab" onclick="toggleFriends()" title="Friends"><span class="mi">group</span></button>
   <div class="friends-panel" id="friendsPanel">
     <div class="chat-head">
       <span>Friends</span>
       <small>live</small>
     </div>
     <div class="chat-msgs" id="friendsBody" style="max-height:340px">
-      <div class="chat-empty">Loading…</div>
+      <div class="chat-empty">Loading?</div>
     </div>
   </div>
 
   <!-- SHOP -->
   <div class="overlay" id="shopOverlay" onclick="if(event.target===this)closeShop()">
     <div class="modal" style="max-width:420px">
-      <h2>🛒 XP Shop</h2>
+      <h2><span class="mi">shopping_cart</span> XP Shop</h2>
       <p>Balance: <b id="shopBal" style="color:#f59e0b">0</b> XP</p>
       <div class="shop-grid" id="shopGrid"></div>
       <div id="shopExtra"></div>
@@ -1363,7 +1361,7 @@
   <!-- APPROVED MODAL (pops like the request form) -->
   <div class="overlay" id="approvedOverlay" onclick="if(event.target===this)closeApprovedModal()">
     <div class="modal">
-      <h2>Request Approved! 🎉</h2>
+      <h2>Request Approved! <span class="mi">celebration</span></h2>
       <p>Use this key to log in:</p>
       <div class="keyline"><span id="playKeyText"></span><button class="mini-btn" onclick="copyPlayKey()">Copy</button></div>
       <div style="margin-top:14px"><button class="mini-btn" onclick="closeApprovedModal()">Done</button></div>
@@ -1375,8 +1373,8 @@
     <div class="game-modal-card" id="gameModalCard">
       <div class="game-modal-head">
         <span id="gameModalTitle">Game</span>
-        <button id="gameFsBtn" class="gm-btn" onclick="toggleGameFullscreen()" aria-label="Enter fullscreen">⛶</button>
-        <button class="gm-btn" onclick="closeGame()" aria-label="Close game">✕</button>
+        <button id="gameFsBtn" class="gm-btn" onclick="toggleGameFullscreen()" aria-label="Enter fullscreen">?</button>
+        <button class="gm-btn" onclick="closeGame()" aria-label="Close game">?</button>
       </div>
       <div class="game-frame-wrap" id="gameFrameWrap"></div>
     </div>
@@ -1385,7 +1383,7 @@
   <!-- SCHEDULED-ANNOUNCEMENT ALERT (one-time modal per user) -->
   <div id="schedAlertModal" role="dialog" aria-label="Announcement" style="display:none">
     <div class="sched-alert-card">
-      <div style="font-size:40px">📅</div>
+      <div style="font-size:40px">??</div>
       <h2>Scheduled announcement</h2>
       <p id="schedAlertBody"></p>
       <p class="muted" id="schedAlertWhen"></p>
@@ -1400,10 +1398,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ── Fill these in (same values as games/index.html) ─────────────
+    // -- Fill these in (same values as games/index.html) -------------
     const SUPABASE_URL = "https://hqjclkkwsepdhtwnwsvp.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxamNsa2t3c2VwZGh0d253c3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTY5NTMsImV4cCI6MjEwNTc3Mjk1M30.-OXxTRYmIi4snwJSiThFsAPr5YgVbwz4kwUY_DURFRA";
-    // ───────────────────────────────────────────────────────────────
+    // ---------------------------------------------------------------
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const LS_TOKEN = 'ls_session_token';
@@ -1487,7 +1485,7 @@ async function sha256hexFp(str) {
     }
 
     function audioFp() {
-      // Offline-rendered oscillator fingerprint — no sound ever plays.
+      // Offline-rendered oscillator fingerprint ? no sound ever plays.
       try {
         const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
         if (!AC) return Promise.resolve('noaudioctx');
@@ -1526,7 +1524,7 @@ async function sha256hexFp(str) {
           x.font = '72px "' + f + '", ' + b;
           return x.measureText(probe).width !== widths[b];
         }));
-        // NOTE: document.fonts.size intentionally excluded — it changes as
+        // NOTE: document.fonts.size intentionally excluded ? it changes as
         // webfonts finish loading, which would destabilise the fingerprint.
         return present.sort().join(',');
       } catch (e) { return 'fonts-err'; }
@@ -1722,20 +1720,20 @@ async function sha256hexFp(str) {
       meta.appendChild(badgeSpan);
       const time = document.createElement('span');
       if (msg.created_at) {
-        time.textContent = ' · ' + timeAgo(msg.created_at);
+        time.textContent = ' ? ' + timeAgo(msg.created_at);
         time.title = formatTime(msg.created_at);
       }
       meta.appendChild(time);
       const replyBtn = document.createElement('button');
       replyBtn.className = 'reply-btn';
-      replyBtn.textContent = '↩';
+      replyBtn.textContent = replyBtn.innerHTML = '<span class="mi">undo</span>';
       replyBtn.title = 'Reply';
       replyBtn.setAttribute('aria-label', 'Reply to ' + uname);
       replyBtn.onclick = () => startReply(msg.id, uname, msg.content || '');
       meta.appendChild(replyBtn);
       const flagBtn = document.createElement('button');
       flagBtn.className = 'flag-btn';
-      flagBtn.textContent = '🚩';
+      flagBtn.textContent =flagBtn.innerHTML = '<span class="mi">flag</span>';
       flagBtn.title = 'Report message';
       flagBtn.setAttribute('aria-label', 'Report message from ' + uname);
       flagBtn.onclick = () => sendReport(msg.id, uname);
@@ -1831,7 +1829,7 @@ async function sha256hexFp(str) {
           .order('created_at', { ascending: true })
           .limit(50);
         if (res.error && /column/i.test(res.error.message || '')) {
-          // Older schema without the new columns — fall back to base fields.
+          // Older schema without the new columns ? fall back to base fields.
           res = await sb
             .from('messages')
             .select('id, username, content, created_at')
@@ -1842,7 +1840,7 @@ async function sha256hexFp(str) {
         if (error) throw error;
         box.innerHTML = '';
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="chat-empty">💬 No messages yet — say hi.</div>';
+          box.innerHTML = '<div class="chat-empty"><span class="mi">chat_bubble</span> No messages yet ? say hi.</div>';
         } else {
           liveShouts = [];
           data.forEach((m, i) => { appendMessage(m, i * 40); noteShout(m); });
@@ -1852,7 +1850,7 @@ async function sha256hexFp(str) {
       } catch (e) {
         console.error(e);
         document.getElementById('chatMsgs').innerHTML =
-          '<div class="chat-empty">💬 Chat unavailable.</div>';
+          '<div class="chat-empty"><span class="mi">chat_bubble</span> Chat unavailable.</div>';
         document.getElementById('chatStatus').textContent = 'offline';
       }
     }
@@ -1913,10 +1911,10 @@ async function sha256hexFp(str) {
       }
       input.value = '';
       const sendBtn = document.querySelector('.chat-form button[type="submit"]');
-      if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '…'; }
+      if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '?'; }
       try {
         let msgText = content.slice(0, 500);
-        if (isSparkleActive(myCosmetics)) msgText = '✨ ' + msgText;
+        if (isSparkleActive(myCosmetics)) msgText = '? ' + msgText;
         const args = Object.assign(myCreds(), {
           content: msgText,
           reply_to: (replyTo && replyTo.id) || null,
@@ -2006,7 +2004,7 @@ async function sha256hexFp(str) {
         myXpBal = bal; myXpLife = life;
         renderXpChip();
         if (levelForXp(life) > oldLevel) toast('Level up! You are now level ' + levelForXp(life), 'ok');
-        else if (reason) toast('+' + amount + ' XP' + (reason ? ' — ' + reason : ''), 'ok');
+        else if (reason) toast('+' + amount + ' XP' + (reason ? ' ? ' + reason : ''), 'ok');
       } catch (e) { console.error('addXP failed:', e); }
     }
 
@@ -2063,10 +2061,10 @@ async function sha256hexFp(str) {
         if (sameAsLast(box, sig)) return;
         box.innerHTML = '';
         if (rows.length === 0) {
-          box.innerHTML = '<div style="font-size:13px;color:#6b6b8a">No XP yet — play games to earn!</div>';
+          box.innerHTML = '<div style="font-size:13px;color:#7d8590">No XP yet ? play games to earn!</div>';
           return;
         }
-        const medals = ['🥇', '🥈', '🥉'];
+        const medals = ['1.','2.','3.'];
         rows.forEach((r, i) => {
           const div = document.createElement('div');
           div.className = 'leader-row';
@@ -2152,7 +2150,7 @@ async function sha256hexFp(str) {
         d.className = 'shout-box';
         const head = document.createElement('div');
         head.style.cssText = 'font-size:11px;color:#f59e0b;font-weight:800;margin-bottom:2px';
-        head.textContent = '📢 SHOUTOUT from ' + s.user;
+        head.textContent = 'SHOUTOUT from ' + s.user;
         const body = document.createElement('div');
         body.textContent = s.text;
         d.appendChild(head);
@@ -2184,19 +2182,19 @@ async function sha256hexFp(str) {
     /* ---------- XP shop ---------- */
 
     const SHOP_ITEMS = [
-      { id: 'shoutout', emoji: '📢', name: 'Shoutout', desc: 'Pin your message in chat for 60 seconds', cost: 100 },
-      { id: 'gold24', emoji: '🥇', name: 'Gold name (24h)', desc: 'Gold username for a full day', cost: 150 },
-      { id: 'status', emoji: '💭', name: 'Status message', desc: 'A custom line under your name, forever', cost: 200 },
-      { id: 'sparkle', emoji: '✨', name: 'Sparkle chat (7d)', desc: '✨ prefix on your messages for a week', cost: 250 },
-      { id: 'hideonline', emoji: '🥷', name: 'Hide online (forever)', desc: 'Lurk without the green dot', cost: 300 },
-      { id: 'namecolor', emoji: '🎨', name: 'Name color', desc: 'Pick your permanent username color', cost: 500 },
-      { id: 'mystery', emoji: '🎁', name: 'Mystery box', desc: 'Gamble: 10–200 XP or bonus flair', cost: 100 },
-      { id: 'doubleday', emoji: '🔥', name: 'Double XP day', desc: 'Double earnings for 24 hours', cost: 500 },
-      { id: 'glow', emoji: '💡', name: 'Name glow', desc: 'Permanent glowing username', cost: 800 },
-      { id: 'vipweek', emoji: '👑', name: 'VIP week', desc: 'Gold badge + double XP for 7 days', cost: 1000 },
-      { id: 'clearwarn', emoji: '🧹', name: 'Clear 1 warning', desc: 'Wipe your most recent warning', cost: 2500 }
+      { id: 'shoutout', icon: 'campaign', name: 'Shoutout', desc: 'Pin your message in chat for 60 seconds', cost: 100 },
+      { id: 'gold24', icon: 'emoji_events', name: 'Gold name (24h)', desc: 'Gold username for a full day', cost: 150 },
+      { id: 'status', icon: 'edit', name: 'Status message', desc: 'A custom line under your name, forever', cost: 200 },
+      { id: 'sparkle', icon: 'auto_awesome', name: 'Sparkle chat (7d)', desc: '? prefix on your messages for a week', cost: 250 },
+      { id: 'hideonline', icon: 'visibility_off', name: 'Hide online (forever)', desc: 'Lurk without the green dot', cost: 300 },
+      { id: 'namecolor', icon: 'palette', name: 'Name color', desc: 'Pick your permanent username color', cost: 500 },
+      { id: 'mystery', icon: 'redeem', name: 'Mystery box', desc: 'Gamble: 10?200 XP or bonus flair', cost: 100 },
+      { id: 'doubleday', icon: 'bolt', name: 'Double XP day', desc: 'Double earnings for 24 hours', cost: 500 },
+      { id: 'glow', icon: 'flare', name: 'Name glow', desc: 'Permanent glowing username', cost: 800 },
+      { id: 'vipweek', icon: 'star', name: 'VIP week', desc: 'Gold badge + double XP for 7 days', cost: 1000 },
+      { id: 'clearwarn', icon: 'backspace', name: 'Clear 1 warning', desc: 'Wipe your most recent warning', cost: 2500 }
     ];
-    const NAME_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#60a5fa', '#a78bfa', '#f472b6'];
+    const NAME_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#60a5fa', '#a7adb5', '#f472b6'];
 
     function openShop() {
       renderXpChip();
@@ -2216,8 +2214,8 @@ async function sha256hexFp(str) {
         const b = document.createElement('button');
         b.className = 'shop-item';
         const em = document.createElement('span');
-        em.className = 'emoji';
-        em.textContent = it.emoji;
+        em.className = 'emoji mi';
+        em.textContent = it.icon;
         const info = document.createElement('div');
         info.className = 'info';
         const nm = document.createElement('b');
@@ -2392,11 +2390,11 @@ async function sha256hexFp(str) {
         const oldLevel = levelForXp(myXpLife);
         const args = Object.assign(myCreds(), { qkey: q.key, day_key: ds, earn_amt: q.xp });
         const res = await rpc('quest_claim', args);
-        if (!res || !res.success) return; // already claimed — silent
+        if (!res || !res.success) return; // already claimed ? silent
         myXpBal = res.balance || 0; myXpLife = res.lifetime || 0;
         renderXpChip();
         if (levelForXp(myXpLife) > oldLevel) toast('Level up! You are now level ' + levelForXp(myXpLife), 'ok');
-        else toast('+' + q.xp + ' XP — quest complete', 'ok');
+        else toast('+' + q.xp + ' XP ? quest complete', 'ok');
         loadQuests();
       } catch (e) { console.error('claim failed:', e); }
     }
@@ -2430,7 +2428,7 @@ async function sha256hexFp(str) {
         const top = document.createElement('div');
         top.className = 'qtop';
         const tx = document.createElement('span');
-        tx.textContent = (done ? '✅ ' : '') + q.text + ' (' + disp + ')';
+        tx.textContent = (done ? '? ' : '') + q.text + ' (' + disp + ')';
         const xp = document.createElement('span');
         xp.className = 'qxp';
         xp.textContent = '+' + q.xp + ' XP';
@@ -2461,7 +2459,7 @@ async function sha256hexFp(str) {
       try {
         const args = Object.assign(myCreds(), { game_name: path, day_key: dayStr() });
         await rpc('game_track', args);
-      } catch (e) {} // duplicate day/game → ignore silently
+      } catch (e) {} // duplicate day/game ? ignore silently
     }
 
     /* ---------- Trivia bot (hourly, self-claim) ---------- */
@@ -2504,9 +2502,9 @@ async function sha256hexFp(str) {
       box.style.display = 'block';
       box.innerHTML = '';
       const b = document.createElement('b');
-      b.textContent = '🧠 Trivia (25 XP): ' + t.q;
+      b.textContent = 'Trivia (25 XP): ' + t.q;
       const sm = document.createElement('small');
-      sm.textContent = 'First correct answer this hour wins — just type it in chat!';
+      sm.textContent = 'First correct answer this hour wins ? just type it in chat!';
       box.appendChild(b);
       box.appendChild(sm);
     }
@@ -2520,11 +2518,11 @@ async function sha256hexFp(str) {
         const oldLevel = levelForXp(myXpLife);
         const args = Object.assign(myCreds(), { qkey: 'trivia-' + triviaHourId(), day_key: dayStr(), earn_amt: 25 });
         const res = await rpc('quest_claim', args);
-        if (!res || !res.success) return; // someone (you) already claimed — silent
+        if (!res || !res.success) return; // someone (you) already claimed ? silent
         myXpBal = res.balance || 0; myXpLife = res.lifetime || 0;
         renderXpChip();
         if (levelForXp(myXpLife) > oldLevel) toast('Level up! You are now level ' + levelForXp(myXpLife), 'ok');
-        else toast('+25 XP — trivia correct!', 'ok');
+        else toast('+25 XP ? trivia correct!', 'ok');
       } catch (e) { console.error('trivia claim failed:', e); }
     }
 
@@ -2554,11 +2552,11 @@ async function sha256hexFp(str) {
         const others = (r.data || []).filter(t => t.username && t.username !== me);
         const g = others.filter(t => t.channel === 'global').map(t => t.username);
         const gl = document.getElementById('typingLine');
-        if (gl) gl.textContent = g.length ? (g.slice(0, 3).join(', ') + (g.length === 1 ? ' is typing…' : ' are typing…')) : '';
+        if (gl) gl.textContent = g.length ? (g.slice(0, 3).join(', ') + (g.length === 1 ? ' is typing?' : ' are typing?')) : '';
         const pk = dmPairKey(me, (typeof dmPeer !== 'undefined' ? dmPeer : 'admin'));
         const d = others.filter(t => t.channel === pk).map(t => t.username);
         const dl = document.getElementById('dmTypingLine');
-        if (dl) dl.textContent = d.length ? (d[0] + ' is typing…') : '';
+        if (dl) dl.textContent = d.length ? (d[0] + ' is typing?') : '';
       } catch (e) { console.error('typing failed:', e); }
     }
 
@@ -2588,13 +2586,13 @@ async function sha256hexFp(str) {
         const total = agg.SST.xp + agg.Lenham.xp;
         const pctS = total > 0 ? Math.round((agg.SST.xp / total) * 100) : 50;
         const score = document.getElementById('schoolScore');
-        if (score) score.textContent = 'SST ' + agg.SST.xp.toLocaleString() + ' — ' + agg.Lenham.xp.toLocaleString() + ' Lenham';
+        if (score) score.textContent = 'SST ' + agg.SST.xp.toLocaleString() + ' ? ' + agg.Lenham.xp.toLocaleString() + ' Lenham';
         const bS = document.getElementById('schoolBarSST');
         const bL = document.getElementById('schoolBarLen');
         if (bS) bS.style.width = pctS + '%';
         if (bL) bL.style.width = (100 - pctS) + '%';
         const ct = document.getElementById('schoolCounts');
-        if (ct) ct.textContent = agg.SST.players + ' SST players · ' + agg.Lenham.players + ' Lenham players';
+        if (ct) ct.textContent = agg.SST.players + ' SST players ? ' + agg.Lenham.players + ' Lenham players';
       } catch (e) { console.error('school board failed:', e); }
     }
 
@@ -2699,7 +2697,7 @@ async function sha256hexFp(str) {
           o.start(t);
           o.stop(t + 1.5);
         });
-      } catch (e) { /* silent — visual still plays */ }
+      } catch (e) { /* silent ? visual still plays */ }
     }
 
     function trollLayer() { return document.getElementById('trollLayer'); }
@@ -2713,7 +2711,7 @@ async function sha256hexFp(str) {
 
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    // Allow-listed scare filename → site-relative URL.
+    // Allow-listed scare filename ? site-relative URL.
     function jumpscareSrc(payload) {
       const img = (payload && payload.image) || 'scare1.jpg';
       const safe = /^scare[1-3]\.jpg$/.test(img) ? img : 'scare1.jpg';
@@ -2734,7 +2732,7 @@ async function sha256hexFp(str) {
     }
 
     // Solid jumpscare: image goes on at full opacity and STAYS there until
-    // stopJumpscare — no fade in/out cycle. contain (not cover) so custom
+    // stopJumpscare ? no fade in/out cycle. contain (not cover) so custom
     // uploads of any shape show fully instead of being cropped.
     function jumpscareLoop(imageSrc) {
       if (!jumpscareActive) return;
@@ -2792,7 +2790,7 @@ async function sha256hexFp(str) {
       title.textContent = 'Connection lost';
       const sub = document.createElement('div');
       sub.className = 'troll-sub';
-      sub.textContent = 'Reconnecting… (just kidding, you are fine)';
+      sub.textContent = 'Reconnecting? (just kidding, you are fine)';
       box.appendChild(spin); box.appendChild(title); box.appendChild(sub);
       layer.appendChild(box);
       disconnectBox = box;
@@ -2833,7 +2831,7 @@ async function sha256hexFp(str) {
         r.style.top = (Math.random() * 100) + 'vh';
         r.style.background = 'hsla(' + hues[n++ % hues.length] + ', 90%, 65%, 0.8)';
         layer.appendChild(r);
-        // Per-particle memory cleanup only — a 1.1s-old droplet leaving
+        // Per-particle memory cleanup only ? a 1.1s-old droplet leaving
         // does NOT stop the effect; the interval keeps spawning.
         setTimeout(() => { if (r.parentNode) r.parentNode.removeChild(r); }, 1100);
       }, 320);
@@ -2853,7 +2851,7 @@ async function sha256hexFp(str) {
       dlg.className = 'ios-alert';
       dlg.setAttribute('role', 'alertdialog');
       const h = document.createElement('h3');
-      h.textContent = '🎉 Congratulations!';
+      h.textContent = '?? Congratulations!';
       const p = document.createElement('p');
       p.textContent = (payload && payload.message) || 'Your iPad has won absolutely nothing. Claim your prize: keep playing.';
       const ok = document.createElement('button');
@@ -2882,7 +2880,7 @@ async function sha256hexFp(str) {
       const layer = trollLayer();
       const msgs = (payload && Array.isArray(payload.messages) && payload.messages.length)
         ? payload.messages.slice(0, 4)
-        : ['psst…', 'behind you', 'just kidding 😅', 'carry on!'];
+        : ['psst?', 'behind you', 'just kidding ??', 'carry on!'];
       const shown = [];
       msgs.forEach((m, i) => {
         setTimeout(() => {
@@ -2908,7 +2906,7 @@ async function sha256hexFp(str) {
       spin.className = 'troll-spin';
       const title = document.createElement('div');
       title.className = 'troll-title';
-      title.textContent = 'Loading…';
+      title.textContent = 'Loading?';
       const sub = document.createElement('div');
       sub.className = 'troll-sub';
       sub.textContent = 'Good things come to those who wait';
@@ -2925,7 +2923,7 @@ async function sha256hexFp(str) {
 
     function effectConfetti() {
       const layer = trollLayer();
-      const colors = ['#a78bfa', '#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#f87171'];
+      const colors = ['#a7adb5', '#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#f87171'];
       for (let i = 0; i < 80; i++) {
         const c = document.createElement('div');
         c.className = 'troll-confetti';
@@ -2992,7 +2990,7 @@ async function sha256hexFp(str) {
           return;
         }
         if (activeTricks[key]) {
-          // Already running — do NOTHING. Never restart a live effect,
+          // Already running ? do NOTHING. Never restart a live effect,
           // or polls/duplicate rows would cause visible flicker.
           console.log('[troll] already running, ignoring on for', key);
           return;
@@ -3088,7 +3086,7 @@ async function sha256hexFp(str) {
             }
           } else {
             html = '<div class="req-banner denied"><strong>Your key was removed by staff.</strong>' +
-              '<div style="margin-top:8px;color:#6b6b8a">That approval no longer has a key attached.</div>' +
+              '<div style="margin-top:8px;color:#7d8590">That approval no longer has a key attached.</div>' +
               '<div style="margin-top:10px"><button class="mini-btn" onclick="resetPlayRequest()">Request a new key</button></div></div>';
           }
         } else {
@@ -3118,7 +3116,7 @@ async function sha256hexFp(str) {
       }
     }
 
-    // Approved popup — mirrors the request-form modal behavior.
+    // Approved popup ? mirrors the request-form modal behavior.
     let playApprovedKey = '';
     let playApprovedShown = false;
 
@@ -3170,10 +3168,10 @@ async function sha256hexFp(str) {
       }
     });
 
-    // 3s fallback poll — catches events realtime missed. Only unseen ids
+    // 3s fallback poll ? catches events realtime missed. Only unseen ids
     // dispatch, so running effects are never restarted by the poll.
     async function pollTrolls() {
-      if (!trollReady) return; // init hasn't seeded history yet — fire nothing
+      if (!trollReady) return; // init hasn't seeded history yet ? fire nothing
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
@@ -3239,7 +3237,7 @@ async function sha256hexFp(str) {
           const head = document.createElement('div');
           head.className = 'ahead';
           const who = document.createElement('strong');
-          who.textContent = '📌 ' + (a.posted_by || 'admin');
+          who.textContent = '' + (a.posted_by || 'admin');
           head.appendChild(who);
           const badge = document.createElement('span');
           badge.innerHTML = rankBadgeHtml(a.rank);
@@ -3251,7 +3249,7 @@ async function sha256hexFp(str) {
           }
           head.appendChild(when);
           const x = document.createElement('button');
-          x.textContent = '✕';
+          x.textContent = '?';
           x.setAttribute('aria-label', 'Dismiss announcement');
           x.onclick = () => dismissAnnounce(a.id);
           if (!a.pinned) head.appendChild(x);
@@ -3286,7 +3284,7 @@ async function sha256hexFp(str) {
       const head = document.createElement('div');
       head.className = 'ahead';
       const who = document.createElement('strong');
-      who.textContent = '📌 ' + (top.posted_by || 'admin');
+      who.textContent = '' + (top.posted_by || 'admin');
       head.appendChild(who);
       const badge = document.createElement('span');
       badge.innerHTML = rankBadgeHtml(top.rank);
@@ -3298,7 +3296,7 @@ async function sha256hexFp(str) {
       }
       head.appendChild(when);
       const x = document.createElement('button');
-      x.textContent = '✕';
+      x.textContent = '?';
       x.setAttribute('aria-label', 'Dismiss announcement');
       x.onclick = () => dismissAnnounce(top.id);
       if (!top.pinned) head.appendChild(x);
@@ -3343,8 +3341,8 @@ async function sha256hexFp(str) {
       const m = document.getElementById('schedAlertModal');
       if (!m) { schedShowing = false; return; }
       document.getElementById('schedAlertBody').textContent = a.content || '';
-      document.getElementById('schedAlertWhen').textContent = '⏰ ' + schedCountdown(a) +
-        (a.posted_by ? ' — ' + a.posted_by : '');
+      document.getElementById('schedAlertWhen').textContent = '' + schedCountdown(a) +
+        (a.posted_by ? ' ? ' + a.posted_by : '');
       m.style.display = 'flex';
     }
 
@@ -3411,7 +3409,7 @@ async function sha256hexFp(str) {
           .gte('last_seen', cutoff);
         if (error) throw error;
         const el = document.getElementById('onlineCount');
-        if (el) el.textContent = String(count != null ? count : '—');
+        if (el) el.textContent = String(count != null ? count : '?');
       } catch (e) {
         console.error('online count failed:', e);
       }
@@ -3459,7 +3457,7 @@ async function sha256hexFp(str) {
       const present = staffKeys.filter(k => k.used_by && online[k.used_by]);
       bar.innerHTML = '';
       const label = document.createElement('span');
-      label.textContent = '🟢 Staff online:';
+        label.textContent = 'Staff online:';
       bar.appendChild(label);
       if (present.length === 0) {
         const none = document.createElement('span');
@@ -3499,10 +3497,10 @@ async function sha256hexFp(str) {
       if (sameAsLast(box, sig)) return;
       box.innerHTML = '';
       if (rows.length === 0) {
-        box.innerHTML = '<div style="font-size:13px;color:#6b6b8a">No playtime yet today — be the first!</div>';
+        box.innerHTML = '<div style="font-size:13px;color:#7d8590">No playtime yet today ? be the first!</div>';
         return;
       }
-      const medals = ['🥇', '🥈', '🥉'];
+      const medals = ['??', '??', '??'];
       rows.forEach((r, i) => {
         const div = document.createElement('div');
         div.className = 'leader-row';
@@ -3664,8 +3662,8 @@ async function sha256hexFp(str) {
       if (myGameBan && myGameBan.expires_at && new Date(myGameBan.expires_at).getTime() > Date.now()) {
         const card = document.createElement('div');
         card.className = 'ban-card';
-        card.textContent = '⛔ You are banned from playing until ' + new Date(myGameBan.expires_at).toLocaleString() +
-          (myGameBan.reason ? ' — ' + myGameBan.reason : '');
+        card.textContent = '? You are banned from playing until ' + new Date(myGameBan.expires_at).toLocaleString() +
+          (myGameBan.reason ? ' ? ' + myGameBan.reason : '');
         wrap.appendChild(card);
       }
     }
@@ -3689,7 +3687,7 @@ async function sha256hexFp(str) {
 
     // Typing-safe rendering: only touch the DOM when the markup actually
     // changed, so heartbeat polls never steal focus or reset scroll.
-    // (Timers stay exactly as they are — same 3s cadence, quieter DOM.)
+    // (Timers stay exactly as they are ? same 3s cadence, quieter DOM.)
     function setHTMLifChanged(el, html) {
       if (!el) return false;
       if (el._lastHtml === html) return false;
@@ -3855,7 +3853,7 @@ async function sha256hexFp(str) {
       const b = document.getElementById('gameFsBtn');
       if (!b) return;
       const fs = !!document.fullscreenElement;
-      b.textContent = fs ? '🗗' : '⛶';
+      b.textContent = fsb.innerHTML = fs ? '<span class="mi">fullscreen_exit</span>' : '<span class="mi">fullscreen</span>';
       b.setAttribute('aria-label', fs ? 'Exit fullscreen' : 'Enter fullscreen');
     }
 
@@ -3865,7 +3863,7 @@ async function sha256hexFp(str) {
       if (!document.fullscreenElement && gameModalOpen) closeGame();
     });
 
-    /* ---------- Direct messages (admin ↔ you) ---------- */
+    /* ---------- Direct messages (admin ? you) ---------- */
 
     let dmPeer = 'admin';
     let myBlocks = [];
@@ -3887,9 +3885,9 @@ async function sha256hexFp(str) {
       const note = document.getElementById('dmNote');
       if (note) note.textContent = dmPeer === 'admin'
         ? 'Only you and the admin see this thread.'
-        : 'Player DMs are moderated — staff can read them.';
+        : 'Player DMs are moderated ? staff can read them.';
       const input = document.getElementById('dmInput');
-      if (input) input.placeholder = 'Message ' + dmPeer + '…';
+      if (input) input.placeholder = 'Message ' + dmPeer + '?';
       document.getElementById('dmPanel').classList.add('open');
       document.getElementById('dmDot').classList.remove('show');
       loadDms();
@@ -3907,7 +3905,7 @@ async function sha256hexFp(str) {
       const isAdmin = (msg.from_username || '').toLowerCase() === 'admin';
       div.className = 'chat-msg' + (isAdmin ? ' admin' : '');
       div.innerHTML =
-        '<div class="meta"><strong></strong> · <span></span></div>' +
+        '<div class="meta"><strong></strong> ? <span></span></div>' +
         '<div class="bubble"></div>';
       div.querySelector('strong').textContent = msg.from_username || 'admin';
       if (msg.created_at) {
@@ -4032,10 +4030,10 @@ async function sha256hexFp(str) {
         div.className = 'friend-row';
         const dot = document.createElement('span');
         dot.className = 'staff-dot';
-        if (!online[name]) dot.style.background = '#6b6b8a';
+        if (!online[name]) dot.style.background = '#7d8590';
         const nm = document.createElement('span');
         nm.className = 'nm';
-        nm.textContent = name + (online[name] ? ' · ' + online[name] : '');
+        nm.textContent = name + (online[name] ? ' ? ' + online[name] : '');
         div.appendChild(dot);
         div.appendChild(nm);
         (extra || []).forEach(([label, fn]) => {
@@ -4063,7 +4061,7 @@ async function sha256hexFp(str) {
       if (fr.length === 0) {
         const d = document.createElement('div');
         d.className = 'chat-empty';
-        d.textContent = 'No friends yet — add people above.';
+        d.textContent = 'No friends yet ? add people above.';
         box.appendChild(d);
       } else {
         fr.forEach(u => {
@@ -4140,7 +4138,7 @@ async function sha256hexFp(str) {
             const info = card.querySelector('.game-info');
             if (info) info.appendChild(badge);
           }
-          badge.textContent = '● ' + n + ' in game';
+          badge.textContent = '? ' + n + ' in game';
           badge.style.display = 'inline-block';
         } else if (badge) {
           badge.style.display = 'none';
@@ -4148,8 +4146,9 @@ async function sha256hexFp(str) {
       });
     }
 
-    // All games — paths are relative to games/play/ (this file lives there,
+    // All games ? paths are relative to games/play/ (this file lives there,
     // the game folders live in games/)
+    const GAME_ART = {"battle-racing-stars":"games/battle-racing-stars/Denda_black.png","bitlife":"games/bitlife/logo.png","bridge-race":"games/bridge-race/TemplateData/unity-logo-dark.png","captcha-ware":"games/captcha-ware/index.png","cookieclicker":"games/cookieclicker/img/icon.png","crazy-candy-creator":"games/crazy-candy-creator/qwei/achievement.png","cricket17":"games/cricket17/cta_ntp.png","ctr":"games/ctr/logo.png","dartspro":"games/dartspro/sprites/dartboard.png","doge-miner-2":"games/doge-miner-2/assets/imageLogo/logo.jpg","draw-the-hill":"games/draw-the-hill/icons/icon-512.png","drift-boss":"games/drift-boss/branding/splash1.png","drive-mad":"games/drive-mad/webapp/cover.jpg","drivenwild":"games/drivenwild/assets/favicon.png","fast-runner":"games/fast-runner/icon.png","final-earth":"games/final-earth/site-specific/coolmath/coolmath-splash.png","fnaf":"games/fnaf/FNAF3/resources/title.png","FNAW":"games/FNAW/smile.jpg","formula-rush":"games/formula-rush/sprites/bg_menu.jpg","fruit-ninja":"games/fruit-ninja/assets/splash/splash%20screen.png","gobble":"games/gobble/webapp/cover.jpg","happyglass":"games/happyglass/icons/icon-512.png","holiday":"games/holiday/images/page/snap-logo.png","idle-football":"games/idle-football/logo.png","impossiblequiz":"games/impossiblequiz/impossiblequiz.png","jetpack-joyride":"games/jetpack-joyride/splash.jpg","knifehit":"games/knifehit/icon-256.png","monster-tracks":"games/monster-tracks/thumb.jpg","npng":"games/npng/TemplateData/unity-logo-dark.png","ovo":"games/ovo/icon-256.png","paperio2":"games/paperio2/images/logo.png","penkick":"games/penkick/sprites/bg_menu.jpg","ragdoll-hit":"games/ragdoll-hit/icon.png","rise-higher":"games/rise-higher/branding/splash-landscape.png","rocketgoal":"games/rocketgoal/TemplateData/loading_logo.jpg","roper":"games/roper/webapp/cover.jpg","stickman-hook":"games/stickman-hook/images/27f62cb7fcc15256d379f7e940d7fc35-titlepow2.png","stickmin":"games/stickmin/breakingthebank/breakingthebank.png","survival-race":"games/survival-race/logo.png","thorns-and-balloons":"games/thorns-and-balloons/icons/icon-512.png","time-travel":"games/time-travel/logo.png","tiny-fishing":"games/tiny-fishing/thumb.png","tiny-fishing-update":"games/tiny-fishing-update/html5game/pcLogoLoading.png","wheelie-bike":"games/wheelie-bike/images/logo-sheet0.png","worldguessr":"games/worldguessr/coolmath-splash.png"};
     const GAMES = [
       "baseball",
       "battle-racing-stars",
@@ -4347,7 +4346,7 @@ async function sha256hexFp(str) {
       "stealingthediamond": "Stealing the Diamond"
     };
 
-    const EMOJIS = ["🎮","🏎️","🧠","🧱","🏹","🏁","🎈","🍪","🍬","🏏","🐔","✂️","🎯","⛏️","🧗","🎨","🏎️","🚗","🦆","⛏️","🏃","🌍","🐦","🐻","🏁","🍉","📐","🌍","👻","🔫","🍫","🎁","⛳","⚽","❓","🍄","🚀","🔪","🧪","🐵","👾","🍣","🏍️","⚽","💪","🥜","🌀","🍕","⚽","🧟","🏹","🥊","⚽","🚀","🎢","🎯","🏁","🍰","⚽","🥞","🪝","🏄","🏁","🪂","⚽","👾","🎈","⏳","🎣","🎣","🕹️","⚔️","🌊","🚲","🌍","🏍️"];
+    const EMOJIS = ["??","???","??","??","??","??","??","??","??","??","??","??","??","??","??","??","???","??","??","??","??","??","??","??","??","??","??","??","??","??","??","??","?","?","?","??","??","??","??","??","??","??","???","?","??","??","??","??","?","??","??","??","?","??","??","??","??","??","?","??","??","??","??","??","?","??","??","?","??","??","???","??","??","??","??","???"];
 
     function prettyName(path) {
       const base = path.split('/').pop();
@@ -4381,6 +4380,40 @@ async function sha256hexFp(str) {
       renderGames(document.getElementById('search').value);
     }
 
+    // Card art: real cover image when the game folder ships one,
+    // otherwise a monogram tile (stable hue per game, no downloads).
+    function gameHue(path) {
+      let h = 0;
+      for (let i = 0; i < path.length; i++) h = (h * 31 + path.charCodeAt(i)) >>> 0;
+      return h % 360;
+    }
+    function gameInitials(name) {
+      const words = String(name || '').split(/[^A-Za-z0-9]+/).filter(Boolean);
+      if (words.length === 0) return '?';
+      if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    function paintThumb(thumb, path, name) {
+      const art = GAME_ART[path];
+      if (art) {
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.alt = name;
+        img.src = '../' + art;
+        img.onerror = () => paintMonogram(thumb, path, name);
+        thumb.appendChild(img);
+      } else {
+        paintMonogram(thumb, path, name);
+      }
+    }
+    function paintMonogram(thumb, path, name) {
+      thumb.innerHTML = '';
+      const d = document.createElement('div');
+      d.className = 'mono-tile';
+      d.style.background = 'hsl(' + gameHue(path) + ', 45%, 32%)';
+      d.textContent = gameInitials(name);
+      thumb.appendChild(d);
+    }
     function renderGames(filter = '') {
       const grid = document.getElementById('gamesGrid');
       const q = filter.trim().toLowerCase();
@@ -4392,9 +4425,9 @@ async function sha256hexFp(str) {
         .filter(p => activeCat === 'All' || gameCat(p) === activeCat)
         .sort((a, b) => prettyName(a).localeCompare(prettyName(b)));
       const rc = document.getElementById('resultCount');
-      if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ★' : '') + (activeCat !== 'All' ? ' · ' + activeCat : '');
+      if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ?' : '') + (activeCat !== 'All' ? ' ? ' + activeCat : '');
       if (list.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#6b6b8a;font-size:14px">🎮 No games found — try a different search.</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#7d8590;font-size:14px"><span class="mi">sports_esports</span> No games found ? try a different search.</div>';
         return;
       }
       list
@@ -4405,7 +4438,7 @@ async function sha256hexFp(str) {
           card.onclick = () => { openGame(path, name); };
           const star = document.createElement('button');
           star.className = 'fav-star' + (favs.indexOf(path) !== -1 ? ' on' : '');
-          star.textContent = '★';
+          star.textContent = '?';
           star.setAttribute('aria-label', 'Favorite ' + name);
           star.onclick = ev => toggleFav(path, ev);
           const info = document.createElement('div');
@@ -4419,7 +4452,7 @@ async function sha256hexFp(str) {
           info.appendChild(tag);
           const thumb = document.createElement('div');
           thumb.className = 'game-thumb';
-          thumb.textContent = emojiFor(path, GAMES.indexOf(path));
+          paintThumb(thumb, path, name);
           card.appendChild(thumb);
           card.appendChild(info);
           card.appendChild(star);
