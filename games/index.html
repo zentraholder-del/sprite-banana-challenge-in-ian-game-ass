@@ -638,7 +638,7 @@
 
   <div class="card" id="authCard">
     <div class="logo">
-      <div class="logo-icon">?</div>
+      <div class="logo-icon"><span class="mi">bolt</span></div>
       <h1>Lightspeed</h1>
       <p id="logoSub">Enter your access key to continue</p>
     </div>
@@ -678,11 +678,11 @@
         <div class="field" style="margin-top:10px">
           <label>School</label>
           <div class="dd" id="dd-school" data-select="reqSchool">
-            <button type="button" class="dd-trigger" onclick="toggleSchoolDD(event)" aria-label="School"><span class="dd-label">Select school?</span><em class="chev">?</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleSchoolDD(event)" aria-label="School"><span class="dd-label">Select school<em class="chev">▾</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="reqSchool" style="display:none" aria-label="School">
-            <option value="">Select school?</option>
+            <option value="">Select school
             <option value="SST">SST</option>
             <option value="Lenham">Lenham</option>
           </select>
@@ -698,7 +698,7 @@
 
       <div id="requestStatusView" style="display:none">
         <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Request status</h2>
-        <p style="font-size:13px;color:#7d8590;margin-bottom:16px;line-height:1.5">Live updates ? no need to refresh.</p>
+        <p style="font-size:13px;color:#7d8590;margin-bottom:16px;line-height:1.5">Live updates — no need to refresh.</p>
         <div id="reqStatusWrap" aria-live="polite"></div>
         <button class="btn ghost" style="margin-top:14px" onclick="showRequestForm()">Back to form</button>
       </div>
@@ -729,7 +729,7 @@
   <!-- MISSED SCHEDULED ALERTS (offline returners catch up here, then continue) -->
   <div class="overlay" id="missedAlertModal">
     <div class="modal">
-      <div style="font-size:40px">??</div>
+      <div style="font-size:40px"><span class="mi" style="font-size:40px">calendar_month</span></div>
       <h2>You missed an announcement</h2>
       <p id="missedAlertBody"></p>
       <p class="muted" id="missedAlertWhen"></p>
@@ -740,8 +740,8 @@
   <!-- APPROVED MODAL (pops like the request form) -->
   <div class="overlay" id="approvedOverlay" onclick="if(event.target===this)closeApprovedModal()">
     <div class="modal" id="approvedModal">
-      <button class="modal-close" onclick="closeApprovedModal()">?</button>
-      <h2>Request Approved! ??</h2>
+      <button class="modal-close" onclick="closeApprovedModal()">
+      <h2><span class="mi">celebration</span> Request Approved!</h2>
       <p>Use this key to log in:</p>
       <div class="keyline"><span id="approvedKeyText"></span><button class="mini-btn" onclick="copyApprovedKey()">Copy</button></div>
       <button class="btn" style="margin-top:14px" onclick="closeApprovedModal()">Done</button>
@@ -999,17 +999,17 @@
           if (code === 'invalid') errBox.textContent = 'Key not found.';
           else if (code === 'deactivated') errBox.textContent = 'This key has been deactivated.';
           else if (code === 'wrong_user') errBox.textContent = 'That name does not match this key.';
-          else if (code === 'unbound') errBox.textContent = 'This key is not bound yet ? just log in.';
-          else if (code === 'no-session') errBox.textContent = 'No active session ? just log in.';
+          else if (code === 'unbound') errBox.textContent = 'This key is not bound yet — just log in.';
+          else if (code === 'no-session') errBox.textContent = 'No active session — just log in.';
           else errBox.textContent = 'Reset failed. Try again.';
           return;
         }
         // Instant effect: prefill login and switch there.
-        okBox.textContent = 'Key reset ? ? hit Continue to log in.';
+        okBox.textContent = 'Key reset ✓ — hit Continue to log in.';
         document.getElementById('usernameInput').value = name;
         document.getElementById('keyInput').value = key;
         switchAuthTab('login');
-        toast('Key reset ? welcome back', 'ok');
+        toast('Key reset ;
       } catch (e) {
         console.error(e);
         errBox.textContent = 'Reset failed. Check your connection.';
@@ -1053,7 +1053,7 @@
       if (!token) return;
       let me = '';
       try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
-      showStatus('Checking saved session?');
+      showStatus('Checking saved session
       try {
         const { data, error } = await sb.rpc('verify_session', { input_username: me, input_token: token });
         if (error) throw error;
@@ -1129,13 +1129,13 @@
       }
 
       setLoginBusy(true);
-      showStatus('Verifying?');
+      showStatus('Verifying
 
       try {
         // Single server-side validation: blacklist, key lookup, site lock,
         // username bind, hard single-session lock. The fingerprint is sent
         // for DEVICE BLACKLIST enforcement only ? never for login locks.
-        showStatus('Checking this device?');
+        showStatus('Checking this device
         let fp = '';
         try { fp = await getDeviceFingerprint(); } catch (e) {}
         const { data: res, error: rpcErr } = await sb.rpc('validate_key', {
@@ -1147,7 +1147,7 @@
           if (code === 'blacklisted') {
             showError('This username is blacklisted.');
           } else if (code === 'invalid') {
-            showError('Invalid key ? request access below.');
+            showError('Invalid key — request access below.');
             input.classList.add('error-input');
             toast('Key not found or already in use.', 'err');
             authShake();
@@ -1158,7 +1158,7 @@
           } else if (code === 'wrong_user') {
             showError('This key belongs to "' + ((res && res.bound) || 'another name') + '". Use that name, or use Reset my key below.');
           } else if (code === 'in_use') {
-            showError('This key is already in use. If it is you on another tab, wait a few minutes ? or use Reset my key below.');
+            showError('This key is already in use. If it is you on another tab, wait a few minutes — or use Reset my key below.');
           } else if (code === 'device_blocked') {
             showError('This device has been blocked by staff.');
           } else {
@@ -1167,7 +1167,7 @@
           setLoginBusy(false);
           return;
         }
-        if (res.welcome_back) showStatus('Welcome back ? restoring your session?');
+        if (res.welcome_back) showStatus('Welcome back 
 
         const token = res.session_token;
         localStorage.setItem(LS_TOKEN, token);
@@ -1245,7 +1245,7 @@
         s.textContent = o.textContent;
         const tick = document.createElement('span');
         tick.className = 'tick';
-        tick.textContent = '?';
+        tick.textContent = '
         b.appendChild(s);
         b.appendChild(tick);
         b.onclick = (function (val) {
@@ -1287,7 +1287,7 @@
       if (!name) { errBox.textContent = 'Enter your name.'; authShake(); return; }
       if (!school) { errBox.textContent = 'Select your school.'; authShake(); return; }
       btn.disabled = true;
-      btn.textContent = 'Sending?';
+      btn.textContent = 'Sending
       try {
         // Fingerprint the requester: stored with the request for device
         // blocking, and blocked devices are rejected outright server-side.
@@ -1300,7 +1300,7 @@
         if (!res || !res.success) {
           const code = (res && res.error) || 'failed';
           if (code === 'pending') {
-            errBox.textContent = 'You already have a pending request ? check its status below.';
+            errBox.textContent = 'You already have a pending request — check its status below.';
           } else if (code === 'cooldown') {
             const waitMs = ((res && res.retry_after) || 0) * 1000;
             errBox.textContent = 'You can request again in ' + fmtWait(waitMs) + '.';
@@ -1352,7 +1352,7 @@
         if (!data || !data.found) { setHTMLifChanged(wrap, ''); return; }
         let html = '';
         if (data.status === 'pending') {
-          html = '<div class="req-banner muted-note">Your request is pending review?</div>';
+          html = '<div class="req-banner muted-note">Your request is pending review';
         } else if (data.status === 'denied') {
           if (dismissed) { setHTMLifChanged(wrap, ''); return; }
           html = '<div class="req-banner denied"><strong>Your key request was denied.</strong>' +
@@ -1381,7 +1381,7 @@
       } catch (e) {
         console.error('request status failed:', e);
         if (wrap && !wrap.innerHTML) {
-          wrap.innerHTML = '<div class="req-banner muted-note">Could not check status ? check your connection. <button class="mini-btn ghost" onclick="checkRequestStatus()">Retry</button></div>';
+          wrap.innerHTML = '<div class="req-banner muted-note">Could not check status — check your connection. <button class="mini-btn ghost" onclick="checkRequestStatus()">Retry</button></div>';
         }
       }
     }

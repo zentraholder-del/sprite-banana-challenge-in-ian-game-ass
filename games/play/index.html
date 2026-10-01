@@ -6,6 +6,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
   <title>Lightspeed ? Games</title>
   <style>
     /* ===== SHARED DESIGN TOKENS (identical in all 4 files ? do not drift) ===== */
@@ -1186,6 +1187,14 @@
     .chat-fab, .dm-fab, .reply-btn, .chat-form button { touch-action: manipulation; }
   
     body { font-weight: 500; }
+    .mi {
+      font-family: 'Material Symbols Rounded';
+      font-weight: 400; font-style: normal; line-height: 1;
+      display: inline-block; vertical-align: middle;
+      font-size: 20px; letter-spacing: normal; text-transform: none;
+      -webkit-font-smoothing: antialiased; user-select: none;
+    }
+    button .mi { pointer-events: none; }
   </style>
 </head>
 <body>
@@ -1223,7 +1232,7 @@
         <button class="side-link" onclick="goGames()"><span class="mi">sports_esports</span> Games</button>
         <button class="side-link chat-only" onclick="toggleChat(true)"><span class="mi">chat_bubble</span> Chat</button>
       </div>
-      <div class="side-stat"><span class="mi" style="font-size:13px;color:#22c55e">fiber_manual_record</span> <b><span id="onlineCount">?</span></b> online</div>
+      <div class="side-stat"><span class="mi" style="font-size:13px;color:#22c55e">fiber_manual_record</span> <b><span id="onlineCount">…</span></b> online</div>
       <div class="side-stat"><button class="logout-btn" onclick="logout()">Sign out</button></div>
     </aside>
 
@@ -1265,17 +1274,17 @@
 
     <div class="leader-card" id="schoolBoardCard">
       <h3><span class="mi">school</span> SST vs Lenham</h3>
-      <div id="schoolScore" style="font-size:20px;font-weight:800;color:#ece9e2;text-align:center;margin-bottom:10px">?</div>
+      <div id="schoolScore" style="font-size:20px;font-weight:800;color:#ece9e2;text-align:center;margin-bottom:10px">…</div>
       <div style="height:12px;border-radius:8px;overflow:hidden;display:flex;background:#1e242b">
         <div id="schoolBarSST" style="background:#e1352b;width:50%;transition:width 0.4s ease-out"></div>
         <div id="schoolBarLen" style="background:#22c55e;width:50%;transition:width 0.4s ease-out"></div>
       </div>
-      <div id="schoolCounts" style="font-size:12px;color:#7d8590;text-align:center;margin-top:8px">?</div>
+      <div id="schoolCounts" style="font-size:12px;color:#7d8590;text-align:center;margin-top:8px">…</div>
     </div>
 
     <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()">? Favorites</button>
+      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()">★ Favorites</button>
     </div>
     <div class="result-count" id="resultCount"></div>
 
@@ -1296,13 +1305,13 @@
   <div class="chat-panel" id="chatPanel">
     <div class="chat-head">
       <span>Global Chat</span>
-      <small id="chatStatus">connecting?</small>
+      <small id="chatStatus">connecting…</small>
     </div>
     <div id="chatAnnounce" aria-live="polite"></div>
     <div class="chat-msgs" id="chatMsgs">
-      <div class="chat-empty">Loading?</div>
+      <div class="chat-empty">Loading…</div>
     </div>
-    <button class="new-msg-pill" id="newMsgPill" onclick="jumpToLatest()">? New messages</button>
+    <button class="new-msg-pill" id="newMsgPill" onclick="jumpToLatest()">↓ New messages</button>
     <div class="trivia-box" id="triviaBox" style="display:none"></div>
     <div id="shoutBox"></div>
     <div class="typing-line" id="typingLine"></div>
@@ -1311,7 +1320,7 @@
       <button onclick="cancelReply()" aria-label="Cancel reply">?</button>
     </div>
     <form class="chat-form" onsubmit="return sendChat(event)">
-      <textarea id="chatInput" rows="1" placeholder="Say something?" maxlength="500" autocomplete="off"></textarea>
+      <textarea id="chatInput" rows="1" placeholder="Say something…" maxlength="500" autocomplete="off"></textarea>
       <button type="submit">Send</button>
     </form>
   </div>
@@ -1330,7 +1339,7 @@
     </div>
     <div class="typing-line" id="dmTypingLine"></div>
     <form class="chat-form" onsubmit="return sendDmReply(event)">
-      <input id="dmInput" type="text" placeholder="Reply?" maxlength="500" autocomplete="off" />
+      <input id="dmInput" type="text" placeholder="Reply…" maxlength="500" autocomplete="off" />
       <button type="submit">Send</button>
     </form>
   </div>
@@ -1726,14 +1735,14 @@ async function sha256hexFp(str) {
       meta.appendChild(time);
       const replyBtn = document.createElement('button');
       replyBtn.className = 'reply-btn';
-      replyBtn.textContent = replyBtn.innerHTML = '<span class="mi">undo</span>';
+      replyBtn.innerHTML = '<span class="mi">undo</span>';
       replyBtn.title = 'Reply';
       replyBtn.setAttribute('aria-label', 'Reply to ' + uname);
       replyBtn.onclick = () => startReply(msg.id, uname, msg.content || '');
       meta.appendChild(replyBtn);
       const flagBtn = document.createElement('button');
       flagBtn.className = 'flag-btn';
-      flagBtn.textContent =flagBtn.innerHTML = '<span class="mi">flag</span>';
+      flagBtn.innerHTML = '<span class="mi">flag</span>';
       flagBtn.title = 'Report message';
       flagBtn.setAttribute('aria-label', 'Report message from ' + uname);
       flagBtn.onclick = () => sendReport(msg.id, uname);
@@ -1840,7 +1849,7 @@ async function sha256hexFp(str) {
         if (error) throw error;
         box.innerHTML = '';
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="chat-empty"><span class="mi">chat_bubble</span> No messages yet ? say hi.</div>';
+          box.innerHTML = '<div class="chat-empty"><span class="mi">chat_bubble</span> No messages yet — say hi.</div>';
         } else {
           liveShouts = [];
           data.forEach((m, i) => { appendMessage(m, i * 40); noteShout(m); });
@@ -2188,7 +2197,7 @@ async function sha256hexFp(str) {
       { id: 'sparkle', icon: 'auto_awesome', name: 'Sparkle chat (7d)', desc: '? prefix on your messages for a week', cost: 250 },
       { id: 'hideonline', icon: 'visibility_off', name: 'Hide online (forever)', desc: 'Lurk without the green dot', cost: 300 },
       { id: 'namecolor', icon: 'palette', name: 'Name color', desc: 'Pick your permanent username color', cost: 500 },
-      { id: 'mystery', icon: 'redeem', name: 'Mystery box', desc: 'Gamble: 10?200 XP or bonus flair', cost: 100 },
+      { id: 'mystery', icon: 'redeem', name: 'Mystery box', desc: 'Gamble: 10–200 XP or bonus flair', cost: 100 },
       { id: 'doubleday', icon: 'bolt', name: 'Double XP day', desc: 'Double earnings for 24 hours', cost: 500 },
       { id: 'glow', icon: 'flare', name: 'Name glow', desc: 'Permanent glowing username', cost: 800 },
       { id: 'vipweek', icon: 'star', name: 'VIP week', desc: 'Gold badge + double XP for 7 days', cost: 1000 },
@@ -2428,7 +2437,7 @@ async function sha256hexFp(str) {
         const top = document.createElement('div');
         top.className = 'qtop';
         const tx = document.createElement('span');
-        tx.textContent = (done ? '? ' : '') + q.text + ' (' + disp + ')';
+        tx.textContent = (done ? '✓ ' : '') + q.text + ' (' + disp + ')';
         const xp = document.createElement('span');
         xp.className = 'qxp';
         xp.textContent = '+' + q.xp + ' XP';
@@ -3342,7 +3351,7 @@ async function sha256hexFp(str) {
       if (!m) { schedShowing = false; return; }
       document.getElementById('schedAlertBody').textContent = a.content || '';
       document.getElementById('schedAlertWhen').textContent = '' + schedCountdown(a) +
-        (a.posted_by ? ' ? ' + a.posted_by : '');
+        (a.posted_by ? ' — ' + a.posted_by : '');
       m.style.display = 'flex';
     }
 
@@ -3853,7 +3862,7 @@ async function sha256hexFp(str) {
       const b = document.getElementById('gameFsBtn');
       if (!b) return;
       const fs = !!document.fullscreenElement;
-      b.textContent = fsb.innerHTML = fs ? '<span class="mi">fullscreen_exit</span>' : '<span class="mi">fullscreen</span>';
+      b.innerHTML = fs ? '<span class="mi">fullscreen_exit</span>' : '<span class="mi">fullscreen</span>';
       b.setAttribute('aria-label', fs ? 'Exit fullscreen' : 'Enter fullscreen');
     }
 
@@ -3905,7 +3914,7 @@ async function sha256hexFp(str) {
       const isAdmin = (msg.from_username || '').toLowerCase() === 'admin';
       div.className = 'chat-msg' + (isAdmin ? ' admin' : '');
       div.innerHTML =
-        '<div class="meta"><strong></strong> ? <span></span></div>' +
+        '<div class="meta"><strong></strong> · <span></span></div>' +
         '<div class="bubble"></div>';
       div.querySelector('strong').textContent = msg.from_username || 'admin';
       if (msg.created_at) {
@@ -3935,7 +3944,7 @@ async function sha256hexFp(str) {
         const box = document.getElementById('dmMsgs');
         box.innerHTML = '';
         if (!dataArr || dataArr.length === 0) {
-          box.innerHTML = '<div class="chat-empty">No messages yet.</div>';
+          box.innerHTML = '<div class="chat-empty"><span class="mi">chat_bubble</span> No messages yet.</div>';
         } else {
           dataArr.forEach(appendDm);
           if (dataArr.some(m => m.to_username === myName && !m.read)) {
@@ -4033,7 +4042,7 @@ async function sha256hexFp(str) {
         if (!online[name]) dot.style.background = '#7d8590';
         const nm = document.createElement('span');
         nm.className = 'nm';
-        nm.textContent = name + (online[name] ? ' ? ' + online[name] : '');
+        nm.textContent = name + (online[name] ? ' · ' + online[name] : '');
         div.appendChild(dot);
         div.appendChild(nm);
         (extra || []).forEach(([label, fn]) => {
@@ -4061,7 +4070,7 @@ async function sha256hexFp(str) {
       if (fr.length === 0) {
         const d = document.createElement('div');
         d.className = 'chat-empty';
-        d.textContent = 'No friends yet ? add people above.';
+        d.textContent = 'No friends yet — add people above.';
         box.appendChild(d);
       } else {
         fr.forEach(u => {
@@ -4427,7 +4436,7 @@ async function sha256hexFp(str) {
       const rc = document.getElementById('resultCount');
       if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ?' : '') + (activeCat !== 'All' ? ' ? ' + activeCat : '');
       if (list.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#7d8590;font-size:14px"><span class="mi">sports_esports</span> No games found ? try a different search.</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#7d8590;font-size:14px"><span class="mi">sports_esports</span> No games found — try a different search.</div>';
         return;
       }
       list
@@ -4438,7 +4447,7 @@ async function sha256hexFp(str) {
           card.onclick = () => { openGame(path, name); };
           const star = document.createElement('button');
           star.className = 'fav-star' + (favs.indexOf(path) !== -1 ? ' on' : '');
-          star.textContent = '?';
+          star.textContent = '★';
           star.setAttribute('aria-label', 'Favorite ' + name);
           star.onclick = ev => toggleFav(path, ev);
           const info = document.createElement('div');
