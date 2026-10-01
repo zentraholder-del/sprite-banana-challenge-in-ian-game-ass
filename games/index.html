@@ -1178,7 +1178,7 @@
           } else if (code === 'wrong_user') {
             showError('This key belongs to "' + ((res && res.bound) || 'another name') + '". Use that name, or use Reset my key below.');
           } else if (code === 'in_use') {
-            showError('This key is already in use. If it is you on another tab, wait a few minutes — or use Reset my key below.');
+            showError('This key is already signed in somewhere else. If that was you, use Reset my key below to free it, then log in again.');
           } else if (code === 'device_blocked') {
             showError('This device has been blocked by staff.');
           } else {

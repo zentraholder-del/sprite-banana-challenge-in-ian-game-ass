@@ -1789,7 +1789,16 @@ async function sha256hexFp(str) {
       }
     }
 
-    function adminLogout() {
+    async function adminLogout() {
+      // Free the key server-side so it can be used again immediately
+      // (pure hard lock has no stale takeover). Best-effort either way.
+      try {
+        let me = '';
+        try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
+        let tk = '';
+        try { tk = localStorage.getItem(LS_TOKEN) || ''; } catch (e) {}
+        if (tk) await sb.rpc('logout_session', { input_username: me, input_token: tk });
+      } catch (e) {}
       localStorage.removeItem(LS_TOKEN);
       localStorage.removeItem(LS_USER);
       try { localStorage.removeItem(LS_RANK); } catch (e) {}

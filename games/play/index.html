@@ -1634,13 +1634,26 @@ async function sha256hexFp(str) {
       return '';
     }
 
-    function logout(reason) {
+    async function logout(reason) {
       // Remember WHY we booted so the login page can explain it instead of
       // dumping the user on a blank form. Manual sign-out passes no reason.
       try {
         if (reason) localStorage.setItem('ls_booted', reason);
         else localStorage.removeItem('ls_booted');
       } catch (e) {}
+      // Manual sign-out frees the key server-side so it can be used again
+      // immediately (pure hard lock has no stale takeover). Best-effort:
+      // the redirect happens either way. Boots skip this — their token is
+      // already dead, so the call would be a no-op anyway.
+      if (!reason) {
+        try {
+          let me = '';
+          try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
+          let tk = '';
+          try { tk = localStorage.getItem(LS_TOKEN) || ''; } catch (e) {}
+          if (tk) await sb.rpc('logout_session', { input_username: me, input_token: tk });
+        } catch (e) {}
+      }
       localStorage.removeItem(LS_TOKEN);
       localStorage.removeItem(LS_USER);
       try { sessionStorage.removeItem('ls_auth'); } catch (e) {}

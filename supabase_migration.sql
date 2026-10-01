@@ -299,7 +299,6 @@ DECLARE
   new_token UUID;
   lk_locked BOOLEAN := FALSE;
   lk_msg TEXT := '';
-  sess_fresh BOOLEAN := FALSE;
 BEGIN
   -- input_fp feeds DEVICE BLACKLIST enforcement only (no session locking):
   -- blocked fingerprints are rejected here, and the fp is recorded for
@@ -307,7 +306,7 @@ BEGIN
   IF EXISTS (SELECT 1 FROM blacklist WHERE username = input_username) THEN
     RETURN json_build_object('success', false, 'error', 'blacklisted');
   END IF;
-  SELECT * INTO r FROM license_keys WHERE key = upper(trim(input_key));
+  SELECT * INTO r FROM license_keys WHERE key = upper(trim(input_key)) FOR UPDATE;
   IF NOT FOUND THEN
     RETURN json_build_object('success', false, 'error', 'invalid');
   END IF;
@@ -325,10 +324,6 @@ BEGIN
   IF r.used_by IS NOT NULL AND lower(r.used_by) <> lower(input_username) THEN
     RETURN json_build_object('success', false, 'error', 'wrong_user', 'bound', r.used_by);
   END IF;
-  -- Hard lock: an active session blocks everyone else. Exception: if the
-  -- bound account shows no recent presence (idle 5+ min, closed tab, crash),
-  -- the same account takes the session over instead of being locked out.
-  -- (Device fingerprints play no part in this decision.)
   -- Device blacklist: rejected whether or not the fp matches anything
   -- recorded. Checked before the hard lock so the message is accurate.
   IF (input_fp IS NOT NULL AND input_fp <> '' AND EXISTS (
@@ -337,16 +332,11 @@ BEGIN
       SELECT 1 FROM blacklist_devices WHERE fp = r.device_fp)) THEN
     RETURN json_build_object('success', false, 'error', 'device_blocked');
   END IF;
+  -- Pure hard lock: any live token blocks every new login, no stale
+  -- exception. The ONLY way back in is Reset my key (or staff action),
+  -- which nulls the token. (Device fingerprints play no part here.)
   IF r.session_token IS NOT NULL THEN
-    IF r.used_by IS NOT NULL AND EXISTS (
-      SELECT 1 FROM active_sessions
-      WHERE lower(username) = lower(r.used_by) AND last_seen > NOW() - INTERVAL '5 minutes'
-    ) THEN
-      sess_fresh := TRUE;
-    END IF;
-    IF sess_fresh THEN
-      RETURN json_build_object('success', false, 'error', 'in_use');
-    END IF;
+    RETURN json_build_object('success', false, 'error', 'in_use');
   END IF;
   new_token := gen_random_uuid();
   UPDATE license_keys
@@ -383,6 +373,23 @@ BEGIN
   RETURN json_build_object('valid', true, 'used_by', r.used_by,
     'rank', COALESCE(r.rank, CASE WHEN r.is_admin THEN 'admin' ELSE 'user' END),
     'is_admin', r.is_admin);
+END; $$;
+
+-- Clean logout frees the key immediately so it can be used again without
+-- Reset. The token is nulled only on match, so a stale/rotated token can
+-- never kill someone else's live session. Presence row dropped too.
+-- Called best-effort from the client (fail-open: redirect either way).
+CREATE OR REPLACE FUNCTION logout_session(input_username TEXT, input_token TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  UPDATE license_keys SET session_token = NULL
+  WHERE session_token::text = input_token
+    AND (input_username = '' OR lower(used_by) = lower(input_username));
+  BEGIN
+    DELETE FROM active_sessions WHERE lower(username) = lower(input_username);
+  EXCEPTION WHEN undefined_table THEN NULL;
+  END;
+  RETURN json_build_object('success', true);
 END; $$;
 
 -- Old 3-arg version must go first: same name + different arity would
@@ -1792,7 +1799,7 @@ BEGIN
         'perms_clear','lock_set','xp_grant','xp_grant_all','dashboard_stats','activity_feed',
         'keys_ranks','watch_get','reports_list','report_dismiss','report_action',
         'wall_check','user_delete','block_device_by_key','unblock_device','devices_list',
-        'reset_my_key','block_requester_device')
+        'reset_my_key','block_requester_device','logout_session')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);
