@@ -1014,7 +1014,7 @@
         document.getElementById('usernameInput').value = name;
         document.getElementById('keyInput').value = key;
         switchAuthTab('login');
-        toast('Key reset ;
+        toast('Key reset — welcome back', 'ok');
       } catch (e) {
         console.error(e);
         errBox.textContent = 'Reset failed. Check your connection.';
@@ -1034,7 +1034,7 @@
     function setLoginBusy(busy) {
       const btn = document.getElementById('loginBtn');
       btn.disabled = busy;
-      btn.innerHTML = busy ? '<span class="spin"></span>Verifying?' : 'Continue';
+      btn.innerHTML = busy ? '<span class="spin"></span>Verifying…' : 'Continue';
     }
 
     function showRequestForm() {
@@ -1058,7 +1058,7 @@
       if (!token) return;
       let me = '';
       try { me = localStorage.getItem(LS_USER) || ''; } catch (e) {}
-      showStatus('Checking saved session
+      showStatus('Checking saved session…');
       try {
         const { data, error } = await sb.rpc('verify_session', { input_username: me, input_token: token });
         if (error) throw error;
@@ -1134,13 +1134,13 @@
       }
 
       setLoginBusy(true);
-      showStatus('Verifying
+      showStatus('Verifying…');
 
       try {
         // Single server-side validation: blacklist, key lookup, site lock,
         // username bind, hard single-session lock. The fingerprint is sent
         // for DEVICE BLACKLIST enforcement only ? never for login locks.
-        showStatus('Checking this device
+        showStatus('Checking this device…');
         let fp = '';
         try { fp = await getDeviceFingerprint(); } catch (e) {}
         const { data: res, error: rpcErr } = await sb.rpc('validate_key', {
@@ -1172,7 +1172,7 @@
           setLoginBusy(false);
           return;
         }
-        if (res.welcome_back) showStatus('Welcome back 
+        if (res.welcome_back) showStatus('Welcome back — restoring your session…');
 
         const token = res.session_token;
         localStorage.setItem(LS_TOKEN, token);
@@ -1238,7 +1238,7 @@
       if (!sel || !dd) return;
       const label = dd.querySelector('.dd-label');
       const cur = sel.options[sel.selectedIndex];
-      if (label) label.textContent = cur ? cur.textContent : 'Select school?';
+      if (label) label.textContent = cur ? cur.textContent : 'Select school…';
       const panel = dd.querySelector('.dd-panel');
       panel.innerHTML = '';
       Array.from(sel.options).forEach(o => {
@@ -1250,7 +1250,7 @@
         s.textContent = o.textContent;
         const tick = document.createElement('span');
         tick.className = 'tick';
-        tick.textContent = '
+        tick.textContent = '✓';
         b.appendChild(s);
         b.appendChild(tick);
         b.onclick = (function (val) {
@@ -1292,7 +1292,7 @@
       if (!name) { errBox.textContent = 'Enter your name.'; authShake(); return; }
       if (!school) { errBox.textContent = 'Select your school.'; authShake(); return; }
       btn.disabled = true;
-      btn.textContent = 'Sending
+      btn.textContent = 'Sending…';
       try {
         // Fingerprint the requester: stored with the request for device
         // blocking, and blocked devices are rejected outright server-side.
@@ -1529,7 +1529,7 @@
           body.textContent = a.content || '';
           let label = '';
           try { label = new Date(a.scheduled_for).toLocaleString(); } catch (e) {}
-          when.textContent = '? ' + label + (a.posted_by ? ' ? ' + a.posted_by : '');
+          when.textContent = '⏰ ' + label + (a.posted_by ? ' — ' + a.posted_by : '');
           btn.textContent = (i === items.length - 1) ? 'Continue' : 'Got it (' + (i + 1) + '/' + items.length + ')';
         }
         btn.onclick = async () => {

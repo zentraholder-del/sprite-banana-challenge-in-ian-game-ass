@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
-  <title>Lightspeed ? Admin</title>
+  <title>Lightspeed — Admin</title>
   <style>
     /* ===== SHARED DESIGN TOKENS (identical in all 4 files ? do not drift) ===== */
     :root {
@@ -930,7 +930,7 @@
   </div>
 
   <nav>
-    <div class="nav-logo">? Lightspeed ? Admin</div>
+    <div class="nav-logo">⚡ Lightspeed · Admin</div>
     <div><button class="logout-btn" id="adminLogout" onclick="adminLogout()" style="display:none">Sign out</button></div>
   </nav>
 
@@ -939,75 +939,75 @@
     <!-- GATE (replaced by shared-login check; shown only while verifying) -->
     <div class="card center" id="gate">
       <h1>Admin</h1>
-      <p class="sub" id="gateStatus">Checking admin session?</p>
+      <p class="sub" id="gateStatus">Checking admin session…</p>
     </div>
 
     <!-- DASHBOARD -->
     <div id="dash" style="display:none">
       <div class="topbar">
         <span class="who" id="topbarUser">Admin</span>
-        <button class="icon-btn" onclick="openRankGuide()" aria-label="Rank guide" title="What can each rank do?">?</button>
+        <button class="icon-btn" onclick="openRankGuide()" aria-label="Rank guide" title="What can each rank do?">❓</button>
         <div class="ticker" aria-live="polite">
-          <span>Keys <b id="tickKeys">?</b></span>
-          <span>Requests <b id="tickPending">?</b></span>
-          <span>Online <b id="tickOnline">?</b></span>
+          <span>Keys <b id="tickKeys">…</b></span>
+          <span>Requests <b id="tickPending">…</b></span>
+          <span>Online <b id="tickOnline">…</b></span>
         </div>
       </div>
       <div class="admin-shell">
       <div class="tabs sidebar">
-        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">?? Dashboard</button>
-        <button data-tab="requests" onclick="showTab('requests', this)">?? Key requests</button>
-        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">??? Admin requests</button>
-        <button data-tab="keys" onclick="showTab('keys', this)">?? Manage keys</button>
-        <button data-tab="blacklist" onclick="showTab('blacklist', this)">?? Blacklist</button>
-        <button data-tab="messages" onclick="showTab('messages', this)">?? Messaging</button>
-        <button data-tab="users" onclick="showTab('users', this)">?? Users</button>
-        <button data-tab="playerdms" onclick="showTab('playerdms', this)">?? Player DMs</button>
-        <button data-tab="reports" onclick="showTab('reports', this)">?? Reports</button>
-        <button data-tab="troll" onclick="showTab('troll', this)">?? Troll</button>
-        <button data-tab="activity" onclick="showTab('activity', this)">?? Activity</button>
-        <button data-tab="perms" onclick="showTab('perms', this)">?? Permissions</button>
-        <a class="tablink" href="../games/play/">? Play Games</a>
+        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">📊 Dashboard</button>
+        <button data-tab="requests" onclick="showTab('requests', this)">📥 Key requests</button>
+        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">🛡️ Admin requests</button>
+        <button data-tab="keys" onclick="showTab('keys', this)">🔑 Manage keys</button>
+        <button data-tab="blacklist" onclick="showTab('blacklist', this)">🚫 Blacklist</button>
+        <button data-tab="messages" onclick="showTab('messages', this)">💬 Messaging</button>
+        <button data-tab="users" onclick="showTab('users', this)">👥 Users</button>
+        <button data-tab="playerdms" onclick="showTab('playerdms', this)">✉️ Player DMs</button>
+        <button data-tab="reports" onclick="showTab('reports', this)">🚩 Reports</button>
+        <button data-tab="troll" onclick="showTab('troll', this)">👻 Troll</button>
+        <button data-tab="activity" onclick="showTab('activity', this)">📜 Activity</button>
+        <button data-tab="perms" onclick="showTab('perms', this)">🔐 Permissions</button>
+        <a class="tablink" href="../games/play/">▶ Play Games</a>
       </div>
       <div class="admin-main">
       <p class="muted" id="rankNote" style="margin-bottom:12px"></p>
 
       <div class="card section active" id="sec-dashboard">
         <h2>Overview</h2>
-        <p class="sub">Live snapshot ? stats refresh every 3 seconds, counts animate only the change.</p>
+        <p class="sub">Live snapshot — stats refresh every 3 seconds, counts animate only the change.</p>
         <div class="stat-grid" id="statGrid">
-          <div class="stat-card"><div class="stat-num">?</div><div class="stat-label">Active keys</div></div>
-          <div class="stat-card"><div class="stat-num">?</div><div class="stat-label">Users activated</div></div>
-          <div class="stat-card"><div class="stat-num">?</div><div class="stat-label">Online now</div></div>
-          <div class="stat-card"><div class="stat-num">?</div><div class="stat-label">Pending requests</div></div>
+          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Active keys</div></div>
+          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Users activated</div></div>
+          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Online now</div></div>
+          <div class="stat-card"><div class="stat-num">…</div><div class="stat-label">Pending requests</div></div>
           <div class="stat-card"><div class="stat-num">100</div><div class="stat-label">Games available</div></div>
         </div>
         <div class="dash-preview">
           <h3>Recent activity</h3>
-          <div id="dashPreview"><p class="muted">Loading?</p></div>
+          <div id="dashPreview"><p class="muted">Loading…</p></div>
           <button class="linklike" onclick="showTab('activity', document.querySelector('.tabs button[data-tab=&quot;activity&quot;]'))">View full log ?</button>
         </div>
         <div class="dash-preview" id="lockPanel" style="display:none">
-          <h3>?? Site lock (kill-switch)</h3>
+          <h3>🔒 Site lock (kill-switch)</h3>
           <p class="sub">While locked, only you can log in or stay online. Everyone else is signed out with your message.</p>
           <div class="inline-form" style="margin-top:8px">
             <input id="lockMsg" placeholder="Locked message (optional)" maxlength="200" style="flex:1;min-width:0" />
             <button class="btn small danger" onclick="setSiteLock(true)">Lock site</button>
             <button class="btn small ghost" onclick="setSiteLock(false)">Unlock</button>
           </div>
-          <span class="muted" id="lockStatus">Checking?</span>
+          <span class="muted" id="lockStatus">Checking…</span>
         </div>
       </div>
 
       <div class="card section" id="sec-requests">
         <h2>Pending key requests</h2>
-        <div id="reqList"><p class="muted">Loading?</p></div>
+        <div id="reqList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-adminreqs">
         <h2>Admin requests</h2>
-        <p class="sub">Rank-upgrade requests on existing keys ? one per account, ever. Owner and admin only.</p>
-        <div id="adminReqList"><p class="muted">Loading?</p></div>
+        <p class="sub">Rank-upgrade requests on existing keys — one per account, ever. Owner and admin only.</p>
+        <div id="adminReqList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-keys">
@@ -1016,7 +1016,7 @@
         <div class="inline-form" style="align-items:center">
           <input id="customKey" placeholder="Custom Key (leave blank to auto-generate)" maxlength="64" style="flex:1; min-width:180px" aria-label="Custom key" />
           <div class="dd" id="dd-genrank" data-select="genRank">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-genrank')" aria-label="Rank for new key"><span class="dd-label"></span><em class="chev">?</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-genrank')" aria-label="Rank for new key"><span class="dd-label"></span><em class="chev">▾</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="genRank" aria-label="Rank for new key" style="display:none">
@@ -1039,9 +1039,9 @@
           <button onclick="setKeyRankFilter('owner', this)">owner</button>
         </div>
         <div class="inline-form">
-          <input id="keySearch" placeholder="Filter by username?" maxlength="32" oninput="renderKeys()" aria-label="Filter keys by username" />
+          <input id="keySearch" placeholder="Filter by username…" maxlength="32" oninput="renderKeys()" aria-label="Filter keys by username" />
         </div>
-        <div id="keyList"><p class="muted">Loading?</p></div>
+        <div id="keyList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-blacklist">
@@ -1051,15 +1051,15 @@
           <input id="blReason" placeholder="reason (optional)" maxlength="200" />
           <button class="btn small" onclick="addBlacklist()">Add</button>
         </div>
-        <div id="blList"><p class="muted">Loading?</p></div>
+        <div id="blList"><p class="muted">Loading…</p></div>
         <h2 style="margin-top:24px">Blocked devices</h2>
-        <p class="sub">Device fingerprints blocked here (or via a key's Block device button) can't log in on any page ? every page shows them a fake error instead.</p>
-        <div id="devList"><p class="muted">Loading?</p></div>
+        <p class="sub">Device fingerprints blocked here (or via a key's Block device button) can't log in on any page — every page shows them a fake error instead.</p>
+        <div id="devList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-messages">
         <h2>Post announcement</h2>
-        <p class="sub">Pinned banner on the play page for everyone ? separate from global chat.</p>
+        <p class="sub">Pinned banner on the play page for everyone — separate from global chat.</p>
         <div class="inline-form">
           <input id="adminMsg" placeholder="Announcement or troll?" maxlength="500" />
           <button class="btn small" onclick="postAdminMessage()">Post</button>
@@ -1081,17 +1081,17 @@
         <div class="error" id="msgError"></div>
         <div class="ok" id="msgOk"></div>
         <h2 style="margin-top:24px">Recent announcements</h2>
-        <div id="recentMsgs"><p class="muted">Loading?</p></div>
+        <div id="recentMsgs"><p class="muted">Loading…</p></div>
         <h2 style="margin-top:24px">Recent chat (moderation)</h2>
         <p class="sub">Global chat messages live on the play page. Delete removes them for everyone.</p>
-        <div id="chatModList"><p class="muted">Loading?</p></div>
+        <div id="chatModList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-users">
         <h2>Active users</h2>
         <p class="sub">Live from active_sessions, most recent first. "Stale" means no heartbeat for 90+ seconds.</p>
         <div class="inline-form">
-          <input id="userSearch" placeholder="Filter by username?" maxlength="32" oninput="renderUsers()" aria-label="Filter users by username" />
+          <input id="userSearch" placeholder="Filter by username…" maxlength="32" oninput="renderUsers()" aria-label="Filter users by username" />
         </div>
         <div class="inline-form" id="xpGrantPanel" style="align-items:center;display:none">
           <input id="xpGrantAmount" type="number" inputmode="numeric" min="1" max="10000" value="100" style="flex:0 0 100px;min-width:100px" aria-label="XP amount" />
@@ -1099,11 +1099,11 @@
           <button class="btn small" id="xpAllBtn" onclick="grantXpEveryone('all', this)">Give everyone</button>
           <span class="muted">Owner-only XP grants</span>
         </div>
-        <div id="userList"><p class="muted">Loading?</p></div>
+        <div id="userList"><p class="muted">Loading…</p></div>
         <div id="watchPanel" style="display:none; margin-top:20px; border-top:1px solid #262c33; padding-top:20px;">
-          <h2>?? Watching <span id="watchName"></span></h2>
+          <h2>👁 Watching <span id="watchName"></span></h2>
           <div class="inline-form"><button class="btn small ghost" onclick="closeWatch()">Close</button></div>
-          <div id="watchBody"><p class="muted">Loading?</p></div>
+          <div id="watchBody"><p class="muted">Loading…</p></div>
         </div>
         <div class="dm-layout" id="dmThread" style="display:none">
           <div>
@@ -1123,8 +1123,8 @@
 
       <div class="card section" id="sec-playerdms">
         <h2>Player DMs</h2>
-        <p class="sub">Read-only moderation view. Owner and admin only ? players are told DMs are moderated.</p>
-        <div id="spyList"><p class="muted">Loading?</p></div>
+        <p class="sub">Read-only moderation view. Owner and admin only — players are told DMs are moderated.</p>
+        <div id="spyList"><p class="muted">Loading…</p></div>
         <div id="spyThread" style="display:none; margin-top:20px; border-top:1px solid rgba(255,255,255,0.07); padding-top:20px;">
           <h2>Thread: <span id="spyPair"></span></h2>
           <div class="dm-hist" id="spyHistory"></div>
@@ -1134,12 +1134,12 @@
       <div class="card section" id="sec-reports">
         <h2>Player reports</h2>
         <p class="sub">Flagged chat messages. Dismiss, delete the message, or mute the author.</p>
-        <div id="reportList"><p class="muted">Loading?</p></div>
+        <div id="reportList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-troll">
         <h2>Troll control</h2>
-        <p class="sub">Effects play live on games/play/. Target everyone or one user. Everything auto-clears or dismisses ? nothing locks anyone out.</p>
+        <p class="sub">Effects play live on games/play/. Target everyone or one user. Everything auto-clears or dismisses — nothing locks anyone out.</p>
         <div class="segrow" role="radiogroup" aria-label="Trick target">
           <button class="seg-btn active" id="tgtEveryone" onclick="setTrollTarget('everyone')">Everyone</button>
           <button class="seg-btn" id="tgtUser" onclick="setTrollTarget('user')">Specific user</button>
@@ -1147,7 +1147,7 @@
         <div class="field" id="trollUserWrap" style="display:none">
           <label>Target user</label>
           <div class="dd" id="dd-target" data-select="trollTarget">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-target')" aria-label="Target user"><span class="dd-label"></span><em class="chev">?</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-target')" aria-label="Target user"><span class="dd-label"></span><em class="chev">▾</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="trollTarget" aria-label="Target user" style="display:none" onchange="paintTrickButtons(); refreshTrollStates();"></select>
@@ -1155,7 +1155,7 @@
         <div class="field">
           <label>Scare image (jumpscare only)</label>
           <div class="dd" id="dd-scare" data-select="scareImg">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-scare')" aria-label="Scare image"><span class="dd-label"></span><em class="chev">?</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-scare')" aria-label="Scare image"><span class="dd-label"></span><em class="chev">▾</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="scareImg" aria-label="Scare image" style="display:none">
@@ -1177,20 +1177,20 @@
         </div>
         <div class="field">
           <label>Message (iOS alert &amp; popup spam)</label>
-          <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing ??" maxlength="200" />
+          <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing 😂" maxlength="200" />
         </div>
         <div class="active-strip" id="activeNow" aria-live="polite"></div>
         <div class="trick-grid" id="trickGrid">
-          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">??<span>Jumpscare</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">??<span>Screen shake</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">??<span>Fake disconnect</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">??<span>Upside down</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">?<span>Ripple chaos</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">??<span>Fake iOS alert</span><em class="tstate">INSTANT</em></button>
-          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">??<span>Color invert</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">??<span>Popup spam</span><em class="tstate">INSTANT</em></button>
-          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">?<span>Loading forever</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">??<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">✨<span>Ripple chaos</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">🔔<span>Fake iOS alert</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">🎨<span>Color invert</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">💬<span>Popup spam</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
         <p class="muted">Tap a TOGGLE card to switch it on/off instantly. Tap an INSTANT card to fire it once. Jumpscare uses the image picker above when toggled ON.</p>
         <div class="error" id="trollErr"></div>
@@ -1200,12 +1200,12 @@
       <div class="card section" id="sec-activity">
         <h2>Activity log</h2>
         <p class="sub">Recent activations, blacklist actions, and troll events sent. Read-only.</p>
-        <div id="activityList"><p class="muted">Loading?</p></div>
+        <div id="activityList"><p class="muted">Loading…</p></div>
       </div>
       <div class="card section" id="sec-perms">
         <h2>Rank permissions</h2>
         <p class="sub">Owner-only. Tick what each rank may do ? applies instantly on save. Your own owner powers can never be restricted.</p>
-        <div id="permsMatrix"><p class="muted">Loading?</p></div>
+        <div id="permsMatrix"><p class="muted">Loading…</p></div>
         <div class="inline-form" style="margin-top:12px">
           <button class="btn small" onclick="savePerms()">Save permissions</button>
           <button class="btn small ghost" onclick="resetPerms()">Reset to defaults</button>
@@ -1222,7 +1222,7 @@
   <div class="overlay" id="bulkOverlay" onclick="if(event.target===this)closeBulkModal()">
     <div class="modal" style="text-align:left;max-width:460px">
       <h2 style="text-align:center">Bulk generate</h2>
-      <p class="sub" style="text-align:center">Up to 20 keys ? set a count, or paste one custom key per line.</p>
+      <p class="sub" style="text-align:center">Up to 20 keys — set a count, or paste one custom key per line.</p>
       <div class="field">
         <label>Count (1?20)</label>
         <input id="bulkCountM" type="number" inputmode="numeric" min="1" max="20" value="5" />
@@ -1250,8 +1250,8 @@
     <div class="modal" style="text-align:left;max-width:460px">
       <h2 style="text-align:center">What can each rank do?</h2>
       <p class="sub" style="text-align:center">Owner outranks admin outranks mod outranks user.</p>
-      <div class="mini-row"><span><span class="pill rank-owner">owner</span></span><span>Everything. Only one owner key exists ? it can never be deleted or edited from this site.</span></div>
-      <div class="mini-row"><span><span class="pill rank-admin">admin</span></span><span>Everything except owner-only actions. Can only modify <b>user</b> keys ? never admin, mod, or owner keys.</span></div>
+      <div class="mini-row"><span><span class="pill rank-owner">owner</span></span><span>Everything. Only one owner key exists — it can never be deleted or edited from this site.</span></div>
+      <div class="mini-row"><span><span class="pill rank-admin">admin</span></span><span>Everything except owner-only actions. Can only modify <b>user</b> keys — never admin, mod, or owner keys.</span></div>
       <div class="mini-row"><span><span class="pill rank-mod">mod</span></span><span>Blacklist, chat/mod messages, view users. No keys, requests, troll, or activity tabs.</span></div>
       <div class="mini-row"><span><span class="pill rank-user">user</span></span><span>Plays games. No admin access at all.</span></div>
       <button class="btn block" style="margin-top:16px" onclick="closeRankGuide()">Got it</button>
@@ -1263,7 +1263,7 @@
   <!-- ONE-TIME KEY REVEAL (plaintext is never stored) -->  <div class="overlay" id="keyOverlay" onclick="if(event.target===this)closeKeyModal()">
     <div class="modal">
       <h2>New key created</h2>
-      <p class="sub">Send this to the requester now ? it is shown only once.</p>
+      <p class="sub">Send this to the requester now — it is shown only once.</p>
       <div class="newkey"><span id="keyModalText"></span><button class="btn small" id="keyCopyBtn" onclick="copyRevealedKey()">Copy</button></div>
       <div id="keyModalList"></div>
       <button class="btn block" style="margin-top:16px" onclick="closeKeyModal()">Done</button>
@@ -1646,9 +1646,9 @@ async function sha256hexFp(str) {
         }
       });
       if (note) {
-        if (myRank === 'owner') note.textContent = 'Signed in as OWNER ? full access. Your powers cannot be restricted.';
-        else if (myRank === 'admin') note.textContent = 'Signed in as ADMIN ? your access is set by the owner on the Permissions tab.';
-        else if (myRank === 'mod') note.textContent = 'Signed in as MOD ? your access is set by the owner on the Permissions tab.';
+        if (myRank === 'owner') note.textContent = 'Signed in as OWNER — full access. Your powers cannot be restricted.';
+        else if (myRank === 'admin') note.textContent = 'Signed in as ADMIN — your access is set by the owner on the Permissions tab.';
+        else if (myRank === 'mod') note.textContent = 'Signed in as MOD — your access is set by the owner on the Permissions tab.';
         else note.textContent = '';
       }
       const xpPanel = document.getElementById('xpGrantPanel');
@@ -1663,8 +1663,8 @@ async function sha256hexFp(str) {
       if (!st || myRank !== 'owner') return;
       try {
         const r = await sb.from('app_config').select('locked').eq('id', 1).maybeSingle();
-        if (!r.error && r.data) st.textContent = r.data.locked ? '?? LOCKED' : 'Unlocked';
-        else st.textContent = 'Not set up yet ? run the SQL, then lock/unlock here.';
+        if (!r.error && r.data) st.textContent = r.data.locked ? '🔒 LOCKED' : 'Unlocked';
+        else st.textContent = 'Not set up yet — run the SQL, then lock/unlock here.';
       } catch (e) { console.error('lock status failed:', e); }
     }
     async function setSiteLock(locked) {
@@ -1674,7 +1674,7 @@ async function sha256hexFp(str) {
       try {
         const res = await srpc('lock_set', callerArgs({ new_locked: locked, new_message: msg.slice(0, 200) }));
         if (!res || !res.success) throw new Error((res && res.error) || 'failed');
-        if (st) st.textContent = locked ? '?? LOCKED' : 'Unlocked';
+        if (st) st.textContent = locked ? '🔒 LOCKED' : 'Unlocked';
         toast(locked ? 'Site locked' : 'Site unlocked', locked ? undefined : 'ok');
       } catch (e) { console.error('set lock failed:', e); toast('Lock change failed', 'err'); }
     }
@@ -1947,7 +1947,7 @@ async function sha256hexFp(str) {
         const rows = await fetchActivityRows();
         const top = rows.slice(0, 5);
         if (top.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No activity yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
           return;
         }
         let html = '';
@@ -1963,9 +1963,9 @@ async function sha256hexFp(str) {
 
     function activityIcon(kind) {
       if (!kind) return '?';
-      if (kind.indexOf('activation') !== -1) return '??';
-      if (kind.indexOf('blacklist') !== -1) return '??';
-      if (kind.indexOf('troll') !== -1) return '??';
+      if (kind.indexOf('activation') !== -1) return '🔑';
+      if (kind.indexOf('blacklist') !== -1) return '🚫';
+      if (kind.indexOf('troll') !== -1) return '👻';
       if (kind.indexOf('approved') !== -1) return '?';
       if (kind.indexOf('denied') !== -1) return '?';
       return '?';
@@ -2007,7 +2007,7 @@ async function sha256hexFp(str) {
       const box = document.getElementById('activityList');
       const top = activityRows.slice(0, activityShown);
       if (top.length === 0) {
-        box.innerHTML = '<div class="empty-state"><div class="big">??</div>No activity yet.</div>';
+        box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
         return;
       }
       let html = '<div class="timeline">';
@@ -2041,7 +2041,7 @@ async function sha256hexFp(str) {
         renderActivityRows();
       } catch (e) {
         console.error('activity log failed:', e);
-        if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big">??</div>Failed to load activity.</div>';
+        if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load activity.</div>';
       }
     }
 
@@ -2097,7 +2097,7 @@ async function sha256hexFp(str) {
     const INSTANT_TRICKS = ['confetti', 'popups', 'alert'];
     let trollStates = {}; // "type|scope" -> 'on' / 'off' / null (scope '*' = Everyone)
     let trollStateRows = {}; // "type|scope" -> { type, scope } for the Active-now list
-    const TRICK_EMOJI = { jumpscare: '??', shake: '??', disconnect: '??', flip: '??', ripples: '?', invert: '??', loading: '?', alert: '??', popups: '??', confetti: '??' };
+    const TRICK_EMOJI = { jumpscare: '👻', shake: '📳', disconnect: '📡', flip: '🙃', ripples: '✨', invert: '🎨', loading: '⏳', alert: '🔔', popups: '💬', confetti: '🎉' };
 
     function currentScope() {
       if (trollMode === 'user') {
@@ -2134,7 +2134,7 @@ async function sha256hexFp(str) {
         box.innerHTML = '';
         return;
       }
-      let html = '<div class="muted" style="margin-bottom:8px">Live now ? tap Stop to kill one:</div>';
+      let html = '<div class="muted" style="margin-bottom:8px">Live now — tap Stop to kill one:</div>';
       keys.forEach(k => {
         const r = trollStateRows[k];
         html += '<div class="keyrow"><span>' + (TRICK_EMOJI[r.type] || '?') + ' <b>' + esc(r.type) + '</b> ? ' +
@@ -2297,7 +2297,7 @@ async function sha256hexFp(str) {
           else prev.style.display = 'none';
         }
         const st = document.getElementById('customScareStatus');
-        if (st && !st.textContent) st.textContent = url ? 'Custom image set ? pick "Custom upload" above to use it.' : 'No custom image yet.';
+        if (st && !st.textContent) st.textContent = url ? 'Custom image set — pick "Custom upload" above to use it.' : 'No custom image yet.';
       } catch (e) { console.error('load custom scare failed:', e); }
     }
     function downscaleImage(file, maxDim) {
@@ -2328,16 +2328,16 @@ async function sha256hexFp(str) {
       if (!f) { if (st) st.textContent = 'Choose an image file first.'; return; }
       if (!/^image\//.test(f.type || '')) { if (st) st.textContent = 'That is not an image file.'; return; }
       if (f.size > 8 * 1024 * 1024) { if (st) st.textContent = 'File too big (max 8MB).'; return; }
-      if (st) st.textContent = 'Uploading?';
+      if (st) st.textContent = 'Uploading…';
       try {
         const dataUrl = await downscaleImage(f, 800);
-        if (dataUrl.length > 700000) { if (st) st.textContent = 'Still too big after shrinking ? try a smaller image.'; return; }
+        if (dataUrl.length > 700000) { if (st) st.textContent = 'Still too big after shrinking — try a smaller image.'; return; }
         const res = await srpc('scare_set', callerArgs({ image_data: dataUrl }));
         if (!res || !res.success) throw new Error((res && res.error) || 'failed');
         customScareReady = true;
         const prev = document.getElementById('customScarePreview');
         if (prev) { prev.src = dataUrl; prev.style.display = ''; }
-        if (st) st.textContent = 'Custom image saved ? ? select "Custom upload" in the picker to fire it.';
+        if (st) st.textContent = 'Custom image saved ✓ — select "Custom upload" in the picker to fire it.';
         toast('Custom scare saved', 'ok');
       } catch (e) { console.error('upload custom scare failed:', e); if (st) st.textContent = 'Upload failed.'; toast('Upload failed', 'err'); }
     }
@@ -2376,7 +2376,7 @@ async function sha256hexFp(str) {
       if (!sel || !dd) return;
       const label = dd.querySelector('.dd-label');
       const cur = sel.options[sel.selectedIndex];
-      if (label) label.textContent = cur ? cur.textContent : 'Select?';
+      if (label) label.textContent = cur ? cur.textContent : 'Select…';
       const panel = dd.querySelector('.dd-panel');
       panel.innerHTML = '';
       Array.from(sel.options).forEach(o => {
@@ -2465,7 +2465,7 @@ async function sha256hexFp(str) {
         loadKeys();
       } catch (e) {
         console.error('bulk generate failed:', e);
-        toast('Bulk generate failed partway ? some keys may have been created.', 'err');
+        toast('Bulk generate failed partway — some keys may have been created.', 'err');
       } finally {
         setBtnLoading(btn, false, 'Generate');
       }
@@ -2549,7 +2549,7 @@ async function sha256hexFp(str) {
         if (data.error) throw new Error(data.error);
         const pending = (data || []).filter(r => r.status === 'pending');
         if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No pending requests.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending requests.</div>';
           knownReqIds = {};
           return;
         }
@@ -2559,8 +2559,8 @@ async function sha256hexFp(str) {
           const isNew = !isFirst && !knownReqIds[r.id];
           knownReqIds[r.id] = true;
           html += '<div class="req-card' + (isNew ? ' flash' : '') + '" style="animation-delay:' + Math.min(ri, 8) * 40 + 'ms">' +
-            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off">?? device blocked</span>' : '') + '</div>' +
-            '<div class="rmeta">' + esc(r.school || '?') + ' ? ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '?') + '</div>' +
+            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off">🚫 device blocked</span>' : '') + '</div>' +
+            '<div class="rmeta">' + esc(r.school || '—') + ' — ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '—') + '</div>' +
             '<div class="rreason">' + esc(r.reason || '(no reason given)') + '</div>' +
             '<div class="row-actions">' +
             '<button class="btn small" onclick="approveRequest(' + r.id + ', this)">Approve</button>' +
@@ -2575,7 +2575,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html);
       } catch (e) {
         console.error(e);
-        if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">??</div>Failed to load requests.</div>';
+        if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
       }
     }
 
@@ -2618,7 +2618,7 @@ async function sha256hexFp(str) {
         const decided = data.decided || [];
         let html = '';
         if (pending.length === 0) {
-          html += '<div class="empty-state"><div class="big">??</div>No pending admin requests.</div>';
+          html += '<div class="empty-state"><div class="big">📭</div>No pending admin requests.</div>';
         } else {
           html += '<table><tr><th>User</th><th>Key</th><th>Rank</th><th></th></tr>';
           pending.forEach((r, ri) => {
@@ -2646,9 +2646,9 @@ async function sha256hexFp(str) {
         console.error('load admin requests failed:', e);
         if (first) {
           const msg = /column/i.test((e && e.message) || '')
-            ? 'Admin requests need a database update ? run the SQL migration, then reload.'
+            ? 'Admin requests need a database update — run the SQL migration, then reload.'
             : 'Failed to load admin requests.';
-          const errHtml = '<div class="empty-state"><div class="big">??</div>' + esc(msg) + '</div>';
+          const errHtml = '<div class="empty-state"><div class="big">⚠️</div>' + esc(msg) + '</div>';
           setHTMLifChanged(box, errHtml);
         }
       }
@@ -2886,13 +2886,13 @@ async function sha256hexFp(str) {
         if (data.error) throw new Error(data.error);
         lastKeys = data || [];
         if (lastKeys.length === 0) {
-          setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>No keys yet ? generate one above.</div>');
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big">🔑</div>No keys yet — generate one above.</div>');
           return;
         }
         renderKeys();
       } catch (e) {
         console.error(e);
-        if (firstKeys) box.innerHTML = '<div class="empty-state"><div class="big">??</div>Failed to load keys.</div>';
+        if (firstKeys) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load keys.</div>';
       }
     }
 
@@ -2913,11 +2913,11 @@ async function sha256hexFp(str) {
         return 0;
       });
       if (rows.length === 0) {
-        box.innerHTML = '<div class="empty-state"><div class="big">??</div>' +
-          (lastKeys.length === 0 ? 'No keys yet ? generate one above.' : 'No keys match the current filters.') + '</div>';
+        box.innerHTML = '<div class="empty-state"><div class="big">🔑</div>' +
+          (lastKeys.length === 0 ? 'No keys yet — generate one above.' : 'No keys match the current filters.') + '</div>';
         return;
       }
-      const arrow = col => keySort.col === col ? (keySort.dir === 1 ? ' ?' : ' ?') : '';
+      const arrow = col => keySort.col === col ? (keySort.dir === 1 ? ' ▲' : ' ▼') : '';
       let html = '<div class="keys-table-wrap"><table class="keys-table"><tr><th>Key</th>' +
         '<th class="sortable" onclick="setKeySort(\'username\')">User' + arrow('username') + '</th>' +
         '<th class="sortable" onclick="setKeySort(\'rank\')">Rank' + arrow('rank') + '</th>' +
@@ -2934,7 +2934,7 @@ async function sha256hexFp(str) {
           '<td class="muted">' + (k.created_at ? esc(new Date(k.created_at).toLocaleString()) : '?') + '</td>' +
           '<td><div class="row-actions">' +
           (editable
-            ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active ? tap to disable' : 'Inactive ? tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +
+            ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active — tap to disable' : 'Inactive — tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +
               '<button class="btn small ghost" onclick="resetKey(' + k.id + ', this, \'' + esc(trank) + '\')">Reset</button>' +
               (can('blacklist.manage') ? '<button class="btn small ghost" onclick="blockDevice(' + k.id + ', this)">Block device</button>' : '')
             : '<button class="btn small ghost restricted" title="Insufficient rank" disabled>Locked</button>') +
@@ -3005,7 +3005,7 @@ async function sha256hexFp(str) {
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">??</div>Blacklist is empty.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>Blacklist is empty.</div>';
           return;
         }
         let html = '<table><tr><th>Username</th><th>Reason</th><th></th></tr>';
@@ -3017,7 +3017,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error(e);
-      if (firstBl) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load blacklist.</div>');
+      if (firstBl) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load blacklist.</div>');
     }
     }
 
@@ -3063,19 +3063,19 @@ async function sha256hexFp(str) {
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         if (!data.length) {
-          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No blocked devices.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">📵</div>No blocked devices.</div>';
           return;
         }
         let html = '<table><tr><th>Device</th><th>Reason</th><th>When</th><th></th></tr>';
         data.forEach(d => {
           html += '<tr><td class="mono">' + esc(String(d.fp || '').slice(0, 12)) + '?</td><td>' + esc(d.reason || '?') +
-            '</td><td class="muted">' + esc(d.created_at ? new Date(d.created_at).toLocaleString() : '?') +
+            '</td><td class="muted">' + esc(d.created_at ? new Date(d.created_at).toLocaleString() : '—') +
             '</td><td><button class="btn small ghost" onclick="unblockDevice(\'' + esc(d.fp) + '\', this)">Unblock</button></td></tr>';
         });
         setHTMLifChanged(box, html + '</table>');
       } catch (e) {
         console.error('devices failed:', e);
-        setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load devices.</div>');
+        setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load devices.</div>');
       }
     }
     async function unblockDevice(fp, btn) {
@@ -3104,7 +3104,7 @@ async function sha256hexFp(str) {
       } catch (e) {
         console.error(e);
         setBtnLoading(btn, false, 'Block device');
-        toast(e && e.message === 'no-device' ? 'No device recorded on that key yet ? they must log in once first.' : 'Block failed.', 'err');
+        toast(e && e.message === 'no-device' ? 'No device recorded on that key yet — they must log in once first.' : 'Block failed.', 'err');
       }
     }
 
@@ -3193,17 +3193,17 @@ async function sha256hexFp(str) {
           .limit(10);
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No announcements yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">📢</div>No announcements yet.</div>';
           return;
         }
         let html = '<table><tr><th>Announcement</th><th>By</th><th>When</th><th></th></tr>';
         data.forEach((a, ai) => {
           let tag = '';
-          if (a.pinned) tag = '<div class="muted">?? sticky ? stays until deleted</div>';
+          if (a.pinned) tag = '<div class="muted">📌 sticky — stays until deleted</div>';
           else if (a.scheduled_for) {
             const t = new Date(a.scheduled_for).getTime();
             tag = '<div class="muted">? ' + esc(new Date(a.scheduled_for).toLocaleString());
-            tag += (Date.now() >= t - 300000) ? (a.reminded ? ' ? alerted' : ' ? live') : ' ? upcoming';
+            tag += (Date.now() >= t - 300000) ? (a.reminded ? ' • alerted' : ' • live') : ' • upcoming';
             tag += '</div>';
           }
           html += '<tr class="arow" style="animation-delay:' + (ai * 40) + 'ms"><td>' + esc(a.content) + tag +
@@ -3216,7 +3216,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load announcements failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load announcements.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load announcements.</div>');
     }
     }
 
@@ -3298,7 +3298,7 @@ async function sha256hexFp(str) {
         const { data, error } = res;
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No chat messages yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No chat messages yet.</div>';
           return;
         }
         let html = '<table><tr><th>User</th><th>Message</th><th>When</th><th></th></tr>';
@@ -3314,7 +3314,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load chat mod failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load chat.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load chat.</div>');
     }
     }
 
@@ -3367,7 +3367,7 @@ async function sha256hexFp(str) {
         if (error) throw error;
         if (!data || data.length === 0) {
           lastUsers.rows = [];
-          setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>No active sessions.</div>');
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>');
           return;
         }
 // Rank map for whoever can set ranks (owner by default).
@@ -3392,7 +3392,7 @@ try {
         renderUsers();
       } catch (e) {
         console.error(e);
-        if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big">??</div>Failed to load users.</div>';
+        if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load users.</div>';
       }
     }
 
@@ -3402,7 +3402,7 @@ try {
       const q = ((document.getElementById('userSearch') || {}).value || '').trim().toLowerCase();
       const rows = lastUsers.rows.filter(u => !q || (u.username || '').toLowerCase().indexOf(q) !== -1);
       if (rows.length === 0) {
-        setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>' +
+        setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>' +
           (lastUsers.rows.length === 0 ? 'No active sessions.' : 'No users match.') + '</div>');
         return;
       }
@@ -3416,7 +3416,7 @@ try {
         const av = avatarFor(u.username);
         let rankCell;
         if (can('users.set_rank') && !isMe && urank !== 'owner') {
-          rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">?</em></button><div class="dd-panel"></div></div>';
+          rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>';
         } else {
           rankCell = rankPill(urank) + (isMe ? ' <span class="muted">you</span>' : '');
         }
@@ -3428,7 +3428,7 @@ try {
           : (wc > 0 ? '<span class="pill rank-user">? ' + wc + '</span>' : '');
         const muteBtn = !canMod ? '' : (mutedMap[u.username]
           ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="unmuteUser(this)" title="Muted until ' + esc(mutedMap[u.username]) + '">Unmute</button>'
-          : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev">?</em></button><div class="dd-panel"></div></div>');
+          : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>');
         const banBtns = (canMod && wc >= 3)
           ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 5)">Ban 5m</button>' +
             '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
@@ -3438,7 +3438,7 @@ try {
             ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">+XP</button>'
             : '';
           const watchBtn = (can('users.watch') && !isMe)
-            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="openWatch(this.getAttribute(\'data-user\'))">?? Watch</button>'
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="openWatch(this.getAttribute(\'data-user\'))">👁 Watch</button>'
             : '';
           const delUserBtn = (!isMe && canModify(urank))
             ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="deleteUserAccount(this.getAttribute(\'data-user\'), this)">Delete user</button>'
@@ -3447,8 +3447,8 @@ try {
           '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
           '<span class="un">' + esc(u.username) + '</span>' + presencePill(u.last_seen) + '</div>' +
           '<div class="user-meta">' + rankCell + '</div>' +
-          '<div class="user-meta">?? ' + esc(u.current_game || 'Browsing') + '</div>' +
-          '<div class="user-meta">?? ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '?') + '</div>' +
+          '<div class="user-meta">🎮 ' + esc(u.current_game || 'Browsing') + '</div>' +
+          '<div class="user-meta">⏱ ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '—') + '</div>' +
           '<div class="row-actions">' +
             '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
             warnBtn + muteBtn + banBtns + xpBtn + watchBtn + delUserBtn +
@@ -3521,7 +3521,7 @@ try {
       const username = btn.getAttribute('data-user');
       if (!username) return;
       if (!canModerateTarget(username)) { toast('Insufficient rank', 'err'); return; }
-      const reason = prompt('Warn ' + username + ' ? reason (optional):');
+      const reason = prompt('Warn ' + username + ' — reason (optional):');
       if (reason === null) return;
       try {
         const res = await srpc('mod_action', callerArgs({ target_username: username, action: 'warn', reason: reason || null }));
@@ -3669,7 +3669,7 @@ try {
         if (data.error) throw new Error(data.error);
         const pending = (data || []).filter(r => r.status === 'pending');
         if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No pending reports.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending reports.</div>';
           return;
         }
         const ids = pending.map(r => r.message_id).filter(Boolean);
@@ -3695,7 +3695,7 @@ try {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load reports failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load reports.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load reports.</div>');
     }
     }
 
@@ -3757,7 +3757,7 @@ try {
       const box = document.getElementById('spyList');
       if (!box) return;
       if (!can('tab.playerdms')) {
-        box.innerHTML = '<div class="empty-state"><div class="big">??</div>Insufficient rank.</div>';
+        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Insufficient rank.</div>';
         return;
       }
       const first = !box.querySelector('table') && !box.querySelector('.empty-state');
@@ -3776,7 +3776,7 @@ try {
         });
         const keys = Object.keys(pairs).slice(0, 30);
         if (keys.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">??</div>No DM threads yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No DM threads yet.</div>';
           return;
         }
         let html = '<table><tr><th>Thread</th><th>Latest</th><th></th></tr>';
@@ -3790,7 +3790,7 @@ try {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('spy list failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">??</div>Failed to load threads.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load threads.</div>');
     }
     }
 
@@ -3802,7 +3802,7 @@ try {
       document.getElementById('spyPair').textContent = a + ' <> ' + b;
       document.getElementById('spyThread').style.display = 'block';
       const box = document.getElementById('spyHistory');
-      box.innerHTML = '<p class="muted">Loading?</p>';
+      box.innerHTML = '<p class="muted">Loading…</p>';
       try {
         const data = await srpc('dm_spy_thread', Object.assign(staffCreds(), { u1: a, u2: b }));
         if (!data) throw new Error('failed');
@@ -3847,7 +3847,7 @@ try {
       dmTarget = name;
       document.getElementById('dmUser').textContent = dmTarget;
       document.getElementById('dmThread').style.display = 'flex';
-      document.getElementById('dmHistory').innerHTML = '<p class="muted">Loading?</p>';
+      document.getElementById('dmHistory').innerHTML = '<p class="muted">Loading…</p>';
       loadDmContacts();
       loadDmHistory();
     }
@@ -3886,7 +3886,7 @@ try {
     async function loadDmHistory(background) {
       if (!dmTarget) return;
       const box = document.getElementById('dmHistory');
-      if (!background && !box.querySelector('.dm-line')) box.innerHTML = '<p class="muted">Loading?</p>';
+      if (!background && !box.querySelector('.dm-line')) box.innerHTML = '<p class="muted">Loading…</p>';
       // Don't yank the scroll position on background refreshes unless the
       // admin is already at the bottom reading the latest messages.
       const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
@@ -3948,7 +3948,7 @@ try {
       watchTarget = username;
       document.getElementById('watchName').textContent = username;
       document.getElementById('watchPanel').style.display = 'block';
-      document.getElementById('watchBody').innerHTML = '<p class="muted">Loading?</p>';
+      document.getElementById('watchBody').innerHTML = '<p class="muted">Loading…</p>';
       loadWatch();
     }
 
@@ -3976,25 +3976,25 @@ try {
         let html = '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
           '<span class="un">' + esc(u) + '</span> ' + rankPill((k && k.rank) || 'user') + ' ' +
           presencePill(s ? s.last_seen : null) + '</div>';
-        html += '<div class="user-meta">?? ' + esc((s && s.current_game) || 'offline') + '</div>';
-        html += '<div class="user-meta">?? last seen ' + esc(s && s.last_seen ? new Date(s.last_seen).toLocaleString() : '?') + '</div>';
-        html += '<div class="user-meta">?? today ' + fmtDur(secs) + ' ? ? level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
-        html += '<div class="user-meta">? ' + ((w.warnings || []).length) + ' warning(s)' +
-          ((w.mute && w.mute.expires_at) ? ' ? ?? muted until ' + esc(new Date(w.mute.expires_at).toLocaleString()) : '') +
-          ((w.ban && w.ban.expires_at) ? ' ? ? game-banned until ' + esc(new Date(w.ban.expires_at).toLocaleString()) : '') + '</div>';
+        html += '<div class="user-meta">🎮 ' + esc((s && s.current_game) || 'offline') + '</div>';
+        html += '<div class="user-meta">⏱ last seen ' + esc(s && s.last_seen ? new Date(s.last_seen).toLocaleString() : '—') + '</div>';
+        html += '<div class="user-meta">📈 today ' + fmtDur(secs) + ' — ⭐ level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
+        html += '<div class="user-meta">⚠ ' + ((w.warnings || []).length) + ' warning(s)' +
+          ((w.mute && w.mute.expires_at) ? ' — ⛔ muted until ' + esc(new Date(w.mute.expires_at).toLocaleString()) : '') +
+          ((w.ban && w.ban.expires_at) ? ' — ⛔ game-banned until ' + esc(new Date(w.ban.expires_at).toLocaleString()) : '') + '</div>';
         html += '<div class="sec-label">Recent chat</div>';
         const msgs = w.messages || [];
         if (msgs.length === 0) html += '<div class="user-meta">No messages.</div>';
         msgs.forEach(m => {
-          html += '<div class="user-meta">?? ' + esc(String(m.content || '').slice(0, 80)) +
-            ' <span class="muted">? ' + esc(m.created_at ? new Date(m.created_at).toLocaleString() : '') + '</span></div>';
+          html += '<div class="user-meta">💬 ' + esc(String(m.content || '').slice(0, 80)) +
+            ' <span class="muted">— ' + esc(m.created_at ? new Date(m.created_at).toLocaleString() : '') + '</span></div>';
         });
         html += '<div class="sec-label">Recent tricks aimed at them</div>';
         const trs = w.trolls || [];
         if (trs.length === 0) html += '<div class="user-meta">None.</div>';
         trs.forEach(t => {
           const st = (t.payload && t.payload.state) ? t.payload.state.toUpperCase() : 'FIRED';
-          html += '<div class="user-meta">?? ' + esc(t.event_type || '?') + ' ? ' + esc(st) + '</div>';
+          html += '<div class="user-meta">🎭 ' + esc(t.event_type || '—') + ' — ' + esc(st) + '</div>';
         });
         setHTMLifChanged(body, html);
       } catch (e) {

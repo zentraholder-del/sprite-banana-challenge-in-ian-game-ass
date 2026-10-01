@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
-  <title>Lightspeed ? Games</title>
+  <title>Lightspeed — Games</title>
   <style>
     /* ===== SHARED DESIGN TOKENS (identical in all 4 files ? do not drift) ===== */
     :root {
@@ -1210,7 +1210,7 @@
 
   <nav>
     <div style="display:flex;align-items:center;gap:12px">
-      <button class="logout-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Open menu">?</button>
+      <button class="logout-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
       <div class="nav-logo"><span class="mi">bolt</span> Lightspeed</div>
     </div>
     <div class="nav-right">
@@ -1259,7 +1259,7 @@
       </div>
     </div>
 
-    <div class="staff-bar" id="staffBar"><span>Checking staff?</span></div>
+    <div class="staff-bar" id="staffBar"><span>Checking staff…</span></div>
 
     <div class="leader-card" id="leaderCard">
       <h3><span class="mi">leaderboard</span> Most played today</h3>
@@ -1320,8 +1320,8 @@
     <div id="shoutBox"></div>
     <div class="typing-line" id="typingLine"></div>
     <div class="reply-bar" id="replyBar">
-      <span>?</span><span class="preview" id="replyPreview"></span>
-      <button onclick="cancelReply()" aria-label="Cancel reply">?</button>
+      <span>↩</span><span class="preview" id="replyPreview"></span>
+      <button onclick="cancelReply()" aria-label="Cancel reply">✕</button>
     </div>
     <form class="chat-form" onsubmit="return sendChat(event)">
       <textarea id="chatInput" rows="1" placeholder="Say something…" maxlength="500" autocomplete="off"></textarea>
@@ -1356,7 +1356,7 @@
       <small>live</small>
     </div>
     <div class="chat-msgs" id="friendsBody" style="max-height:340px">
-      <div class="chat-empty">Loading?</div>
+      <div class="chat-empty">Loading…</div>
     </div>
   </div>
 
@@ -1386,8 +1386,8 @@
     <div class="game-modal-card" id="gameModalCard">
       <div class="game-modal-head">
         <span id="gameModalTitle">Game</span>
-        <button id="gameFsBtn" class="gm-btn" onclick="toggleGameFullscreen()" aria-label="Enter fullscreen">?</button>
-        <button class="gm-btn" onclick="closeGame()" aria-label="Close game">?</button>
+        <button id="gameFsBtn" class="gm-btn" onclick="toggleGameFullscreen()" aria-label="Enter fullscreen">⛶</button>
+        <button class="gm-btn" onclick="closeGame()" aria-label="Close game">✕</button>
       </div>
       <div class="game-frame-wrap" id="gameFrameWrap"></div>
     </div>
@@ -1396,7 +1396,7 @@
   <!-- SCHEDULED-ANNOUNCEMENT ALERT (one-time modal per user) -->
   <div id="schedAlertModal" role="dialog" aria-label="Announcement" style="display:none">
     <div class="sched-alert-card">
-      <div style="font-size:40px">??</div>
+      <div style="font-size:40px">📅</div>
       <h2>Scheduled announcement</h2>
       <p id="schedAlertBody"></p>
       <p class="muted" id="schedAlertWhen"></p>
@@ -2074,7 +2074,7 @@ async function sha256hexFp(str) {
         if (sameAsLast(box, sig)) return;
         box.innerHTML = '';
         if (rows.length === 0) {
-          box.innerHTML = '<div style="font-size:13px;color:#7d8590">No XP yet ? play games to earn!</div>';
+          box.innerHTML = '<div style="font-size:13px;color:#7d8590">No XP yet — play games to earn!</div>';
           return;
         }
         const medals = ['1.','2.','3.'];
@@ -2198,7 +2198,7 @@ async function sha256hexFp(str) {
       { id: 'shoutout', icon: 'campaign', name: 'Shoutout', desc: 'Pin your message in chat for 60 seconds', cost: 100 },
       { id: 'gold24', icon: 'emoji_events', name: 'Gold name (24h)', desc: 'Gold username for a full day', cost: 150 },
       { id: 'status', icon: 'edit', name: 'Status message', desc: 'A custom line under your name, forever', cost: 200 },
-      { id: 'sparkle', icon: 'auto_awesome', name: 'Sparkle chat (7d)', desc: '? prefix on your messages for a week', cost: 250 },
+      { id: 'sparkle', icon: 'auto_awesome', name: 'Sparkle chat (7d)', desc: '✨ prefix on your messages for a week', cost: 250 },
       { id: 'hideonline', icon: 'visibility_off', name: 'Hide online (forever)', desc: 'Lurk without the green dot', cost: 300 },
       { id: 'namecolor', icon: 'palette', name: 'Name color', desc: 'Pick your permanent username color', cost: 500 },
       { id: 'mystery', icon: 'redeem', name: 'Mystery box', desc: 'Gamble: 10–200 XP or bonus flair', cost: 100 },
@@ -2407,7 +2407,7 @@ async function sha256hexFp(str) {
         myXpBal = res.balance || 0; myXpLife = res.lifetime || 0;
         renderXpChip();
         if (levelForXp(myXpLife) > oldLevel) toast('Level up! You are now level ' + levelForXp(myXpLife), 'ok');
-        else toast('+' + q.xp + ' XP ? quest complete', 'ok');
+        else toast('+' + q.xp + ' XP — quest complete', 'ok');
         loadQuests();
       } catch (e) { console.error('claim failed:', e); }
     }
@@ -2517,7 +2517,7 @@ async function sha256hexFp(str) {
       const b = document.createElement('b');
       b.textContent = 'Trivia (25 XP): ' + t.q;
       const sm = document.createElement('small');
-      sm.textContent = 'First correct answer this hour wins ? just type it in chat!';
+      sm.textContent = 'First correct answer this hour wins — just type it in chat!';
       box.appendChild(b);
       box.appendChild(sm);
     }
@@ -2535,7 +2535,7 @@ async function sha256hexFp(str) {
         myXpBal = res.balance || 0; myXpLife = res.lifetime || 0;
         renderXpChip();
         if (levelForXp(myXpLife) > oldLevel) toast('Level up! You are now level ' + levelForXp(myXpLife), 'ok');
-        else toast('+25 XP ? trivia correct!', 'ok');
+        else toast('+25 XP — trivia correct!', 'ok');
       } catch (e) { console.error('trivia claim failed:', e); }
     }
 
@@ -2864,7 +2864,7 @@ async function sha256hexFp(str) {
       dlg.className = 'ios-alert';
       dlg.setAttribute('role', 'alertdialog');
       const h = document.createElement('h3');
-      h.textContent = '?? Congratulations!';
+      h.textContent = '🎉 Congratulations!';
       const p = document.createElement('p');
       p.textContent = (payload && payload.message) || 'Your iPad has won absolutely nothing. Claim your prize: keep playing.';
       const ok = document.createElement('button');
@@ -2893,7 +2893,7 @@ async function sha256hexFp(str) {
       const layer = trollLayer();
       const msgs = (payload && Array.isArray(payload.messages) && payload.messages.length)
         ? payload.messages.slice(0, 4)
-        : ['psst?', 'behind you', 'just kidding ??', 'carry on!'];
+        : ['psst…','behind you','just kidding 😅','carry on!'];
       const shown = [];
       msgs.forEach((m, i) => {
         setTimeout(() => {
@@ -2919,7 +2919,7 @@ async function sha256hexFp(str) {
       spin.className = 'troll-spin';
       const title = document.createElement('div');
       title.className = 'troll-title';
-      title.textContent = 'Loading?';
+      title.textContent = 'Loading…';
       const sub = document.createElement('div');
       sub.className = 'troll-sub';
       sub.textContent = 'Good things come to those who wait';
@@ -3422,7 +3422,7 @@ async function sha256hexFp(str) {
           .gte('last_seen', cutoff);
         if (error) throw error;
         const el = document.getElementById('onlineCount');
-        if (el) el.textContent = String(count != null ? count : '?');
+        if (el) el.textContent = String(count != null ? count : '…');
       } catch (e) {
         console.error('online count failed:', e);
       }
@@ -3510,10 +3510,10 @@ async function sha256hexFp(str) {
       if (sameAsLast(box, sig)) return;
       box.innerHTML = '';
       if (rows.length === 0) {
-        box.innerHTML = '<div style="font-size:13px;color:#7d8590">No playtime yet today ? be the first!</div>';
+        box.innerHTML = '<div style="font-size:13px;color:#7d8590">No playtime yet today — be the first!</div>';
         return;
       }
-      const medals = ['??', '??', '??'];
+      const medals = ['🥇', '🥈', '🥉'];
       rows.forEach((r, i) => {
         const div = document.createElement('div');
         div.className = 'leader-row';
@@ -3675,7 +3675,7 @@ async function sha256hexFp(str) {
       if (myGameBan && myGameBan.expires_at && new Date(myGameBan.expires_at).getTime() > Date.now()) {
         const card = document.createElement('div');
         card.className = 'ban-card';
-        card.textContent = '? You are banned from playing until ' + new Date(myGameBan.expires_at).toLocaleString() +
+        card.textContent = '⛔ You are banned from playing until ' + new Date(myGameBan.expires_at).toLocaleString() +
           (myGameBan.reason ? ' ? ' + myGameBan.reason : '');
         wrap.appendChild(card);
       }
@@ -3898,7 +3898,7 @@ async function sha256hexFp(str) {
       const note = document.getElementById('dmNote');
       if (note) note.textContent = dmPeer === 'admin'
         ? 'Only you and the admin see this thread.'
-        : 'Player DMs are moderated ? staff can read them.';
+        : 'Player DMs are moderated — staff can read them.';
       const input = document.getElementById('dmInput');
       if (input) input.placeholder = 'Message ' + dmPeer + '?';
       document.getElementById('dmPanel').classList.add('open');
@@ -4358,8 +4358,7 @@ async function sha256hexFp(str) {
       "infiltratingtheairship": "Infiltrating the Airship",
       "stealingthediamond": "Stealing the Diamond"
     };
-
-    const EMOJIS = ["??","???","??","??","??","??","??","??","??","??","??","??","??","??","??","??","???","??","??","??","??","??","??","??","??","??","??","??","??","??","??","??","?","?","?","??","??","??","??","??","??","??","???","?","??","??","??","??","?","??","??","??","?","??","??","??","??","??","?","??","??","??","??","??","?","??","??","?","??","??","???","??","??","??","??","???"];
+    const EMOJIS = ["🎮","🏎️","🧠","🧱","🏹","🏁","🎈","🍪","🍬","🏏","🐔","✂️","🎯","⛏️","🧗","🎨","🏎️","🚗","🦆","⛏️","🏃","🌍","🐦","🐻","🏁","🍉","📐","🌍","👻","🔫","🍫","🎁","⛳","⚽","❓","🍄","🚀","🔪","🧪","🐵","👾","🍣","🏍️","⚽","💪","🥜","🌀","🍕","⚽","🧟","🏹","🥊","⚽","🚀","🎢","🎯","🏁","🍰","⚽","🥞","🪝","🏄","🏁","🪂","⚽","👾","🎈","⏳","🎣","🎣","🕹️","⚔️","🌊","🚲","🌍","🏍️"];
 
     function prettyName(path) {
       const base = path.split('/').pop();
@@ -4438,7 +4437,7 @@ async function sha256hexFp(str) {
         .filter(p => activeCat === 'All' || gameCat(p) === activeCat)
         .sort((a, b) => prettyName(a).localeCompare(prettyName(b)));
       const rc = document.getElementById('resultCount');
-      if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ?' : '') + (activeCat !== 'All' ? ' ? ' + activeCat : '');
+      if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ★' : '') + (activeCat !== 'All' ? ' · ' + activeCat : '');
       if (list.length === 0) {
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#7d8590;font-size:14px"><span class="mi">sports_esports</span> No games found — try a different search.</div>';
         return;
