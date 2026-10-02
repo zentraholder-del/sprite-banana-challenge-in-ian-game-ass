@@ -1339,6 +1339,9 @@
     </div>
   </div>
 
+  <!-- TOURNAMENT TURN BANNER -->
+  <button class="new-msg-pill" id="turnPill" onclick="openMyTurn()" style="position:fixed;left:50%;bottom:86px;z-index:130">Your tie needs you — tap to play</button>
+
   <!-- ADMIN (shown only when the logged-in user is_admin) -->
   <a class="admin-fab" id="adminFab" href="../../admin/index.html"><span class="mi">settings</span> Admin Panel</a>
 
@@ -2854,6 +2857,43 @@ async function sha256hexFp(str) {
         console.error(e);
         body.innerHTML = '<p style="font-size:13px;color:#7d8590">Could not load bracket.</p>';
       }
+    }
+
+    /* ---------- Tournament auto-drag: staff starts it, players get yanked
+       straight into their tie the moment it's their pick. No asking. ---- */
+    let turnInfo = null;
+
+    async function pollMyTurn() {
+      try {
+        try { if (!localStorage.getItem(LS_TOKEN)) return; } catch (e) { return; }
+        const { data, error } = await sb.rpc('tourney_myturn', myCreds());
+        if (error) throw error;
+        if (!data || !data.turn) { hideTurnPill(); turnInfo = null; return; }
+        turnInfo = data;
+        showTurnPill();
+        let dragged = null;
+        try { dragged = localStorage.getItem('ls_dragged'); } catch (e) {}
+        if (String(dragged) === String(data.match_id)) return; // yanked already
+        try { localStorage.setItem('ls_dragged', String(data.match_id)); } catch (e) {}
+        try { localStorage.setItem('ls_shootout_match', String(data.match_id)); } catch (e) {}
+        toast('Your tournament tie is ready — taking you in', 'ok');
+        try { openGame('shootout', 'Shootout'); } catch (e) { console.error(e); }
+      } catch (e) { console.error('myturn failed:', e); }
+    }
+    function showTurnPill() {
+      const p = document.getElementById('turnPill');
+      if (p) p.classList.add('show');
+    }
+    function hideTurnPill() {
+      const p = document.getElementById('turnPill');
+      if (p) p.classList.remove('show');
+    }
+    function openMyTurn() {
+      if (!turnInfo || !turnInfo.turn) return;
+      try { localStorage.setItem('ls_dragged', String(turnInfo.match_id)); } catch (e) {}
+      try { localStorage.setItem('ls_shootout_match', String(turnInfo.match_id)); } catch (e) {}
+      hideTurnPill();
+      try { openGame('shootout', 'Shootout'); } catch (e) { console.error(e); }
     }
 
     /* ---------- Panic button (snap back to the boring calculator) ---------- */
@@ -4732,6 +4772,8 @@ async function sha256hexFp(str) {
       startPoller('trivia', renderTrivia, 60000);
       startPoller('schools', loadSchoolBoard, 30000);
       startPoller('tourney', loadTourneys, 10000);
+      try { localStorage.removeItem('ls_dragged'); } catch (e) {}
+      startPoller('myturn', pollMyTurn, 10000);
       loadMyXp();
       loadXpBoard();
       loadQuests();

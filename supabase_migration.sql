@@ -969,6 +969,102 @@ BEGIN
   RETURN json_build_object('success', true);
 END; $$;
 
+-- Staff adds a player directly (school cups: teacher drafts kids, nobody
+-- has to join). Target must hold an active key.
+CREATE OR REPLACE FUNCTION tourney_add(caller_username TEXT, caller_token TEXT,
+  tid BIGINT, target_username TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT; tro tournaments%ROWTYPE; cnt INT; canon TEXT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'tournaments.manage') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  IF target_username IS NULL OR trim(target_username) = '' THEN
+    RETURN json_build_object('success', false, 'error', 'Bad username');
+  END IF;
+  SELECT * INTO tro FROM tournaments WHERE id = tid;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Not found');
+  END IF;
+  IF tro.status <> 'signup' THEN
+    RETURN json_build_object('success', false, 'error', 'Signups are closed');
+  END IF;
+  SELECT used_by INTO canon FROM license_keys
+  WHERE lower(used_by) = lower(trim(target_username)) AND is_active = true
+  ORDER BY id LIMIT 1;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'No active key for that name');
+  END IF;
+  SELECT COUNT(*) INTO cnt FROM tournament_entries WHERE tournament_id = tid;
+  IF cnt >= tro.max_players THEN
+    RETURN json_build_object('success', false, 'error', 'Tournament is full');
+  END IF;
+  BEGIN
+    INSERT INTO tournament_entries (tournament_id, username) VALUES (tid, canon);
+  EXCEPTION WHEN unique_violation THEN
+    RETURN json_build_object('success', false, 'error', 'Already joined');
+  END;
+  PERFORM audit_log(caller_username, 'tourney_add',
+    COALESCE((SELECT title FROM tournaments WHERE id = tid), ''), canon);
+  RETURN json_build_object('success', true);
+END; $$;
+
+-- "Is it my turn?": my earliest live pending tie where my current-round
+-- pick is still missing. Powers the auto-drag: the hub polls this and
+-- yanks the player straight into their tie.
+CREATE OR REPLACE FUNCTION tourney_myturn(input_username TEXT, input_token TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE mid BIGINT; tid BIGINT; ttl TEXT; r INT;
+DECLARE shooter TEXT; keeper TEXT; prow shootout_picks%ROWTYPE;
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('error', 'auth');
+  END IF;
+  SELECT m.id, m.tournament_id INTO mid, tid FROM tournament_matches m
+  JOIN tournaments t ON t.id = m.tournament_id
+  WHERE m.status = 'pending' AND t.status = 'live'
+    AND (lower(m.player_a) = lower(input_username) OR lower(m.player_b) = lower(input_username))
+    AND ((lower(m.player_a) = lower(input_username) AND m.sub_a IS NULL)
+      OR (lower(m.player_b) = lower(input_username) AND m.sub_b IS NULL))
+  ORDER BY m.id LIMIT 1;
+  IF NOT FOUND THEN
+    RETURN json_build_object('turn', false);
+  END IF;
+  SELECT COALESCE(MAX(round_no), 0) INTO r FROM shootout_picks
+  WHERE shootout_picks.match_id = tourney_myturn.mid;
+  IF r = 0 THEN r := 1; END IF;
+  SELECT * INTO prow FROM shootout_picks
+  WHERE shootout_picks.match_id = tourney_myturn.mid
+    AND shootout_picks.round_no = r;
+  IF FOUND AND prow.shoot_zone IS NOT NULL AND prow.keep_zone IS NOT NULL THEN
+    r := r + 1;
+    SELECT * INTO prow FROM shootout_picks
+    WHERE shootout_picks.match_id = tourney_myturn.mid
+      AND shootout_picks.round_no = r;
+  END IF;
+  IF FOUND THEN
+    IF prow.shooter IS NOT NULL AND lower(prow.shooter) = lower(input_username)
+       AND prow.shoot_zone IS NOT NULL THEN
+      RETURN json_build_object('turn', false);
+    END IF;
+    IF prow.keeper IS NOT NULL AND lower(prow.keeper) = lower(input_username)
+       AND prow.keep_zone IS NOT NULL THEN
+      RETURN json_build_object('turn', false);
+    END IF;
+    shooter := prow.shooter; keeper := prow.keeper;
+  ELSE
+    SELECT player_a, player_b INTO shooter, keeper FROM tournament_matches WHERE id = mid;
+    IF r % 2 = 0 THEN
+      DECLARE tmp TEXT; BEGIN tmp := shooter; shooter := keeper; keeper := tmp; END;
+    END IF;
+  END IF;
+  SELECT title INTO ttl FROM tournaments WHERE id = tid;
+  RETURN json_build_object('turn', true, 'tournament_id', tid,
+    'match_id', mid, 'round_no', r, 'title', COALESCE(ttl, ''),
+    'i_shoot', (lower(input_username) = lower(COALESCE(shooter, ''))));
+END; $$;
+
 ALTER TABLE tournament_matches ADD COLUMN IF NOT EXISTS sub_a INT;
 ALTER TABLE tournament_matches ADD COLUMN IF NOT EXISTS sub_b INT;
 
@@ -2476,7 +2572,8 @@ BEGIN
         'resetreq_approve','resetreq_deny','audit_list',
         'tourney_create','tourney_list','tourney_detail','tourney_join',
         'tourney_start','tourney_decide','tourney_cancel',
-        'shootout_pick','shootout_state','tourney_submit')
+        'shootout_pick','shootout_state','tourney_submit',
+        'tourney_add','tourney_myturn')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);

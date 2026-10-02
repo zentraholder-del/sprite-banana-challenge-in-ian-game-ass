@@ -1029,7 +1029,10 @@
         <p class="sub">Single-elimination cups. Players join from the hub; you start the bracket and enter results — next rounds build themselves.</p>
         <div class="inline-form" style="align-items:center">
           <input id="tourneyTitle" placeholder="Cup title (e.g. Lunch Cup #3)" maxlength="80" style="flex:1;min-width:180px" aria-label="Tournament title" />
-          <input id="tourneyGame" placeholder="Game slug" maxlength="64" value="shootout" style="flex:0 0 150px;min-width:120px" aria-label="Game slug" />
+          <select id="tourneyGame" aria-label="Tournament game" style="flex:0 0 150px;min-width:120px">
+            <option value="shootout">shootout</option>
+            <option value="penkick">penkick</option>
+          </select>
           <input id="tourneyMax" type="number" inputmode="numeric" min="2" max="64" value="16" style="flex:0 0 80px;min-width:70px" aria-label="Max players" />
           <button class="btn small" id="tourneyCreateBtn" onclick="createTourney()">Create tournament</button>
         </div>
@@ -3104,7 +3107,12 @@ async function sha256hexFp(str) {
               ? '<button class="btn small" onclick="toggleTourneyMatches(' + t.id + ')">Enter results</button>' +
                 '<button class="btn small danger" onclick="cancelTourney(' + t.id + ', this)">Cancel</button>'
               : '<span class="muted">Finished</span>') +
-            '</div><div id="tmatches-' + t.id + '"></div></div>';
+            '</div>' +
+            (t.status === 'signup'
+              ? '<div class="deny-box"><input id="tadd-' + t.id + '" placeholder="Add player by username" maxlength="32" aria-label="Username to add" />' +
+                '<button class="btn small ghost" onclick="tourneyAddPlayer(' + t.id + ', this)">Add</button></div>'
+              : '') +
+            '<div id="tmatches-' + t.id + '"></div></div>';
         });
         setHTMLifChanged(box, html);
       } catch (e) {
@@ -3167,8 +3175,26 @@ async function sha256hexFp(str) {
       }
     }
 
-    async function startTourney(id, btn) {
+    async function tourneyAddPlayer(tid, btn) {
       if (!can('tournaments.manage')) { toast('Insufficient rank', 'err'); return; }
+      const inp = document.getElementById('tadd-' + tid);
+      const name = ((inp && inp.value) || '').trim();
+      if (!name) { toast('Enter a username', 'err'); return; }
+      setBtnLoading(btn, true);
+      try {
+        const res = await srpc('tourney_add', callerArgs({ tid, target_username: name }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        toast(name + ' added to the cup', 'ok');
+        loadTourneysAdmin();
+      } catch (e) {
+        console.error(e);
+        toast('Add failed: ' + String((e && e.message) || '').slice(0, 120), 'err');
+      } finally {
+        setBtnLoading(btn, false, 'Add');
+      }
+    }
+
+    async function startTourney(id, btn) {      if (!can('tournaments.manage')) { toast('Insufficient rank', 'err'); return; }
       setBtnLoading(btn, true);
       try {
         const res = await srpc('tourney_start', callerArgs({ tid: id }));
