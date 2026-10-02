@@ -1200,6 +1200,14 @@
     @keyframes itemIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .chat-msg { animation: itemIn 0.3s ease-out backwards; }
     .chat-fab, .dm-fab, .reply-btn, .chat-form button { touch-action: manipulation; }
+    /* tournament bracket */
+    .trounds { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+    .tround { flex: 0 0 220px; display: flex; flex-direction: column; gap: 8px; }
+    .tmatch { background: #1e242b; border: 1px solid #242b33; border-radius: 12px; padding: 10px 12px; }
+    .tplayer { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ece9e2; padding: 3px 0; overflow-wrap: anywhere; }
+    .tplayer b { margin-left: auto; color: #f59e0b; }
+    .tplayer.win { color: #22c55e; font-weight: 700; }
+    .tstat { font-size: 11px; color: #7d8590; margin-top: 4px; }
   
     body { font-weight: 500; }
     .mi {
@@ -1304,6 +1312,11 @@
       <div id="schoolCounts" style="font-size:12px;color:#7d8590;text-align:center;margin-top:8px">…</div>
     </div>
 
+    <div class="leader-card" id="tourneyCard">
+      <h3><span class="mi">emoji_events</span> Tournaments</h3>
+      <div id="tourneyList"><div class="skel" style="height:32px"></div></div>
+    </div>
+
     <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
       <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()"><span class="mi" style="font-size:16px">star</span> Favorites</button>
@@ -1317,6 +1330,14 @@
   </div><!-- /.shell -->
 
   <footer>LIGHTSPEED &copy; 2026</footer>
+
+  <!-- TOURNAMENT BRACKET -->
+  <div class="overlay" id="tourneyOverlay" onclick="if(event.target===this)closeTourney()">
+    <div class="modal" style="max-width:640px;text-align:left">
+      <div id="tourneyBody"></div>
+      <button class="mini-btn" style="margin-top:14px" onclick="closeTourney()">Close</button>
+    </div>
+  </div>
 
   <!-- ADMIN (shown only when the logged-in user is_admin) -->
   <a class="admin-fab" id="adminFab" href="../../admin/index.html"><span class="mi">settings</span> Admin Panel</a>
@@ -2703,6 +2724,114 @@ async function sha256hexFp(str) {
       } catch (e) {
         console.error('set school failed:', e);
         toast('Save failed', 'err');
+      }
+    }
+
+    /* ---------- Tournaments (staff-run single-elim cups) ---------- */
+
+    async function loadTourneys() {
+      const box = document.getElementById('tourneyList');
+      if (!box) return;
+      try {
+        const { data, error } = await sb.rpc('tourney_list', myCreds());
+        if (error) throw error;
+        if (!data || data.error || !data.length) {
+          setHTMLifChanged(box, '<div class="muted">No tournaments yet — staff will post cups here.</div>');
+          return;
+        }
+        let html = '';
+        data.forEach(t => {
+          const tag = t.status === 'live' ? '<span class="game-tag">LIVE</span>'
+            : t.status === 'finished' ? '<span class="game-tag">done</span>'
+            : '<span class="game-tag">signups</span>';
+          const sub = t.status === 'finished' && t.last_winner
+            ? 'Champion: <strong>' + escapeHtml(t.last_winner) + '</strong>'
+            : escapeHtml(String(t.entries)) + '/' + escapeHtml(String(t.max_players)) + ' joined';
+          html += '<div class="quest-row"><div class="qtop"><span><strong>' + escapeHtml(t.title) + '</strong> ' + tag + '</span>' +
+            '<span class="qxp">' + sub + '</span></div>' +
+            '<div class="qtop" style="margin-top:6px"><span style="font-size:12px;color:#7d8590">' + escapeHtml(t.game_slug || '') + '</span>' +
+            '<span style="margin-left:auto;display:flex;gap:6px;align-items:center">' +
+            (t.status === 'signup' && !t.mine ? '<button class="mini-btn" onclick="joinTourney(' + t.id + ', this)">Join</button>' : '') +
+            (t.status === 'signup' && t.mine ? '<span style="font-size:12px;color:#22c55e">You are in</span>' : '') +
+            '<button class="mini-btn ghost" onclick="openTourney(' + t.id + ')">Bracket</button>' +
+            '</span></div></div>';
+        });
+        setHTMLifChanged(box, html);
+      } catch (e) {
+        console.error('tourneys failed:', e);
+      }
+    }
+
+    async function joinTourney(id, btn) {
+      try {
+        if (btn) btn.disabled = true;
+        const { data, error } = await sb.rpc('tourney_join', Object.assign(myCreds(), { tid: id }));
+        if (error) throw error;
+        if (!data || !data.success) throw new Error((data && (data.error || data.message)) || 'failed');
+        toast('You joined the tournament', 'ok');
+        loadTourneys();
+      } catch (e) {
+        console.error(e);
+        toast('Join failed: ' + String((e && e.message) || 'try again').slice(0, 120), 'err');
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function closeTourney() {
+      const o = document.getElementById('tourneyOverlay');
+      if (!o) return;
+      o.classList.remove('show');
+      o.style.display = 'none';
+    }
+
+    async function openTourney(id) {
+      const o = document.getElementById('tourneyOverlay');
+      const body = document.getElementById('tourneyBody');
+      if (!o || !body) return;
+      body.innerHTML = '<div class="skel" style="height:44px"></div>';
+      o.style.display = 'flex';
+      requestAnimationFrame(() => o.classList.add('show'));
+      try {
+        const { data, error } = await sb.rpc('tourney_detail', Object.assign(myCreds(), { tid: id }));
+        if (error) throw error;
+        if (!data || data.error) throw new Error((data && data.error) || 'failed');
+        const t = data.tournament || {};
+        const me = meName();
+        const rounds = {};
+        (data.matches || []).forEach(m => { (rounds[m.round_no] = rounds[m.round_no] || []).push(m); });
+        let html = '<h2 style="font-size:18px;font-weight:700;color:#ece9e2;margin-bottom:4px">' + escapeHtml(t.title || 'Tournament') + '</h2>' +
+          '<p style="font-size:13px;color:#7d8590;margin-bottom:14px">' + escapeHtml(t.game_slug || '') + ' — ' + escapeHtml(t.status || '') +
+          ' — ' + (data.entries || []).length + ' players</p>';
+        const rnos = Object.keys(rounds).map(Number).sort((a, b) => a - b);
+        if (!rnos.length) {
+          const inIt = (data.entries || []).some(e => e.username === me);
+          html += '<p style="font-size:13px;color:#7d8590">Bracket drops when staff start the cup. You are ' + (inIt ? 'in.' : 'not in.') + '</p>';
+        } else {
+          html += '<div class="trounds">';
+          rnos.forEach(rn => {
+            html += '<div class="tround"><div class="sec-label">Round ' + rn + '</div>';
+            rounds[rn].forEach(m => {
+              const decided = m.status === 'decided' || m.status === 'bye';
+              const wa = decided && m.winner && m.player_a && m.winner === m.player_a;
+              const wb = decided && m.winner && m.player_b && m.winner === m.player_b;
+              html += '<div class="tmatch">' +
+                '<div class="tplayer' + (wa ? ' win' : '') + '">' + escapeHtml(m.player_a || '—') +
+                (m.score_a !== null && typeof m.score_a !== 'undefined' ? ' <b>' + m.score_a + '</b>' : '') +
+                (me && m.player_a === me ? ' <span class="game-tag">you</span>' : '') + '</div>' +
+                '<div class="tplayer' + (wb ? ' win' : '') + '">' + escapeHtml(m.player_b || (m.status === 'bye' ? '— bye' : 'TBD')) +
+                (m.score_b !== null && typeof m.score_b !== 'undefined' ? ' <b>' + m.score_b + '</b>' : '') +
+                (me && m.player_b === me ? ' <span class="game-tag">you</span>' : '') + '</div>' +
+                (m.status === 'bye' ? '<div class="tstat">bye advances</div>' : m.status === 'decided' ? '<div class="tstat">final</div>' : '<div class="tstat">to play</div>') +
+                '</div>';
+            });
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+        body.innerHTML = html;
+      } catch (e) {
+        console.error(e);
+        body.innerHTML = '<p style="font-size:13px;color:#7d8590">Could not load bracket.</p>';
       }
     }
 
@@ -4581,12 +4710,14 @@ async function sha256hexFp(str) {
       startPoller('cosmap', loadCosmeticsMap, 15000);
       startPoller('trivia', renderTrivia, 60000);
       startPoller('schools', loadSchoolBoard, 30000);
+      startPoller('tourney', loadTourneys, 10000);
       loadMyXp();
       loadXpBoard();
       loadQuests();
       loadBlocks();
       loadMySchool();
       loadSchoolBoard();
+      loadTourneys();
       renderTrivia();
       armPanicLogo();
     })();

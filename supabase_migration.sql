@@ -191,7 +191,7 @@ DECLARE
     'troll_settings', 'typing', 'user_cosmetics', 'warnings', 'xp_balances',
 
     'xp_daily', 'xp_purchases', 'mutes', 'blacklist_devices', 'key_reset_requests',
-    'staff_audit'
+    'staff_audit', 'tournaments', 'tournament_entries', 'tournament_matches'
 
   ];
 
@@ -266,7 +266,8 @@ BEGIN
 
       'keys.create','keys.modify_user','requests.decide','adminreqs.decide','users.moderate_user',
 
-      'announce.post','announce.delete','chat.delete','blacklist.manage','troll.fire');
+      'announce.post','announce.delete','chat.delete','blacklist.manage','troll.fire',
+      'tournaments.manage');
 
   ELSIF caller_rank = 'mod' THEN
 
@@ -715,6 +716,256 @@ BEGIN
   PERFORM audit_log(caller_username, 'resetreq_deny',
     COALESCE((SELECT name FROM key_reset_requests WHERE id = request_id), 'request#' || request_id::text),
     left(COALESCE(input_reason, ''), 200));
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE TABLE IF NOT EXISTS tournaments (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  title TEXT NOT NULL,
+  game_slug TEXT NOT NULL DEFAULT 'penkick',
+  status TEXT NOT NULL DEFAULT 'signup',
+  max_players INT NOT NULL DEFAULT 16,
+  created_by TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tournament_entries (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  tournament_id BIGINT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  username TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(tournament_id, username)
+);
+
+CREATE TABLE IF NOT EXISTS tournament_matches (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  tournament_id BIGINT NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  round_no INT NOT NULL DEFAULT 1,
+  match_no INT NOT NULL DEFAULT 1,
+  player_a TEXT,
+  player_b TEXT,
+  score_a INT,
+  score_b INT,
+  winner TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(tournament_id, round_no, match_no)
+);
+
+-- Tournaments: staff-run single-elimination cups. Players join during
+-- signup; staff starts (shuffled bracket, odd player out gets a bye);
+-- staff decides each tie by score (ties need an explicit winner pick) and
+-- the next round builds itself as rounds complete. Bracket view for all.
+CREATE OR REPLACE FUNCTION tourney_list(input_username TEXT, input_token TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('error', 'auth');
+  END IF;
+  RETURN COALESCE((SELECT json_agg(t ORDER BY t.id DESC) FROM (
+    SELECT t.id, t.title, t.game_slug, t.status, t.max_players, t.created_by, t.created_at,
+      (SELECT COUNT(*) FROM tournament_entries e WHERE e.tournament_id = t.id) AS entries,
+      EXISTS (SELECT 1 FROM tournament_entries e
+        WHERE e.tournament_id = t.id AND lower(e.username) = lower(input_username)) AS mine,
+      (SELECT m.winner FROM tournament_matches m
+        WHERE m.tournament_id = t.id AND m.winner IS NOT NULL
+        ORDER BY m.round_no DESC, m.match_no DESC LIMIT 1) AS last_winner
+    FROM tournaments t WHERE t.status <> 'cancelled' ORDER BY t.id DESC LIMIT 20
+  ) t), '[]'::json);
+END; $$;
+
+CREATE OR REPLACE FUNCTION tourney_detail(input_username TEXT, input_token TEXT, tid BIGINT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE tro tournaments%ROWTYPE;
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('error', 'auth');
+  END IF;
+  SELECT * INTO tro FROM tournaments WHERE id = tid;
+  IF NOT FOUND THEN
+    RETURN json_build_object('error', 'not found');
+  END IF;
+  RETURN json_build_object(
+    'tournament', row_to_json(tro),
+    'entries', COALESCE((SELECT json_agg(e ORDER BY e.id) FROM (
+      SELECT username, created_at FROM tournament_entries
+      WHERE tournament_id = tid ORDER BY id) e), '[]'::json),
+    'matches', COALESCE((SELECT json_agg(m ORDER BY m.round_no, m.match_no) FROM (
+      SELECT id, round_no, match_no, player_a, player_b, score_a, score_b,
+        winner, status FROM tournament_matches
+      WHERE tournament_id = tid ORDER BY round_no, match_no) m), '[]'::json));
+END; $$;
+
+CREATE OR REPLACE FUNCTION tourney_create(caller_username TEXT, caller_token TEXT,
+  title TEXT, game_slug TEXT DEFAULT 'penkick', max_players INT DEFAULT 16)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT; nid BIGINT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'tournaments.manage') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  IF title IS NULL OR length(trim(title)) < 3 OR length(title) > 80 THEN
+    RETURN json_build_object('success', false, 'error', 'Title must be 3-80 chars');
+  END IF;
+  max_players := GREATEST(2, LEAST(COALESCE(max_players, 16), 64));
+  INSERT INTO tournaments (title, game_slug, status, max_players, created_by)
+  VALUES (trim(title), left(COALESCE(NULLIF(trim(game_slug), ''), 'penkick'), 64),
+    'signup', max_players, caller_username)
+  RETURNING id INTO nid;
+  PERFORM audit_log(caller_username, 'tourney_create', trim(title), 'max=' || max_players::text);
+  RETURN json_build_object('success', true, 'id', nid);
+END; $$;
+
+CREATE OR REPLACE FUNCTION tourney_join(input_username TEXT, input_token TEXT, tid BIGINT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE tro tournaments%ROWTYPE; cnt INT;
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('success', false, 'error', 'auth');
+  END IF;
+  IF EXISTS (SELECT 1 FROM blacklist WHERE lower(username) = lower(input_username)) THEN
+    RETURN json_build_object('success', false, 'error', 'blacklisted');
+  END IF;
+  SELECT * INTO tro FROM tournaments WHERE id = tid;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Not found');
+  END IF;
+  IF tro.status <> 'signup' THEN
+    RETURN json_build_object('success', false, 'error', 'Signups are closed');
+  END IF;
+  SELECT COUNT(*) INTO cnt FROM tournament_entries WHERE tournament_id = tid;
+  IF cnt >= tro.max_players THEN
+    RETURN json_build_object('success', false, 'error', 'Tournament is full');
+  END IF;
+  BEGIN
+    INSERT INTO tournament_entries (tournament_id, username) VALUES (tid, input_username);
+  EXCEPTION WHEN unique_violation THEN
+    RETURN json_build_object('success', false, 'error', 'Already joined');
+  END;
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE OR REPLACE FUNCTION tourney_start(caller_username TEXT, caller_token TEXT, tid BIGINT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT; tro tournaments%ROWTYPE; names TEXT[]; n INT; i INT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'tournaments.manage') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  SELECT * INTO tro FROM tournaments WHERE id = tid FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Not found');
+  END IF;
+  IF tro.status <> 'signup' THEN
+    RETURN json_build_object('success', false, 'error', 'Already started');
+  END IF;
+  SELECT COALESCE(array_agg(username ORDER BY random()), '{}') INTO names
+  FROM tournament_entries WHERE tournament_id = tid;
+  n := COALESCE(array_length(names, 1), 0);
+  IF n < 2 THEN
+    RETURN json_build_object('success', false, 'error', 'Need at least 2 players');
+  END IF;
+  UPDATE tournaments SET status = 'live' WHERE id = tid;
+  i := 1;
+  WHILE i <= n LOOP
+    IF i = n THEN
+      INSERT INTO tournament_matches (tournament_id, round_no, match_no, player_a, winner, status)
+      VALUES (tid, 1, (i + 1) / 2, names[i], names[i], 'bye');
+    ELSE
+      INSERT INTO tournament_matches (tournament_id, round_no, match_no, player_a, player_b)
+      VALUES (tid, 1, (i + 1) / 2, names[i], names[i + 1]);
+    END IF;
+    i := i + 2;
+  END LOOP;
+  PERFORM audit_log(caller_username, 'tourney_start', tro.title, n::text || ' players');
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE OR REPLACE FUNCTION tourney_decide(caller_username TEXT, caller_token TEXT,
+  match_id BIGINT, score_a INT, score_b INT, winner_override TEXT DEFAULT NULL)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT; m tournament_matches%ROWTYPE; tstat TEXT;
+DECLARE w TEXT; pend INT; wins TEXT[]; i INT; r INT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'tournaments.manage') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  SELECT * INTO m FROM tournament_matches WHERE id = match_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Match not found');
+  END IF;
+  IF m.status <> 'pending' THEN
+    RETURN json_build_object('success', false, 'error', 'Already decided');
+  END IF;
+  SELECT status INTO tstat FROM tournaments WHERE id = m.tournament_id;
+  IF tstat <> 'live' THEN
+    RETURN json_build_object('success', false, 'error', 'Tournament is not live');
+  END IF;
+  IF score_a IS NULL OR score_b IS NULL OR score_a < 0 OR score_b < 0
+     OR score_a > 999 OR score_b > 999 THEN
+    RETURN json_build_object('success', false, 'error', 'Bad scores');
+  END IF;
+  IF winner_override IS NOT NULL AND winner_override <> '' THEN
+    IF lower(winner_override) = lower(COALESCE(m.player_a, '')) THEN w := m.player_a;
+    ELSIF lower(winner_override) = lower(COALESCE(m.player_b, '')) THEN w := m.player_b;
+    ELSE RETURN json_build_object('success', false, 'error', 'Winner must be a player in this tie');
+    END IF;
+  ELSIF score_a > score_b THEN w := m.player_a;
+  ELSIF score_b > score_a THEN w := m.player_b;
+  ELSE RETURN json_build_object('success', false, 'error', 'Tie: pick a winner');
+  END IF;
+  IF w IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'No winner available');
+  END IF;
+  UPDATE tournament_matches
+  SET score_a = tourney_decide.score_a, score_b = tourney_decide.score_b, winner = w, status = 'decided'
+  WHERE id = match_id;
+  -- Auto-advance: when the round is complete, build the next round from
+  -- its winners (odd one out gets a bye); a lone winner takes the cup.
+  SELECT COUNT(*) INTO pend FROM tournament_matches
+  WHERE tournament_id = m.tournament_id AND round_no = m.round_no AND status = 'pending';
+  IF pend = 0 THEN
+    SELECT COALESCE(array_agg(winner ORDER BY match_no), '{}') INTO wins
+    FROM tournament_matches
+    WHERE tournament_id = m.tournament_id AND round_no = m.round_no AND winner IS NOT NULL;
+    IF COALESCE(array_length(wins, 1), 0) = 1 THEN
+      UPDATE tournaments SET status = 'finished' WHERE id = m.tournament_id;
+    ELSIF NOT EXISTS (SELECT 1 FROM tournament_matches
+           WHERE tournament_id = m.tournament_id AND round_no = m.round_no + 1) THEN
+      r := m.round_no + 1;
+      i := 1;
+      WHILE i <= array_length(wins, 1) LOOP
+        IF i = array_length(wins, 1) THEN
+          INSERT INTO tournament_matches (tournament_id, round_no, match_no, player_a, winner, status)
+          VALUES (m.tournament_id, r, (i + 1) / 2, wins[i], wins[i], 'bye');
+        ELSE
+          INSERT INTO tournament_matches (tournament_id, round_no, match_no, player_a, player_b)
+          VALUES (m.tournament_id, r, (i + 1) / 2, wins[i], wins[i + 1]);
+        END IF;
+        i := i + 2;
+      END LOOP;
+    END IF;
+  END IF;
+  PERFORM audit_log(caller_username, 'tourney_decide',
+    (SELECT title FROM tournaments WHERE id = m.tournament_id),
+    COALESCE(m.player_a, '?') || ' ' || tourney_decide.score_a::text || '-' || tourney_decide.score_b::text || ' ' || COALESCE(m.player_b, '?'));
+  RETURN json_build_object('success', true);
+END; $$;
+
+CREATE OR REPLACE FUNCTION tourney_cancel(caller_username TEXT, caller_token TEXT, tid BIGINT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE crank TEXT;
+BEGIN
+  crank := caller_rank_of(caller_username, caller_token);
+  IF NOT has_perm(crank, 'tournaments.manage') THEN
+    RETURN json_build_object('success', false, 'error', 'Insufficient rank');
+  END IF;
+  UPDATE tournaments SET status = 'cancelled' WHERE id = tid AND status IN ('signup', 'live');
+  PERFORM audit_log(caller_username, 'tourney_cancel',
+    COALESCE((SELECT title FROM tournaments WHERE id = tid), 'id#' || tid::text), '');
   RETURN json_build_object('success', true);
 END; $$;
 
@@ -2025,7 +2276,9 @@ BEGIN
         'wall_check','user_delete','block_device_by_key','unblock_device','devices_list',
         'reset_my_key','block_requester_device','logout_session',
         'submit_reset_request','check_reset_status','resetreq_list',
-        'resetreq_approve','resetreq_deny','audit_list')
+        'resetreq_approve','resetreq_deny','audit_list',
+        'tourney_create','tourney_list','tourney_detail','tourney_join',
+        'tourney_start','tourney_decide','tourney_cancel')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);

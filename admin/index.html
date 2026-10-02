@@ -975,6 +975,7 @@
         <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)"><span class="mi">dashboard</span> Dashboard</button>
         <button data-tab="requests" onclick="showTab('requests', this)"><span class="mi">inbox</span> Key requests</button>
         <button data-tab="resets" onclick="showTab('resets', this)"><span class="mi">sync</span> Key resets</button>
+        <button data-tab="tourneys" onclick="showTab('tourneys', this)"><span class="mi">emoji_events</span> Tournaments</button>
         <button data-tab="adminreqs" onclick="showTab('adminreqs', this)"><span class="mi">shield</span> Admin requests</button>
         <button data-tab="keys" onclick="showTab('keys', this)"><span class="mi">key</span> Manage keys</button>
         <button data-tab="blacklist" onclick="showTab('blacklist', this)"><span class="mi">block</span> Blacklist</button>
@@ -1021,6 +1022,18 @@
       <div class="card section" id="sec-requests">
         <h2>Pending key requests</h2>
         <div id="reqList"><p class="muted">Loading…</p></div>
+      </div>
+
+      <div class="card section" id="sec-tourneys">
+        <h2>Tournaments</h2>
+        <p class="sub">Single-elimination cups. Players join from the hub; you start the bracket and enter results — next rounds build themselves.</p>
+        <div class="inline-form" style="align-items:center">
+          <input id="tourneyTitle" placeholder="Cup title (e.g. Lunch Cup #3)" maxlength="80" style="flex:1;min-width:180px" aria-label="Tournament title" />
+          <input id="tourneyGame" placeholder="Game slug" maxlength="64" value="penkick" style="flex:0 0 150px;min-width:120px" aria-label="Game slug" />
+          <input id="tourneyMax" type="number" inputmode="numeric" min="2" max="64" value="16" style="flex:0 0 80px;min-width:70px" aria-label="Max players" />
+          <button class="btn small" id="tourneyCreateBtn" onclick="createTourney()">Create tournament</button>
+        </div>
+        <div id="tourneyAdminList"><p class="muted">Loading…</p></div>
       </div>
 
       <div class="card section" id="sec-resets">
@@ -1591,6 +1604,8 @@ async function sha256hexFp(str) {
     const PERM_DEFS = [
       { group: 'Tabs', id: 'tab.dashboard', label: 'Dashboard tab' },
       { group: 'Tabs', id: 'tab.requests', label: 'Key requests tab' },
+      { group: 'Tabs', id: 'tab.tourneys', label: 'Tournaments tab' },
+      { group: 'Events', id: 'tournaments.manage', label: 'Run tournaments (create / start / decide)' },
       { group: 'Tabs', id: 'tab.resets', label: 'Key reset requests tab' },
       { group: 'Tabs', id: 'tab.adminreqs', label: 'Admin requests tab' },
       { group: 'Tabs', id: 'tab.keys', label: 'Manage keys tab' },
@@ -1620,8 +1635,8 @@ async function sha256hexFp(str) {
       { group: 'Troll', id: 'troll.custom_image', label: 'Upload custom jumpscare image' }
     ];
     const DEFAULT_PERMS = {
-      admin: { 'tab.dashboard': 1, 'tab.requests': 1, 'tab.resets': 1, 'tab.adminreqs': 1, 'tab.keys': 1, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 1, 'tab.reports': 1, 'tab.troll': 1, 'tab.activity': 1, 'keys.create': 1, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 1, 'adminreqs.decide': 1, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 1, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 1, 'troll.custom_image': 0 },
-      mod: { 'tab.dashboard': 1, 'tab.requests': 0, 'tab.resets': 0, 'tab.adminreqs': 0, 'tab.keys': 0, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 0, 'tab.reports': 1, 'tab.troll': 0, 'tab.activity': 0, 'keys.create': 0, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 0, 'adminreqs.decide': 0, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 0, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 0, 'troll.custom_image': 0 }
+      admin: { 'tab.dashboard': 1, 'tab.requests': 1, 'tab.resets': 1, 'tab.tourneys': 1, 'tab.adminreqs': 1, 'tab.keys': 1, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 1, 'tab.reports': 1, 'tab.troll': 1, 'tab.activity': 1, 'keys.create': 1, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 1, 'tournaments.manage': 1, 'adminreqs.decide': 1, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 1, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 1, 'troll.custom_image': 0 },
+      mod: { 'tab.dashboard': 1, 'tab.requests': 0, 'tab.resets': 0, 'tab.tourneys': 0, 'tab.adminreqs': 0, 'tab.keys': 0, 'tab.blacklist': 1, 'tab.messages': 1, 'tab.users': 1, 'tab.playerdms': 0, 'tab.reports': 1, 'tab.troll': 0, 'tab.activity': 0, 'keys.create': 0, 'keys.modify_user': 1, 'keys.modify_staff': 0, 'requests.decide': 0, 'tournaments.manage': 0, 'adminreqs.decide': 0, 'users.set_rank': 0, 'users.give_xp': 0, 'users.watch': 0, 'users.moderate_user': 1, 'users.moderate_staff': 0, 'announce.post': 1, 'announce.delete': 0, 'chat.delete': 1, 'blacklist.manage': 1, 'troll.fire': 0, 'troll.custom_image': 0 }
     };
     let permCache = {};
     async function loadPerms() {
@@ -1903,6 +1918,7 @@ async function sha256hexFp(str) {
       }
       if (name === 'dashboard') { startPoller('stats', loadDashboard, 3000); loadLockStatus(); startPoller('lockstat', loadLockStatus, 10000); }
       if (name === 'requests') startPoller('requests', loadRequests, 3000);
+      if (name === 'tourneys') startPoller('tourneys', loadTourneysAdmin, 3000);
       if (name === 'resets') startPoller('resets', loadResetRequests, 3000);
       if (name === 'adminreqs') startPoller('adminreqs', loadAdminRequests, 3000);
       if (name === 'keys') startPoller('keys', loadKeys, 10000);
@@ -3033,6 +3049,154 @@ async function sha256hexFp(str) {
         console.error(e);
         setBtnLoading(btn, false, 'Deny');
         toast('Deny failed.', 'err');
+      }
+    }
+
+    /* ---------- tournaments (staff-run cups) ---------- */
+
+    async function createTourney() {
+      if (!can('tournaments.manage')) { toast('Insufficient rank', 'err'); return; }
+      const title = (document.getElementById('tourneyTitle').value || '').trim();
+      const game = (document.getElementById('tourneyGame').value || '').trim() || 'penkick';
+      const maxp = parseInt(document.getElementById('tourneyMax').value, 10) || 16;
+      const btn = document.getElementById('tourneyCreateBtn');
+      setBtnLoading(btn, true);
+      try {
+        const res = await srpc('tourney_create', callerArgs({ title, game_slug: game, max_players: maxp }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        document.getElementById('tourneyTitle').value = '';
+        toast('Tournament created', 'ok');
+        loadTourneysAdmin();
+      } catch (e) {
+        console.error(e);
+        toast('Create failed: ' + String((e && e.message) || '').slice(0, 120), 'err');
+      } finally {
+        setBtnLoading(btn, false, 'Create tournament');
+      }
+    }
+
+    async function loadTourneysAdmin() {
+      const box = document.getElementById('tourneyAdminList');
+      if (!box) return;
+      // Never wipe an open score-entry pane (or focused inputs) on poll ticks.
+      if (box.querySelector('.tmatches-open')) return;
+      if (box.contains(document.activeElement) && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+      const firstT = !box.querySelector('.req-card') && !box.querySelector('.empty-state');
+      if (firstT) box.innerHTML = '<div class="skel" style="height:44px;margin-bottom:8px"></div>';
+      try {
+        const data = await srpc('tourney_list', staffCreds());
+        if (!data) throw new Error('failed');
+        if (data.error) throw new Error(data.error);
+        if (!data.length) {
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">emoji_events</span></div>No tournaments yet.</div>');
+          return;
+        }
+        let html = '';
+        data.forEach(t => {
+          html += '<div class="req-card"><div class="rname">' + esc(t.title) + '</div>' +
+            '<div class="rmeta">' + esc(t.game_slug || '') + ' — ' + esc(t.status) + ' — ' + t.entries + '/' + t.max_players + ' players' +
+            (t.status === 'finished' && t.last_winner ? ' — champion: <strong>' + esc(t.last_winner) + '</strong>' : '') + '</div>' +
+            '<div class="row-actions">' +
+            (t.status === 'signup'
+              ? '<button class="btn small" onclick="startTourney(' + t.id + ', this)">Start bracket</button>' +
+                '<button class="btn small danger" onclick="cancelTourney(' + t.id + ', this)">Cancel</button>'
+              : t.status === 'live'
+              ? '<button class="btn small" onclick="toggleTourneyMatches(' + t.id + ')">Enter results</button>' +
+                '<button class="btn small danger" onclick="cancelTourney(' + t.id + ', this)">Cancel</button>'
+              : '<span class="muted">Finished</span>') +
+            '</div><div id="tmatches-' + t.id + '"></div></div>';
+        });
+        setHTMLifChanged(box, html);
+      } catch (e) {
+        console.error(e);
+        if (firstT) box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load tournaments.</div>';
+      }
+    }
+
+    async function toggleTourneyMatches(id) {
+      const wrap = document.getElementById('tmatches-' + id);
+      if (!wrap) return;
+      if (wrap.classList.contains('tmatches-open')) {
+        wrap.classList.remove('tmatches-open');
+        wrap.innerHTML = '';
+        return;
+      }
+      wrap.classList.add('tmatches-open');
+      wrap.innerHTML = '<p class="muted">Loading…</p>';
+      try {
+        const data = await srpc('tourney_detail', Object.assign(staffCreds(), { tid: id }));
+        if (!data || data.error) throw new Error((data && data.error) || 'failed');
+        const pending = (data.matches || []).filter(m => m.status === 'pending');
+        if (!pending.length) { wrap.innerHTML = '<p class="muted">No pending ties — round complete.</p>'; return; }
+        let html = '';
+        pending.forEach(m => {
+          html += '<div class="deny-box"><span style="font-size:13px"><strong>R' + m.round_no + '</strong> ' +
+            esc(m.player_a || '—') + ' vs ' + esc(m.player_b || '—') + '</span>' +
+            '<input id="dsa-' + m.id + '" type="number" inputmode="numeric" min="0" max="999" placeholder="A" aria-label="Score A" />' +
+            '<input id="dsb-' + m.id + '" type="number" inputmode="numeric" min="0" max="999" placeholder="B" aria-label="Score B" />' +
+            '<select id="dsw-' + m.id + '" aria-label="Winner on tie"><option value="">higher wins</option>' +
+            '<option value="' + esc(m.player_a || '') + '">' + esc(m.player_a || 'A') + ' wins tie</option>' +
+            (m.player_b ? '<option value="' + esc(m.player_b) + '">' + esc(m.player_b) + ' wins tie</option>' : '') + '</select>' +
+            '<button class="btn small" onclick="decideTourneyMatch(' + m.id + ', this)">Save</button></div>';
+        });
+        wrap.innerHTML = html;
+      } catch (e) {
+        console.error(e);
+        wrap.innerHTML = '<p class="muted">Failed to load ties.</p>';
+      }
+    }
+
+    async function decideTourneyMatch(mid, btn) {
+      if (!can('tournaments.manage')) { toast('Insufficient rank', 'err'); return; }
+      const sa = parseInt(((document.getElementById('dsa-' + mid) || {}).value || ''), 10);
+      const sb = parseInt(((document.getElementById('dsb-' + mid) || {}).value || ''), 10);
+      const wsel = document.getElementById('dsw-' + mid);
+      const w = wsel ? wsel.value || null : null;
+      setBtnLoading(btn, true);
+      try {
+        const res = await srpc('tourney_decide', callerArgs({ match_id: mid, score_a: sa, score_b: sb, winner_override: w }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        toast('Result saved', 'ok');
+        document.querySelectorAll('.tmatches-open').forEach(el => { el.classList.remove('tmatches-open'); el.innerHTML = ''; });
+        loadTourneysAdmin();
+      } catch (e) {
+        console.error(e);
+        toast('Save failed: ' + String((e && e.message) || '').slice(0, 140), 'err');
+      } finally {
+        setBtnLoading(btn, false, 'Save');
+      }
+    }
+
+    async function startTourney(id, btn) {
+      if (!can('tournaments.manage')) { toast('Insufficient rank', 'err'); return; }
+      setBtnLoading(btn, true);
+      try {
+        const res = await srpc('tourney_start', callerArgs({ tid: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        toast('Bracket drawn', 'ok');
+        loadTourneysAdmin();
+      } catch (e) {
+        console.error(e);
+        toast('Start failed: ' + String((e && e.message) || '').slice(0, 120), 'err');
+      } finally {
+        setBtnLoading(btn, false, 'Start bracket');
+      }
+    }
+
+    async function cancelTourney(id, btn) {
+      if (!can('tournaments.manage')) { toast('Insufficient rank', 'err'); return; }
+      if (!confirm('Cancel this tournament? Entries are kept but play stops.')) return;
+      setBtnLoading(btn, true);
+      try {
+        const res = await srpc('tourney_cancel', callerArgs({ tid: id }));
+        if (!res || !res.success) throw new Error((res && res.error) || 'failed');
+        toast('Tournament cancelled', 'ok');
+        loadTourneysAdmin();
+      } catch (e) {
+        console.error(e);
+        toast('Cancel failed.', 'err');
+      } finally {
+        setBtnLoading(btn, false, 'Cancel');
       }
     }
 
