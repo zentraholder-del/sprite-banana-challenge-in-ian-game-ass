@@ -4222,7 +4222,7 @@ async function sha256hexFp(str) {
             const info = card.querySelector('.game-info');
             if (info) info.appendChild(badge);
           }
-          badge.textContent = '? ' + n + ' in game';
+          badge.textContent = '• ' + n + ' in game';
           badge.style.display = 'inline-block';
         } else if (badge) {
           badge.style.display = 'none';
@@ -4479,7 +4479,11 @@ async function sha256hexFp(str) {
         const img = document.createElement('img');
         img.loading = 'lazy';
         img.alt = name;
-        img.src = '../' + art;
+        // Manifest values are written repo-root-relative ("games/<slug>/…"
+        // or "play/icons/…"); from this page (games/play/) that means
+        // stripping one leading "games/" — otherwise every game-folder
+        // cover 404s as games/games/… and falls back to a monogram.
+        img.src = '../' + String(art).replace(/^games\//, '');
         img.onerror = () => paintMonogram(thumb, path, name);
         thumb.appendChild(img);
       } else {
