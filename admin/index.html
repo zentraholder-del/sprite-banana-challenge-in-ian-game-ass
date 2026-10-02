@@ -928,6 +928,15 @@
       font-feature-settings: 'lnum' 1, 'kern' 1;
     }
     button .mi { pointer-events: none; }
+    /* Icon sizing per context (base .mi is 20px) */
+    .empty-state .big .mi { font-size: 32px; }
+    .trick-btn > .mi { font-size: 26px; }
+    .pill .mi { font-size: 12px; vertical-align: -2px; }
+    .chev.mi { font-size: 16px; }
+    .tabs button .mi, .tabs a.tablink .mi { font-size: 18px; vertical-align: -3px; }
+    .user-meta .mi { font-size: 14px; vertical-align: -3px; }
+    .keyrow .mi { font-size: 16px; vertical-align: -3px; }
+    .muted .mi { font-size: 14px; vertical-align: -2px; }
   </style>
 </head>
 <body>
@@ -938,7 +947,7 @@
   </div>
 
   <nav>
-    <div class="nav-logo">⚡ Lightspeed · Admin</div>
+    <div class="nav-logo"><span class="mi">bolt</span> Lightspeed · Admin</div>
     <div><button class="logout-btn" id="adminLogout" onclick="adminLogout()" style="display:none">Sign out</button></div>
   </nav>
 
@@ -954,7 +963,7 @@
     <div id="dash" style="display:none">
       <div class="topbar">
         <span class="who" id="topbarUser">Admin</span>
-        <button class="icon-btn" onclick="openRankGuide()" aria-label="Rank guide" title="What can each rank do?">❓</button>
+        <button class="icon-btn" onclick="openRankGuide()" aria-label="Rank guide" title="What can each rank do?"><span class="mi">help</span></button>
         <div class="ticker" aria-live="polite">
           <span>Keys <b id="tickKeys">…</b></span>
           <span>Requests <b id="tickPending">…</b></span>
@@ -963,21 +972,21 @@
       </div>
       <div class="admin-shell">
       <div class="tabs sidebar">
-        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)">📊 Dashboard</button>
-        <button data-tab="requests" onclick="showTab('requests', this)">📥 Key requests</button>
-        <button data-tab="resets" onclick="showTab('resets', this)">🔄 Key resets</button>
-        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)">🛡️ Admin requests</button>
-        <button data-tab="keys" onclick="showTab('keys', this)">🔑 Manage keys</button>
-        <button data-tab="blacklist" onclick="showTab('blacklist', this)">🚫 Blacklist</button>
-        <button data-tab="messages" onclick="showTab('messages', this)">💬 Messaging</button>
-        <button data-tab="users" onclick="showTab('users', this)">👥 Users</button>
-        <button data-tab="playerdms" onclick="showTab('playerdms', this)">✉️ Player DMs</button>
-        <button data-tab="reports" onclick="showTab('reports', this)">🚩 Reports</button>
-        <button data-tab="troll" onclick="showTab('troll', this)">👻 Troll</button>
-        <button data-tab="activity" onclick="showTab('activity', this)">📜 Activity</button>
-        <button data-tab="audit" onclick="showTab('audit', this)">🧾 Audit log</button>
-        <button data-tab="perms" onclick="showTab('perms', this)">🔐 Permissions</button>
-        <a class="tablink" href="../games/play/">▶ Play Games</a>
+        <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)"><span class="mi">dashboard</span> Dashboard</button>
+        <button data-tab="requests" onclick="showTab('requests', this)"><span class="mi">inbox</span> Key requests</button>
+        <button data-tab="resets" onclick="showTab('resets', this)"><span class="mi">sync</span> Key resets</button>
+        <button data-tab="adminreqs" onclick="showTab('adminreqs', this)"><span class="mi">shield</span> Admin requests</button>
+        <button data-tab="keys" onclick="showTab('keys', this)"><span class="mi">key</span> Manage keys</button>
+        <button data-tab="blacklist" onclick="showTab('blacklist', this)"><span class="mi">block</span> Blacklist</button>
+        <button data-tab="messages" onclick="showTab('messages', this)"><span class="mi">chat_bubble</span> Messaging</button>
+        <button data-tab="users" onclick="showTab('users', this)"><span class="mi">group</span> Users</button>
+        <button data-tab="playerdms" onclick="showTab('playerdms', this)"><span class="mi">mail</span> Player DMs</button>
+        <button data-tab="reports" onclick="showTab('reports', this)"><span class="mi">flag</span> Reports</button>
+        <button data-tab="troll" onclick="showTab('troll', this)"><span class="mi">theater_comedy</span> Troll</button>
+        <button data-tab="activity" onclick="showTab('activity', this)"><span class="mi">history</span> Activity</button>
+        <button data-tab="audit" onclick="showTab('audit', this)"><span class="mi">fact_check</span> Audit log</button>
+        <button data-tab="perms" onclick="showTab('perms', this)"><span class="mi">lock</span> Permissions</button>
+        <a class="tablink" href="../games/play/"><span class="mi">play_arrow</span> Play Games</a>
       </div>
       <div class="admin-main">
       <p class="muted" id="rankNote" style="margin-bottom:12px"></p>
@@ -998,7 +1007,7 @@
           <button class="linklike" onclick="showTab('activity', document.querySelector('.tabs button[data-tab=&quot;activity&quot;]'))">View full log ?</button>
         </div>
         <div class="dash-preview" id="lockPanel" style="display:none">
-          <h3>🔒 Site lock (kill-switch)</h3>
+          <h3><span class="mi">lock</span> Site lock (kill-switch)</h3>
           <p class="sub">While locked, only you can log in or stay online. Everyone else is signed out with your message.</p>
           <div class="inline-form" style="margin-top:8px">
             <input id="lockMsg" placeholder="Locked message (optional)" maxlength="200" style="flex:1;min-width:0" />
@@ -1032,7 +1041,7 @@
         <div class="inline-form" style="align-items:center">
           <input id="customKey" placeholder="Custom Key (leave blank to auto-generate)" maxlength="64" style="flex:1; min-width:180px" aria-label="Custom key" />
           <div class="dd" id="dd-genrank" data-select="genRank">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-genrank')" aria-label="Rank for new key"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-genrank')" aria-label="Rank for new key"><span class="dd-label"></span><em class="chev mi">expand_more</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="genRank" aria-label="Rank for new key" style="display:none">
@@ -1117,7 +1126,7 @@
         </div>
         <div id="userList"><p class="muted">Loading…</p></div>
         <div id="watchPanel" style="display:none; margin-top:20px; border-top:1px solid #262c33; padding-top:20px;">
-          <h2>👁 Watching <span id="watchName"></span></h2>
+          <h2><span class="mi">visibility</span> Watching <span id="watchName"></span></h2>
           <div class="inline-form"><button class="btn small ghost" onclick="closeWatch()">Close</button></div>
           <div id="watchBody"><p class="muted">Loading…</p></div>
         </div>
@@ -1163,7 +1172,7 @@
         <div class="field" id="trollUserWrap" style="display:none">
           <label>Target user</label>
           <div class="dd" id="dd-target" data-select="trollTarget">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-target')" aria-label="Target user"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-target')" aria-label="Target user"><span class="dd-label"></span><em class="chev mi">expand_more</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="trollTarget" aria-label="Target user" style="display:none" onchange="paintTrickButtons(); refreshTrollStates();"></select>
@@ -1171,7 +1180,7 @@
         <div class="field">
           <label>Scare image (jumpscare only)</label>
           <div class="dd" id="dd-scare" data-select="scareImg">
-            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-scare')" aria-label="Scare image"><span class="dd-label"></span><em class="chev">▾</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleDropdown('dd-scare')" aria-label="Scare image"><span class="dd-label"></span><em class="chev mi">expand_more</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="scareImg" aria-label="Scare image" style="display:none">
@@ -1193,20 +1202,20 @@
         </div>
         <div class="field">
           <label>Message (iOS alert &amp; popup spam)</label>
-          <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing 😂" maxlength="200" />
+          <input id="trollMsg" placeholder="e.g. Your iPad has won absolutely nothing!" maxlength="200" />
         </div>
         <div class="active-strip" id="activeNow" aria-live="polite"></div>
         <div class="trick-grid" id="trickGrid">
-          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)">👻<span>Jumpscare</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)">📳<span>Screen shake</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)">📡<span>Fake disconnect</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)">🙃<span>Upside down</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)">✨<span>Ripple chaos</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)">🔔<span>Fake iOS alert</span><em class="tstate">INSTANT</em></button>
-          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)">🎨<span>Color invert</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)">💬<span>Popup spam</span><em class="tstate">INSTANT</em></button>
-          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)">⏳<span>Loading forever</span><em class="tpill"></em><em class="tstate">OFF</em></button>
-          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)">🎉<span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="jumpscare" onclick="selectTrick(this)"><span class="mi">warning</span><span>Jumpscare</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="shake" onclick="selectTrick(this)"><span class="mi">vibration</span><span>Screen shake</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="disconnect" onclick="selectTrick(this)"><span class="mi">wifi_off</span><span>Fake disconnect</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="flip" onclick="selectTrick(this)"><span class="mi">flip</span><span>Upside down</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="ripples" onclick="selectTrick(this)"><span class="mi">water_drop</span><span>Ripple chaos</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="alert" onclick="selectTrick(this)"><span class="mi">notifications</span><span>Fake iOS alert</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="invert" onclick="selectTrick(this)"><span class="mi">invert_colors</span><span>Color invert</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="popups" onclick="selectTrick(this)"><span class="mi">open_in_new</span><span>Popup spam</span><em class="tstate">INSTANT</em></button>
+          <button class="trick-btn" data-trick="loading" onclick="selectTrick(this)"><span class="mi">hourglass_empty</span><span>Loading forever</span><em class="tpill"></em><em class="tstate">OFF</em></button>
+          <button class="trick-btn" data-trick="confetti" onclick="selectTrick(this)"><span class="mi">celebration</span><span>Confetti bomb</span><em class="tstate">INSTANT</em></button>
         </div>
         <p class="muted">Tap a TOGGLE card to switch it on/off instantly. Tap an INSTANT card to fire it once. Jumpscare uses the image picker above when toggled ON.</p>
         <div class="error" id="trollErr"></div>
@@ -1686,7 +1695,7 @@ async function sha256hexFp(str) {
       if (!st || myRank !== 'owner') return;
       try {
         const r = await sb.from('app_config').select('locked').eq('id', 1).maybeSingle();
-        if (!r.error && r.data) st.textContent = r.data.locked ? '🔒 LOCKED' : 'Unlocked';
+        if (!r.error && r.data) st.innerHTML = r.data.locked ? '<span class="mi" style="font-size:14px">lock</span> LOCKED' : 'Unlocked';
         else st.textContent = 'Not set up yet — run the SQL, then lock/unlock here.';
       } catch (e) { console.error('lock status failed:', e); }
     }
@@ -1697,7 +1706,7 @@ async function sha256hexFp(str) {
       try {
         const res = await srpc('lock_set', callerArgs({ new_locked: locked, new_message: msg.slice(0, 200) }));
         if (!res || !res.success) throw new Error((res && res.error) || 'failed');
-        if (st) st.textContent = locked ? '🔒 LOCKED' : 'Unlocked';
+        if (st) st.innerHTML = locked ? '<span class="mi" style="font-size:14px">lock</span> LOCKED' : 'Unlocked';
         toast(locked ? 'Site locked' : 'Site unlocked', locked ? undefined : 'ok');
       } catch (e) { console.error('set lock failed:', e); toast('Lock change failed', 'err'); }
     }
@@ -1981,7 +1990,7 @@ async function sha256hexFp(str) {
         const rows = await fetchActivityRows();
         const top = rows.slice(0, 5);
         if (top.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">dashboard</span></div>No activity yet.</div>';
           return;
         }
         let html = '';
@@ -1996,13 +2005,13 @@ async function sha256hexFp(str) {
     }
 
     function activityIcon(kind) {
-      if (!kind) return '?';
-      if (kind.indexOf('activation') !== -1) return '🔑';
-      if (kind.indexOf('blacklist') !== -1) return '🚫';
-      if (kind.indexOf('troll') !== -1) return '👻';
-      if (kind.indexOf('approved') !== -1) return '?';
-      if (kind.indexOf('denied') !== -1) return '?';
-      return '?';
+      if (!kind) return '<span class="mi" style="font-size:14px">help</span>';
+      if (kind.indexOf('activation') !== -1) return '<span class="mi" style="font-size:14px">key</span>';
+      if (kind.indexOf('blacklist') !== -1) return '<span class="mi" style="font-size:14px">block</span>';
+      if (kind.indexOf('troll') !== -1) return '<span class="mi" style="font-size:14px">theater_comedy</span>';
+      if (kind.indexOf('approved') !== -1) return '<span class="mi" style="font-size:14px">check</span>';
+      if (kind.indexOf('denied') !== -1) return '<span class="mi" style="font-size:14px">close</span>';
+      return '<span class="mi" style="font-size:14px">help</span>';
     }
 
     function activityWhen(when) {
@@ -2041,7 +2050,7 @@ async function sha256hexFp(str) {
       const box = document.getElementById('activityList');
       const top = activityRows.slice(0, activityShown);
       if (top.length === 0) {
-        box.innerHTML = '<div class="empty-state"><div class="big">📊</div>No activity yet.</div>';
+        box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">dashboard</span></div>No activity yet.</div>';
         return;
       }
       let html = '<div class="timeline">';
@@ -2075,7 +2084,7 @@ async function sha256hexFp(str) {
         renderActivityRows();
       } catch (e) {
         console.error('activity log failed:', e);
-        if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load activity.</div>';
+        if (firstAct) box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load activity.</div>';
       }
     }
 
@@ -2091,7 +2100,7 @@ async function sha256hexFp(str) {
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         if (!data.length) {
-          setHTMLifChanged(box, '<div class="empty-state"><div class="big">🧾</div>No staff actions logged yet.</div>');
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">fact_check</span></div>No staff actions logged yet.</div>');
           return;
         }
         let html = '<div class="keys-table-wrap"><table><tr><th>When</th><th>Staff</th><th>Action</th><th>Target</th><th>Detail</th></tr>';
@@ -2106,7 +2115,7 @@ async function sha256hexFp(str) {
         setHTMLifChanged(box, html);
       } catch (e) {
         console.error('audit log failed:', e);
-        if (firstAudit) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load audit log.</div>';
+        if (firstAudit) box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load audit log.</div>';
       }
     }
 
@@ -2162,7 +2171,7 @@ async function sha256hexFp(str) {
     const INSTANT_TRICKS = ['confetti', 'popups', 'alert'];
     let trollStates = {}; // "type|scope" -> 'on' / 'off' / null (scope '*' = Everyone)
     let trollStateRows = {}; // "type|scope" -> { type, scope } for the Active-now list
-    const TRICK_EMOJI = { jumpscare: '👻', shake: '📳', disconnect: '📡', flip: '🙃', ripples: '✨', invert: '🎨', loading: '⏳', alert: '🔔', popups: '💬', confetti: '🎉' };
+    const TRICK_ICON = { jumpscare: 'warning', shake: 'vibration', disconnect: 'wifi_off', flip: 'flip', ripples: 'water_drop', invert: 'invert_colors', loading: 'hourglass_empty', alert: 'notifications', popups: 'open_in_new', confetti: 'celebration' };
 
     function currentScope() {
       if (trollMode === 'user') {
@@ -2202,7 +2211,7 @@ async function sha256hexFp(str) {
       let html = '<div class="muted" style="margin-bottom:8px">Live now — tap Stop to kill one:</div>';
       keys.forEach(k => {
         const r = trollStateRows[k];
-        html += '<div class="keyrow"><span>' + (TRICK_EMOJI[r.type] || '?') + ' <b>' + esc(r.type) + '</b> ? ' +
+        html += '<div class="keyrow"><span><span class="mi" style="font-size:16px">' + (TRICK_ICON[r.type] || 'help') + '</span> <b>' + esc(r.type) + '</b> — ' +
           esc(r.scope === '*' ? 'Everyone' : r.scope) + '</span>' +
       '<button class="btn small ghost" data-t="' + esc(r.type) + '" data-s="' + esc(r.scope) +
       '" onclick="stopScopeBtn(this)">Stop</button></div>';
@@ -2402,7 +2411,7 @@ async function sha256hexFp(str) {
         customScareReady = true;
         const prev = document.getElementById('customScarePreview');
         if (prev) { prev.src = dataUrl; prev.style.display = ''; }
-        if (st) st.textContent = 'Custom image saved ✓ — select "Custom upload" in the picker to fire it.';
+        if (st) st.textContent = 'Custom image saved — select "Custom upload" in the picker to fire it.';
         toast('Custom scare saved', 'ok');
       } catch (e) { console.error('upload custom scare failed:', e); if (st) st.textContent = 'Upload failed.'; toast('Upload failed', 'err'); }
     }
@@ -2614,7 +2623,7 @@ async function sha256hexFp(str) {
         if (data.error) throw new Error(data.error);
         const pending = (data || []).filter(r => r.status === 'pending');
         if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending requests.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>No pending requests.</div>';
           knownReqIds = {};
           return;
         }
@@ -2624,7 +2633,7 @@ async function sha256hexFp(str) {
           const isNew = !isFirst && !knownReqIds[r.id];
           knownReqIds[r.id] = true;
           html += '<div class="req-card' + (isNew ? ' flash' : '') + '" style="animation-delay:' + Math.min(ri, 8) * 40 + 'ms">' +
-            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off">🚫 device blocked</span>' : '') + '</div>' +
+            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off"><span class="mi">block</span> device blocked</span>' : '') + '</div>' +
             '<div class="rmeta">' + esc(r.school || '—') + ' — ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '—') + '</div>' +
             '<div class="rreason">' + esc(r.reason || '(no reason given)') + '</div>' +
             '<div class="row-actions">' +
@@ -2640,7 +2649,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html);
       } catch (e) {
         console.error(e);
-        if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load requests.</div>';
+        if (firstReq) box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load requests.</div>';
       }
     }
 
@@ -2683,7 +2692,7 @@ async function sha256hexFp(str) {
         const decided = data.decided || [];
         let html = '';
         if (pending.length === 0) {
-          html += '<div class="empty-state"><div class="big">📭</div>No pending admin requests.</div>';
+          html += '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>No pending admin requests.</div>';
         } else {
           html += '<table><tr><th>User</th><th>Key</th><th>Rank</th><th></th></tr>';
           pending.forEach((r, ri) => {
@@ -2713,7 +2722,7 @@ async function sha256hexFp(str) {
           const msg = /column/i.test((e && e.message) || '')
             ? 'Admin requests need a database update — run the SQL migration, then reload.'
             : 'Failed to load admin requests.';
-          const errHtml = '<div class="empty-state"><div class="big">⚠️</div>' + esc(msg) + '</div>';
+          const errHtml = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>' + esc(msg) + '</div>';
           setHTMLifChanged(box, errHtml);
         }
       }
@@ -2941,7 +2950,7 @@ async function sha256hexFp(str) {
         if (data.error) throw new Error(data.error);
         const pending = (data || []).filter(r => r.status === 'pending');
         if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending reset requests.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>No pending reset requests.</div>';
           knownResetReqIds = {};
           return;
         }
@@ -2951,7 +2960,7 @@ async function sha256hexFp(str) {
           const isNew = !isFirst && !knownResetReqIds[r.id];
           knownResetReqIds[r.id] = true;
           html += '<div class="req-card' + (isNew ? ' flash' : '') + '" style="animation-delay:' + Math.min(ri, 8) * 40 + 'ms">' +
-            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off">🚫 device blocked</span>' : '') +
+            '<div class="rname">' + esc(r.name) + (r.fp_blocked ? ' <span class="pill off"><span class="mi">block</span> device blocked</span>' : '') +
             (r.live_session ? '' : ' <span class="pill off">no live session</span>') + '</div>' +
             '<div class="rmeta">key <span class="mono">' + esc(r.key_value || '?') + '</span> — ' + esc(r.created_at ? new Date(r.created_at).toLocaleString() : '—') + '</div>' +
             '<div class="rreason">' + esc(r.reason || '(no reason given)') + '</div>' +
@@ -2967,7 +2976,7 @@ async function sha256hexFp(str) {
         setHTMLifChanged(box, html);
       } catch (e) {
         console.error(e);
-        if (firstReset) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load reset requests.</div>';
+        if (firstReset) box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load reset requests.</div>';
       }
     }
 
@@ -3066,13 +3075,13 @@ async function sha256hexFp(str) {
         if (data.error) throw new Error(data.error);
         lastKeys = data || [];
         if (lastKeys.length === 0) {
-          setHTMLifChanged(box, '<div class="empty-state"><div class="big">🔑</div>No keys yet — generate one above.</div>');
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">key</span></div>No keys yet — generate one above.</div>');
           return;
         }
         renderKeys();
       } catch (e) {
         console.error(e);
-        if (firstKeys) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load keys.</div>';
+        if (firstKeys) box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load keys.</div>';
       }
     }
 
@@ -3093,7 +3102,7 @@ async function sha256hexFp(str) {
         return 0;
       });
       if (rows.length === 0) {
-        box.innerHTML = '<div class="empty-state"><div class="big">🔑</div>' +
+        box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">key</span></div>' +
           (lastKeys.length === 0 ? 'No keys yet — generate one above.' : 'No keys match the current filters.') + '</div>';
         return;
       }
@@ -3185,7 +3194,7 @@ async function sha256hexFp(str) {
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>Blacklist is empty.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>Blacklist is empty.</div>';
           return;
         }
         let html = '<table><tr><th>Username</th><th>Reason</th><th></th></tr>';
@@ -3197,7 +3206,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error(e);
-      if (firstBl) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load blacklist.</div>');
+      if (firstBl) setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load blacklist.</div>');
     }
     }
 
@@ -3243,7 +3252,7 @@ async function sha256hexFp(str) {
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
         if (!data.length) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📵</div>No blocked devices.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">smartphone</span></div>No blocked devices.</div>';
           return;
         }
         let html = '<table><tr><th>Device</th><th>Reason</th><th>When</th><th></th></tr>';
@@ -3255,7 +3264,7 @@ async function sha256hexFp(str) {
         setHTMLifChanged(box, html + '</table>');
       } catch (e) {
         console.error('devices failed:', e);
-        setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load devices.</div>');
+        setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load devices.</div>');
       }
     }
     async function unblockDevice(fp, btn) {
@@ -3373,16 +3382,16 @@ async function sha256hexFp(str) {
           .limit(10);
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📢</div>No announcements yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">campaign</span></div>No announcements yet.</div>';
           return;
         }
         let html = '<table><tr><th>Announcement</th><th>By</th><th>When</th><th></th></tr>';
         data.forEach((a, ai) => {
           let tag = '';
-          if (a.pinned) tag = '<div class="muted">📌 sticky — stays until deleted</div>';
+          if (a.pinned) tag = '<div class="muted"><span class="mi" style="font-size:14px">push_pin</span> sticky — stays until deleted</div>';
           else if (a.scheduled_for) {
             const t = new Date(a.scheduled_for).getTime();
-            tag = '<div class="muted">? ' + esc(new Date(a.scheduled_for).toLocaleString());
+            tag = '<div class="muted"><span class="mi" style="font-size:14px">schedule</span> ' + esc(new Date(a.scheduled_for).toLocaleString());
             tag += (Date.now() >= t - 300000) ? (a.reminded ? ' • alerted' : ' • live') : ' • upcoming';
             tag += '</div>';
           }
@@ -3396,7 +3405,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load announcements failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load announcements.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load announcements.</div>');
     }
     }
 
@@ -3478,7 +3487,7 @@ async function sha256hexFp(str) {
         const { data, error } = res;
         if (error) throw error;
         if (!data || data.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No chat messages yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">forum</span></div>No chat messages yet.</div>';
           return;
         }
         let html = '<table><tr><th>User</th><th>Message</th><th>When</th><th></th></tr>';
@@ -3494,7 +3503,7 @@ async function sha256hexFp(str) {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load chat mod failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load chat.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load chat.</div>');
     }
     }
 
@@ -3547,7 +3556,7 @@ async function sha256hexFp(str) {
         if (error) throw error;
         if (!data || data.length === 0) {
           lastUsers.rows = [];
-          setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>No active sessions.</div>');
+          setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">group</span></div>No active sessions.</div>');
           return;
         }
 // Rank map for whoever can set ranks (owner by default).
@@ -3572,7 +3581,7 @@ try {
         renderUsers();
       } catch (e) {
         console.error(e);
-        if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Failed to load users.</div>';
+        if (firstUsers) box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load users.</div>';
       }
     }
 
@@ -3582,7 +3591,7 @@ try {
       const q = ((document.getElementById('userSearch') || {}).value || '').trim().toLowerCase();
       const rows = lastUsers.rows.filter(u => !q || (u.username || '').toLowerCase().indexOf(q) !== -1);
       if (rows.length === 0) {
-        setHTMLifChanged(box, '<div class="empty-state"><div class="big">👥</div>' +
+        setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">group</span></div>' +
           (lastUsers.rows.length === 0 ? 'No active sessions.' : 'No users match.') + '</div>');
         return;
       }
@@ -3596,7 +3605,7 @@ try {
         const av = avatarFor(u.username);
         let rankCell;
         if (can('users.set_rank') && !isMe && urank !== 'owner') {
-          rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>';
+          rankCell = '<div class="dd urank" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Change rank"><span class="dd-label">' + esc(urank) + '</span><em class="chev mi">expand_more</em></button><div class="dd-panel"></div></div>';
         } else {
           rankCell = rankPill(urank) + (isMe ? ' <span class="muted">you</span>' : '');
         }
@@ -3608,7 +3617,7 @@ try {
           : (wc > 0 ? '<span class="pill rank-user">? ' + wc + '</span>' : '');
         const muteBtn = !canMod ? '' : (mutedMap[u.username]
           ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="unmuteUser(this)" title="Muted until ' + esc(mutedMap[u.username]) + '">Unmute</button>'
-          : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev">▾</em></button><div class="dd-panel"></div></div>');
+          : '<div class="dd mutedd" data-user="' + esc(u.username) + '"><button type="button" class="dd-trigger sm" aria-label="Mute user"><span class="dd-label">Mute</span><em class="chev mi">expand_more</em></button><div class="dd-panel"></div></div>');
         const banBtns = (canMod && wc >= 3)
           ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 5)">Ban 5m</button>' +
             '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="gameBan(this, 10)">Ban 10m</button>' +
@@ -3618,7 +3627,7 @@ try {
             ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="grantXpPrompt(this)">+XP</button>'
             : '';
           const watchBtn = (can('users.watch') && !isMe)
-            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="openWatch(this.getAttribute(\'data-user\'))">👁 Watch</button>'
+            ? '<button class="btn small ghost" data-user="' + esc(u.username) + '" onclick="openWatch(this.getAttribute(\'data-user\'))"><span class="mi" style="font-size:16px">visibility</span> Watch</button>'
             : '';
           const delUserBtn = (!isMe && canModify(urank))
             ? '<button class="btn small danger" data-user="' + esc(u.username) + '" onclick="deleteUserAccount(this.getAttribute(\'data-user\'), this)">Delete user</button>'
@@ -3627,8 +3636,8 @@ try {
           '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
           '<span class="un">' + esc(u.username) + '</span>' + presencePill(u.last_seen) + '</div>' +
           '<div class="user-meta">' + rankCell + '</div>' +
-          '<div class="user-meta">🎮 ' + esc(u.current_game || 'Browsing') + '</div>' +
-          '<div class="user-meta">⏱ ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '—') + '</div>' +
+          '<div class="user-meta"><span class="mi" style="font-size:14px">sports_esports</span> ' + esc(u.current_game || 'Browsing') + '</div>' +
+          '<div class="user-meta"><span class="mi" style="font-size:14px">schedule</span> ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '—') + '</div>' +
           '<div class="row-actions">' +
             '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
             warnBtn + muteBtn + banBtns + xpBtn + watchBtn + delUserBtn +
@@ -3849,7 +3858,7 @@ try {
         if (data.error) throw new Error(data.error);
         const pending = (data || []).filter(r => r.status === 'pending');
         if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">📭</div>No pending reports.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>No pending reports.</div>';
           return;
         }
         const ids = pending.map(r => r.message_id).filter(Boolean);
@@ -3875,7 +3884,7 @@ try {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('load reports failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load reports.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load reports.</div>');
     }
     }
 
@@ -3937,7 +3946,7 @@ try {
       const box = document.getElementById('spyList');
       if (!box) return;
       if (!can('tab.playerdms')) {
-        box.innerHTML = '<div class="empty-state"><div class="big">⚠️</div>Insufficient rank.</div>';
+        box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Insufficient rank.</div>';
         return;
       }
       const first = !box.querySelector('table') && !box.querySelector('.empty-state');
@@ -3956,7 +3965,7 @@ try {
         });
         const keys = Object.keys(pairs).slice(0, 30);
         if (keys.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big">💬</div>No DM threads yet.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">forum</span></div>No DM threads yet.</div>';
           return;
         }
         let html = '<table><tr><th>Thread</th><th>Latest</th><th></th></tr>';
@@ -3970,7 +3979,7 @@ try {
       setHTMLifChanged(box, html + '</table>');
     } catch (e) {
       console.error('spy list failed:', e);
-      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big">⚠️</div>Failed to load threads.</div>');
+      if (first) setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load threads.</div>');
     }
     }
 
@@ -4156,17 +4165,17 @@ try {
         let html = '<div class="user-top"><span class="avatar" style="background:' + av.bg + '">' + esc(av.ch) + '</span>' +
           '<span class="un">' + esc(u) + '</span> ' + rankPill((k && k.rank) || 'user') + ' ' +
           presencePill(s ? s.last_seen : null) + '</div>';
-        html += '<div class="user-meta">🎮 ' + esc((s && s.current_game) || 'offline') + '</div>';
+        html += '<div class="user-meta"><span class="mi" style="font-size:14px">sports_esports</span> ' + esc((s && s.current_game) || 'offline') + '</div>';
         html += '<div class="user-meta">⏱ last seen ' + esc(s && s.last_seen ? new Date(s.last_seen).toLocaleString() : '—') + '</div>';
-        html += '<div class="user-meta">📈 today ' + fmtDur(secs) + ' — ⭐ level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
-        html += '<div class="user-meta">⚠ ' + ((w.warnings || []).length) + ' warning(s)' +
-          ((w.mute && w.mute.expires_at) ? ' — ⛔ muted until ' + esc(new Date(w.mute.expires_at).toLocaleString()) : '') +
-          ((w.ban && w.ban.expires_at) ? ' — ⛔ game-banned until ' + esc(new Date(w.ban.expires_at).toLocaleString()) : '') + '</div>';
+        html += '<div class="user-meta"><span class="mi" style="font-size:14px">trending_up</span> today ' + fmtDur(secs) + ' — <span class="mi" style="font-size:14px">star</span> level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
+        html += '<div class="user-meta"><span class="mi" style="font-size:14px">warning</span> ' + ((w.warnings || []).length) + ' warning(s)' +
+          ((w.mute && w.mute.expires_at) ? ' — <span class="mi" style="font-size:14px">volume_off</span> muted until ' + esc(new Date(w.mute.expires_at).toLocaleString()) : '') +
+          ((w.ban && w.ban.expires_at) ? ' — <span class="mi" style="font-size:14px">block</span> game-banned until ' + esc(new Date(w.ban.expires_at).toLocaleString()) : '') + '</div>';
         html += '<div class="sec-label">Recent chat</div>';
         const msgs = w.messages || [];
         if (msgs.length === 0) html += '<div class="user-meta">No messages.</div>';
         msgs.forEach(m => {
-          html += '<div class="user-meta">💬 ' + esc(String(m.content || '').slice(0, 80)) +
+          html += '<div class="user-meta"><span class="mi" style="font-size:14px">chat_bubble</span> ' + esc(String(m.content || '').slice(0, 80)) +
             ' <span class="muted">— ' + esc(m.created_at ? new Date(m.created_at).toLocaleString() : '') + '</span></div>';
         });
         html += '<div class="sec-label">Recent tricks aimed at them</div>';
@@ -4174,7 +4183,7 @@ try {
         if (trs.length === 0) html += '<div class="user-meta">None.</div>';
         trs.forEach(t => {
           const st = (t.payload && t.payload.state) ? t.payload.state.toUpperCase() : 'FIRED';
-          html += '<div class="user-meta">🎭 ' + esc(t.event_type || '—') + ' — ' + esc(st) + '</div>';
+          html += '<div class="user-meta"><span class="mi" style="font-size:14px">theater_comedy</span> ' + esc(t.event_type || '—') + ' — ' + esc(st) + '</div>';
         });
         setHTMLifChanged(body, html);
       } catch (e) {

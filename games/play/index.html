@@ -1214,6 +1214,9 @@
       font-feature-settings: 'lnum' 1, 'kern' 1;
     }
     button .mi { pointer-events: none; }
+    /* Icon sizing per context (base .mi is 20px) */
+    .fav-btn .mi, .new-msg-pill .mi { font-size: 16px; vertical-align: -3px; }
+    .leader-rank .mi { font-size: 16px; vertical-align: -2px; }
   </style>
 </head>
 <body>
@@ -1225,7 +1228,7 @@
 
   <nav>
     <div style="display:flex;align-items:center;gap:12px">
-      <button class="logout-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+      <button class="logout-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Open menu"><span class="mi">menu</span></button>
       <div class="nav-logo"><span class="mi">bolt</span> Lightspeed</div>
     </div>
     <div class="nav-right">
@@ -1303,7 +1306,7 @@
 
     <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()">★ Favorites</button>
+      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()"><span class="mi" style="font-size:16px">star</span> Favorites</button>
     </div>
     <div class="result-count" id="resultCount"></div>
 
@@ -1330,13 +1333,13 @@
     <div class="chat-msgs" id="chatMsgs">
       <div class="chat-empty">Loading…</div>
     </div>
-    <button class="new-msg-pill" id="newMsgPill" onclick="jumpToLatest()">↓ New messages</button>
+    <button class="new-msg-pill" id="newMsgPill" onclick="jumpToLatest()"><span class="mi" style="font-size:16px">arrow_downward</span> New messages</button>
     <div class="trivia-box" id="triviaBox" style="display:none"></div>
     <div id="shoutBox"></div>
     <div class="typing-line" id="typingLine"></div>
     <div class="reply-bar" id="replyBar">
-      <span>↩</span><span class="preview" id="replyPreview"></span>
-      <button onclick="cancelReply()" aria-label="Cancel reply">✕</button>
+      <span class="mi">reply</span><span class="preview" id="replyPreview"></span>
+      <button onclick="cancelReply()" aria-label="Cancel reply"><span class="mi">close</span></button>
     </div>
     <form class="chat-form" onsubmit="return sendChat(event)">
       <textarea id="chatInput" rows="1" placeholder="Say something…" maxlength="500" autocomplete="off"></textarea>
@@ -1401,8 +1404,8 @@
     <div class="game-modal-card" id="gameModalCard">
       <div class="game-modal-head">
         <span id="gameModalTitle">Game</span>
-        <button id="gameFsBtn" class="gm-btn" onclick="toggleGameFullscreen()" aria-label="Enter fullscreen">⛶</button>
-        <button class="gm-btn" onclick="closeGame()" aria-label="Close game">✕</button>
+        <button id="gameFsBtn" class="gm-btn" onclick="toggleGameFullscreen()" aria-label="Enter fullscreen"><span class="mi">fullscreen</span></button>
+        <button class="gm-btn" onclick="closeGame()" aria-label="Close game"><span class="mi">close</span></button>
       </div>
       <div class="game-frame-wrap" id="gameFrameWrap"></div>
     </div>
@@ -1411,7 +1414,7 @@
   <!-- SCHEDULED-ANNOUNCEMENT ALERT (one-time modal per user) -->
   <div id="schedAlertModal" role="dialog" aria-label="Announcement" style="display:none">
     <div class="sched-alert-card">
-      <div style="font-size:40px">📅</div>
+      <div style="font-size:40px"><span class="mi" style="font-size:40px">calendar_month</span></div>
       <h2>Scheduled announcement</h2>
       <p id="schedAlertBody"></p>
       <p class="muted" id="schedAlertWhen"></p>
@@ -1858,7 +1861,7 @@ async function sha256hexFp(str) {
         box.scrollTop = box.scrollHeight;
         if (pill) pill.classList.remove('show');
       } else if (pill) {
-        pill.textContent = '↓ New messages';
+        pill.innerHTML = '<span class="mi" style="font-size:16px">arrow_downward</span> New messages';
         pill.classList.add('show');
       }
       if (isLive && !chatPanelVisible()) {
@@ -2146,7 +2149,7 @@ async function sha256hexFp(str) {
           div.className = 'leader-row';
           const rk = document.createElement('span');
           rk.className = 'leader-rank';
-          rk.textContent = medals[i] || ((i + 1) + '.');
+          rk.innerHTML = medals[i] || ((i + 1) + '.');
           const nm = document.createElement('span');
           nm.textContent = r.username || 'anon';
           applyNameStyle(nm, r.username);
@@ -2261,7 +2264,7 @@ async function sha256hexFp(str) {
       { id: 'shoutout', icon: 'campaign', name: 'Shoutout', desc: 'Pin your message in chat for 60 seconds', cost: 100 },
       { id: 'gold24', icon: 'emoji_events', name: 'Gold name (24h)', desc: 'Gold username for a full day', cost: 150 },
       { id: 'status', icon: 'edit', name: 'Status message', desc: 'A custom line under your name, forever', cost: 200 },
-      { id: 'sparkle', icon: 'auto_awesome', name: 'Sparkle chat (7d)', desc: '✨ prefix on your messages for a week', cost: 250 },
+      { id: 'sparkle', icon: 'auto_awesome', name: 'Sparkle chat (7d)', desc: 'Sparkle prefix on your messages for a week', cost: 250 },
       { id: 'hideonline', icon: 'visibility_off', name: 'Hide online (forever)', desc: 'Lurk without the green dot', cost: 300 },
       { id: 'namecolor', icon: 'palette', name: 'Name color', desc: 'Pick your permanent username color', cost: 500 },
       { id: 'mystery', icon: 'redeem', name: 'Mystery box', desc: 'Gamble: 10–200 XP or bonus flair', cost: 100 },
@@ -2504,7 +2507,7 @@ async function sha256hexFp(str) {
         const top = document.createElement('div');
         top.className = 'qtop';
         const tx = document.createElement('span');
-        tx.textContent = (done ? '✓ ' : '') + q.text + ' (' + disp + ')';
+        tx.textContent = q.text + ' (' + disp + ')'; if (done) { var _qi = document.createElement('span'); _qi.className = 'mi'; _qi.style.fontSize = '15px'; _qi.textContent = 'check'; tx.prepend(_qi, ' '); }
         const xp = document.createElement('span');
         xp.className = 'qxp';
         xp.textContent = '+' + q.xp + ' XP';
@@ -2927,7 +2930,7 @@ async function sha256hexFp(str) {
       dlg.className = 'ios-alert';
       dlg.setAttribute('role', 'alertdialog');
       const h = document.createElement('h3');
-      h.textContent = '🎉 Congratulations!';
+      h.innerHTML = '<span class="mi">celebration</span> Congratulations!';
       const p = document.createElement('p');
       p.textContent = (payload && payload.message) || 'Your iPad has won absolutely nothing. Claim your prize: keep playing.';
       const ok = document.createElement('button');
@@ -2956,7 +2959,7 @@ async function sha256hexFp(str) {
       const layer = trollLayer();
       const msgs = (payload && Array.isArray(payload.messages) && payload.messages.length)
         ? payload.messages.slice(0, 4)
-        : ['psst…','behind you','just kidding 😅','carry on!'];
+        : ['psst…','behind you','just kidding!','carry on!'];
       const shown = [];
       msgs.forEach((m, i) => {
         setTimeout(() => {
@@ -3576,13 +3579,13 @@ async function sha256hexFp(str) {
         box.innerHTML = '<div style="font-size:13px;color:#7d8590">No playtime yet today — be the first!</div>';
         return;
       }
-      const medals = ['🥇', '🥈', '🥉'];
+      const medals = ['<span class="mi" style="font-size:16px">emoji_events</span>', '<span class="mi" style="font-size:16px">workspace_premium</span>', '<span class="mi" style="font-size:16px">military_tech</span>'];
       rows.forEach((r, i) => {
         const div = document.createElement('div');
         div.className = 'leader-row';
         const rk = document.createElement('span');
         rk.className = 'leader-rank';
-        rk.textContent = medals[i] || ((i + 1) + '.');
+        rk.innerHTML = medals[i] || ((i + 1) + '.');
         const nm = document.createElement('span');
         nm.textContent = r.username || 'anon';
         const tm = document.createElement('span');
@@ -3744,8 +3747,7 @@ async function sha256hexFp(str) {
       if (myGameBan && myGameBan.expires_at && new Date(myGameBan.expires_at).getTime() > Date.now()) {
         const card = document.createElement('div');
         card.className = 'ban-card';
-        card.textContent = '⛔ You are banned from playing until ' + new Date(myGameBan.expires_at).toLocaleString() +
-          (myGameBan.reason ? ' ? ' + myGameBan.reason : '');
+        card.innerHTML = ''; var _bi = document.createElement('span'); _bi.className = 'mi'; _bi.style.fontSize = '16px'; _bi.textContent = 'block'; card.appendChild(_bi); card.appendChild(document.createTextNode(' You are banned from playing until ' + new Date(myGameBan.expires_at).toLocaleString() + (myGameBan.reason ? ' — ' + myGameBan.reason : '')));
         wrap.appendChild(card);
       }
     }
@@ -4427,7 +4429,6 @@ async function sha256hexFp(str) {
       "infiltratingtheairship": "Infiltrating the Airship",
       "stealingthediamond": "Stealing the Diamond"
     };
-    const EMOJIS = ["🎮","🏎️","🧠","🧱","🏹","🏁","🎈","🍪","🍬","🏏","🐔","✂️","🎯","⛏️","🧗","🎨","🏎️","🚗","🦆","⛏️","🏃","🌍","🐦","🐻","🏁","🍉","📐","🌍","👻","🔫","🍫","🎁","⛳","⚽","❓","🍄","🚀","🔪","🧪","🐵","👾","🍣","🏍️","⚽","💪","🥜","🌀","🍕","⚽","🧟","🏹","🥊","⚽","🚀","🎢","🎯","🏁","🍰","⚽","🥞","🪝","🏄","🏁","🪂","⚽","👾","🎈","⏳","🎣","🎣","🕹️","⚔️","🌊","🚲","🌍","🏍️"];
 
     function prettyName(path) {
       const base = path.split('/').pop();
@@ -4436,9 +4437,6 @@ async function sha256hexFp(str) {
       return base.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
 
-    function emojiFor(path, i) {
-      return EMOJIS[i % EMOJIS.length];
-    }
 
     // Favorites live in localStorage (personal, per device).
     let favOnly = false;
@@ -4506,7 +4504,7 @@ async function sha256hexFp(str) {
         .filter(p => activeCat === 'All' || gameCat(p) === activeCat)
         .sort((a, b) => prettyName(a).localeCompare(prettyName(b)));
       const rc = document.getElementById('resultCount');
-      if (rc) rc.textContent = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' ★' : '') + (activeCat !== 'All' ? ' · ' + activeCat : '');
+      if (rc) rc.innerHTML = list.length + (list.length === 1 ? ' game' : ' games') + (favOnly ? ' <span class="mi" style="font-size:14px">star</span>' : '') + (activeCat !== 'All' ? ' · ' + activeCat : '');
       if (list.length === 0) {
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 16px;color:#7d8590;font-size:14px"><span class="mi">sports_esports</span> No games found — try a different search.</div>';
         return;
@@ -4519,7 +4517,7 @@ async function sha256hexFp(str) {
           card.onclick = () => { openGame(path, name); };
           const star = document.createElement('button');
           star.className = 'fav-star' + (favs.indexOf(path) !== -1 ? ' on' : '');
-          star.textContent = '★';
+          star.innerHTML = '<span class="mi">star</span>';
           star.setAttribute('aria-label', 'Favorite ' + name);
           star.onclick = ev => toggleFav(path, ev);
           const info = document.createElement('div');

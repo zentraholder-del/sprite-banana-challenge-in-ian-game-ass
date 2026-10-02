@@ -637,6 +637,9 @@
       font-feature-settings: 'lnum' 1, 'kern' 1;
     }
     button .mi { pointer-events: none; }
+    /* Icon sizing per context (base .mi is 20px) */
+    .tick .mi { font-size: 16px; }
+    .chev.mi { font-size: 16px; }
   </style>
 </head>
 <body>
@@ -690,7 +693,7 @@
         <div class="field" style="margin-top:10px">
           <label>School</label>
           <div class="dd" id="dd-school" data-select="reqSchool">
-            <button type="button" class="dd-trigger" onclick="toggleSchoolDD(event)" aria-label="School"><span class="dd-label">Select school</span><em class="chev">▾</em></button>
+            <button type="button" class="dd-trigger" onclick="toggleSchoolDD(event)" aria-label="School"><span class="dd-label">Select school</span><em class="chev mi">expand_more</em></button>
             <div class="dd-panel"></div>
           </div>
           <select id="reqSchool" style="display:none" aria-label="School">
@@ -767,7 +770,7 @@
   <!-- APPROVED MODAL (pops like the request form) -->
   <div class="overlay" id="approvedOverlay" onclick="if(event.target===this)closeApprovedModal()">
     <div class="modal" id="approvedModal">
-      <button class="modal-close" onclick="closeApprovedModal()" aria-label="Close">✕</button>
+      <button class="modal-close" onclick="closeApprovedModal()" aria-label="Close"><span class="mi">close</span></button>
       <h2><span class="mi">celebration</span> Request Approved!</h2>
       <p>Use this key to log in:</p>
       <div class="keyline"><span id="approvedKeyText"></span><button class="mini-btn" onclick="copyApprovedKey()">Copy</button></div>
@@ -1412,7 +1415,7 @@
         s.textContent = o.textContent;
         const tick = document.createElement('span');
         tick.className = 'tick';
-        tick.textContent = '✓';
+        tick.innerHTML = '<span class="mi">check</span>';
         b.appendChild(s);
         b.appendChild(tick);
         b.onclick = (function (val) {
