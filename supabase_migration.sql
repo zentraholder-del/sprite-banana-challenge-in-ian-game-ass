@@ -969,6 +969,203 @@ BEGIN
   RETURN json_build_object('success', true);
 END; $$;
 
+ALTER TABLE tournament_matches ADD COLUMN IF NOT EXISTS sub_a INT;
+ALTER TABLE tournament_matches ADD COLUMN IF NOT EXISTS sub_b INT;
+
+CREATE TABLE IF NOT EXISTS shootout_picks (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  match_id BIGINT NOT NULL REFERENCES tournament_matches(id) ON DELETE CASCADE,
+  round_no INT NOT NULL DEFAULT 1,
+  shooter TEXT NOT NULL,
+  keeper TEXT NOT NULL,
+  shoot_zone INT,
+  keep_zone INT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(match_id, round_no)
+);
+
+-- Async shootout picks: the kick resolves only once BOTH zones are stored,
+-- so a live keeper reads a live shooter every round with zero syncing.
+-- Odd rounds: player_a shoots; even rounds: player_b shoots. Zone match =
+-- saved, anything else = goal. Fully deterministic: both clients animate
+-- the identical outcome from the same two numbers.
+CREATE OR REPLACE FUNCTION shootout_pick(input_username TEXT, input_token TEXT,
+  match_id BIGINT, round_no INT, zone INT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE m tournament_matches%ROWTYPE; tstat TEXT;
+DECLARE shooter TEXT; keeper TEXT; r shootout_picks%ROWTYPE;
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('success', false, 'error', 'auth');
+  END IF;
+  IF zone IS NULL OR zone < 1 OR zone > 6 THEN
+    RETURN json_build_object('success', false, 'error', 'Bad zone');
+  END IF;
+  IF round_no IS NULL OR round_no < 1 OR round_no > 99 THEN
+    RETURN json_build_object('success', false, 'error', 'Bad round');
+  END IF;
+  SELECT * INTO m FROM tournament_matches WHERE id = match_id;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Match not found');
+  END IF;
+  IF m.status <> 'pending' THEN
+    RETURN json_build_object('success', false, 'error', 'Match is over');
+  END IF;
+  SELECT status INTO tstat FROM tournaments WHERE id = m.tournament_id;
+  IF tstat <> 'live' THEN
+    RETURN json_build_object('success', false, 'error', 'Tournament is not live');
+  END IF;
+  IF m.player_a IS NULL OR m.player_b IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'No opponent yet');
+  END IF;
+  IF round_no % 2 = 1 THEN shooter := m.player_a; keeper := m.player_b;
+  ELSE shooter := m.player_b; keeper := m.player_a; END IF;
+  IF lower(input_username) <> lower(shooter) AND lower(input_username) <> lower(keeper) THEN
+    RETURN json_build_object('success', false, 'error', 'Not your tie');
+  END IF;
+  SELECT * INTO r FROM shootout_picks
+  WHERE shootout_picks.match_id = shootout_pick.match_id
+    AND shootout_picks.round_no = shootout_pick.round_no;
+  IF NOT FOUND THEN
+    INSERT INTO shootout_picks (match_id, round_no, shooter, keeper)
+    VALUES (match_id, round_no, shooter, keeper)
+    ON CONFLICT (match_id, round_no) DO NOTHING;
+    SELECT * INTO r FROM shootout_picks
+    WHERE shootout_picks.match_id = shootout_pick.match_id
+      AND shootout_picks.round_no = shootout_pick.round_no;
+  END IF;
+  IF lower(input_username) = lower(r.shooter) THEN
+    IF r.shoot_zone IS NOT NULL THEN
+      RETURN json_build_object('success', false, 'error', 'Already picked');
+    END IF;
+    UPDATE shootout_picks SET shoot_zone = zone
+    WHERE shootout_picks.match_id = shootout_pick.match_id
+      AND shootout_picks.round_no = shootout_pick.round_no;
+  ELSIF lower(input_username) = lower(r.keeper) THEN
+    IF r.keep_zone IS NOT NULL THEN
+      RETURN json_build_object('success', false, 'error', 'Already picked');
+    END IF;
+    UPDATE shootout_picks SET keep_zone = zone
+    WHERE shootout_picks.match_id = shootout_pick.match_id
+      AND shootout_picks.round_no = shootout_pick.round_no;
+  ELSE
+    RETURN json_build_object('success', false, 'error', 'Not your tie');
+  END IF;
+  SELECT * INTO r FROM shootout_picks
+  WHERE shootout_picks.match_id = shootout_pick.match_id
+    AND shootout_picks.round_no = shootout_pick.round_no;
+  RETURN json_build_object('success', true,
+    'resolved', (r.shoot_zone IS NOT NULL AND r.keep_zone IS NOT NULL));
+END; $$;
+
+CREATE OR REPLACE FUNCTION shootout_state(input_username TEXT, input_token TEXT,
+  match_id BIGINT, round_no INT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE m tournament_matches%ROWTYPE; r shootout_picks%ROWTYPE;
+DECLARE shooter TEXT; keeper TEXT; resolved BOOLEAN := FALSE;
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('error', 'auth');
+  END IF;
+  SELECT * INTO m FROM tournament_matches WHERE id = match_id;
+  IF NOT FOUND THEN
+    RETURN json_build_object('error', 'not found');
+  END IF;
+  IF round_no % 2 = 1 THEN shooter := m.player_a; keeper := m.player_b;
+  ELSE shooter := m.player_b; keeper := m.player_a; END IF;
+  SELECT * INTO r FROM shootout_picks
+  WHERE shootout_picks.match_id = shootout_state.match_id
+    AND shootout_picks.round_no = shootout_state.round_no;
+  IF FOUND AND r.shoot_zone IS NOT NULL AND r.keep_zone IS NOT NULL THEN
+    resolved := TRUE;
+  END IF;
+  RETURN json_build_object(
+    'found', FOUND,
+    'match_status', m.status,
+    'player_a', m.player_a, 'player_b', m.player_b,
+    'winner', m.winner,
+    'shooter', shooter, 'keeper', keeper,
+    'i_shoot', (lower(input_username) = lower(COALESCE(shooter, ''))),
+    'my_pick', CASE WHEN lower(input_username) = lower(COALESCE(shooter, '')) THEN r.shoot_zone
+                   WHEN lower(input_username) = lower(COALESCE(keeper, '')) THEN r.keep_zone END,
+    'shoot_zone', CASE WHEN resolved THEN r.shoot_zone END,
+    'keep_zone', CASE WHEN resolved THEN r.keep_zone END,
+    'resolved', resolved);
+END; $$;
+
+-- Player score submit: each side posts their own final goals. When both
+-- are in and agree, the tie decides itself (same advance rules as staff).
+CREATE OR REPLACE FUNCTION tourney_submit(input_username TEXT, input_token TEXT,
+  match_id BIGINT, goals INT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE m tournament_matches%ROWTYPE; tstat TEXT;
+DECLARE sa INT; sb INT; w TEXT; pend INT; wins TEXT[]; i INT; r INT;
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('success', false, 'error', 'auth');
+  END IF;
+  IF goals IS NULL OR goals < 0 OR goals > 99 THEN
+    RETURN json_build_object('success', false, 'error', 'Bad score');
+  END IF;
+  SELECT * INTO m FROM tournament_matches WHERE id = match_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'error', 'Match not found');
+  END IF;
+  IF m.status <> 'pending' THEN
+    RETURN json_build_object('success', false, 'error', 'Match is over');
+  END IF;
+  SELECT status INTO tstat FROM tournaments WHERE id = m.tournament_id;
+  IF tstat <> 'live' THEN
+    RETURN json_build_object('success', false, 'error', 'Tournament is not live');
+  END IF;
+  IF lower(input_username) = lower(COALESCE(m.player_a, '')) THEN
+    UPDATE tournament_matches SET sub_a = goals WHERE id = match_id;
+  ELSIF lower(input_username) = lower(COALESCE(m.player_b, '')) THEN
+    UPDATE tournament_matches SET sub_b = goals WHERE id = match_id;
+  ELSE
+    RETURN json_build_object('success', false, 'error', 'Not your tie');
+  END IF;
+  SELECT sub_a, sub_b INTO sa, sb FROM tournament_matches WHERE id = match_id;
+  IF sa IS NULL OR sb IS NULL THEN
+    RETURN json_build_object('success', true, 'decided', false);
+  END IF;
+  IF sa = sb THEN
+    RETURN json_build_object('success', false, 'error', 'Tie: keep playing sudden death');
+  END IF;
+  IF sa > sb THEN w := m.player_a; ELSE w := m.player_b; END IF;
+  UPDATE tournament_matches
+  SET score_a = sa, score_b = sb, winner = w, status = 'decided'
+  WHERE id = match_id;
+  SELECT COUNT(*) INTO pend FROM tournament_matches
+  WHERE tournament_id = m.tournament_id AND round_no = m.round_no AND status = 'pending';
+  IF pend = 0 THEN
+    SELECT COALESCE(array_agg(winner ORDER BY match_no), '{}') INTO wins
+    FROM tournament_matches
+    WHERE tournament_id = m.tournament_id AND round_no = m.round_no AND winner IS NOT NULL;
+    IF COALESCE(array_length(wins, 1), 0) = 1 THEN
+      UPDATE tournaments SET status = 'finished' WHERE id = m.tournament_id;
+    ELSIF NOT EXISTS (SELECT 1 FROM tournament_matches
+           WHERE tournament_id = m.tournament_id AND round_no = m.round_no + 1) THEN
+      r := m.round_no + 1;
+      i := 1;
+      WHILE i <= array_length(wins, 1) LOOP
+        IF i = array_length(wins, 1) THEN
+          INSERT INTO tournament_matches (tournament_id, round_no, match_no, player_a, winner, status)
+          VALUES (m.tournament_id, r, (i + 1) / 2, wins[i], wins[i], 'bye');
+        ELSE
+          INSERT INTO tournament_matches (tournament_id, round_no, match_no, player_a, player_b)
+          VALUES (m.tournament_id, r, (i + 1) / 2, wins[i], wins[i + 1]);
+        END IF;
+        i := i + 2;
+      END LOOP;
+    END IF;
+  END IF;
+  PERFORM audit_log(input_username, 'tourney_submit',
+    COALESCE((SELECT title FROM tournaments WHERE id = m.tournament_id), ''),
+    COALESCE(m.player_a, '?') || ' ' || sa::text || '-' || sb::text || ' ' || COALESCE(m.player_b, '?'));
+  RETURN json_build_object('success', true, 'decided', true, 'winner', w);
+END; $$;
+
 CREATE OR REPLACE FUNCTION adminreq_list(input_username TEXT, input_token TEXT)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE crank TEXT;
@@ -2278,7 +2475,8 @@ BEGIN
         'submit_reset_request','check_reset_status','resetreq_list',
         'resetreq_approve','resetreq_deny','audit_list',
         'tourney_create','tourney_list','tourney_detail','tourney_join',
-        'tourney_start','tourney_decide','tourney_cancel')
+        'tourney_start','tourney_decide','tourney_cancel',
+        'shootout_pick','shootout_state','tourney_submit')
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', f);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon', f);
@@ -2409,7 +2607,8 @@ DECLARE
   t TEXT;
   tbls2 TEXT[] := ARRAY[
     'key_reset_requests', 'staff_audit',
-    'tournaments', 'tournament_entries', 'tournament_matches'
+    'tournaments', 'tournament_entries', 'tournament_matches',
+    'shootout_picks'
   ];
   pol RECORD;
 BEGIN

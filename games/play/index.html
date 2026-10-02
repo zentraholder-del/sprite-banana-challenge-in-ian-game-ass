@@ -2810,6 +2810,11 @@ async function sha256hexFp(str) {
         const t = data.tournament || {};
         const me = meName();
         openTourneyGame = t.game_slug || '';
+        try {
+          const mine = (data.matches || []).find(m => m.status === 'pending' && (m.player_a === me || m.player_b === me));
+          if (mine) localStorage.setItem('ls_shootout_match', String(mine.id));
+          else localStorage.removeItem('ls_shootout_match');
+        } catch (e) {}
         const rounds = {};
         (data.matches || []).forEach(m => { (rounds[m.round_no] = rounds[m.round_no] || []).push(m); });
         let html = '<h2 style="font-size:18px;font-weight:700;color:#ece9e2;margin-bottom:4px">' + escapeHtml(t.title || 'Tournament') + '</h2>' +

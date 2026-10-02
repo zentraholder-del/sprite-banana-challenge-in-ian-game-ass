@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shootout</title>
+  <style>
+    :root {
+      --bg-base: #0e1113; --surface: #161a1f; --surface-2: #1e242b;
+      --border-subtle: #262c33; --text-primary: #ece9e2; --text-secondary: #a7adb5;
+      --text-muted: #7d8590; --accent: #e1352b; --accent-hover: #c62a21;
+      --success: #22c55e; --warning: #f59e0b;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #0a0a0f; color: var(--text-primary); min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; padding: 16px;
+      touch-action: manipulation;
+    }
+    .wrap { width: min(480px, 100%); display: flex; flex-direction: column; gap: 12px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border-subtle);
+      border-radius: 16px; padding: 16px;
+    }
+    h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+    .sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+    .score {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: var(--surface-2); border: 1px solid #242b33; border-radius: 12px;
+      padding: 12px 16px; font-size: 15px; font-weight: 700;
+    }
+    .score .me { color: var(--accent); }
+    .score .vs { color: var(--text-muted); font-weight: 500; font-size: 12px; }
+    .score .opp { color: #60a5fa; }
+    .round-line { font-size: 12px; color: var(--text-muted); text-align: center; }
+    #pitch { width: 100%; border-radius: 12px; display: block; background: #0d5c2e; }
+    .zones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .zone {
+      min-height: 56px; border: 1.5px solid #242b33; border-radius: 12px;
+      background: var(--surface-2); color: var(--text-primary);
+      font-size: 22px; cursor: pointer; font-family: inherit;
+      transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
+      touch-action: manipulation;
+    }
+    .zone:hover { border-color: var(--accent); }
+    .zone:active { transform: scale(0.96); }
+    .zone.locked { border-color: var(--accent); background: #2a1210; }
+    .zone:disabled { opacity: 0.45; cursor: default; transform: none; }
+    .banner {
+      text-align: center; font-size: 26px; font-weight: 800; letter-spacing: 0.5px;
+      min-height: 38px; animation: pop 0.3s var(--ease);
+    }
+    .banner.goal { color: var(--success); }
+    .banner.saved { color: var(--warning); }
+    @keyframes pop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+    .dots { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #242b33; }
+    .dot.g { background: var(--success); }
+    .dot.m { background: var(--danger); }
+    .dot.cur { outline: 2px solid var(--accent); }
+    .btn {
+      width: 100%; min-height: 48px; border: none; border-radius: 10px;
+      background: var(--accent); color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.2s var(--ease), transform 0.2s var(--ease);
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:active { transform: scale(0.97); }
+    .btn.ghost { background: var(--surface-2); border: 1.5px solid #242b33; }
+    .btn:disabled { opacity: 0.55; }
+    .row { display: flex; gap: 8px; }
+    .row .btn { flex: 1; }
+    .msg { font-size: 13px; color: var(--text-secondary); text-align: center; line-height: 1.5; min-height: 20px; }
+    .msg.err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 id="title">Penalty Shootout</h1>
+      <p class="sub" id="subtitle">Tournament tie — human keeper every round.</p>
+    </div>
+    <div class="score">
+      <span class="me" id="scoreMe">YOU 0</span>
+      <span class="vs" id="roundLabel">ROUND 1</span>
+      <span class="opp" id="scoreOpp">OPP 0</span>
+    </div>
+    <div class="card" style="padding:12px">
+      <canvas id="pitch" width="440" height="560"></canvas>
+      <div class="banner" id="banner"></div>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="zones" id="zones" style="display:none">
+      <button class="zone" data-z="1" aria-label="Top left">↖</button>
+      <button class="zone" data-z="2" aria-label="Top middle">↑</button>
+      <button class="zone" data-z="3" aria-label="Top right">↗</button>
+      <button class="zone" data-z="4" aria-label="Bottom left">↙</button>
+      <button class="zone" data-z="5" aria-label="Bottom middle">↓</button>
+      <button class="zone" data-z="6" aria-label="Bottom right">↘</button>
+    </div>
+    <p class="msg" id="msg"></p>
+    <div class="row">
+      <button class="btn ghost" id="backBtn">Back to hub</button>
+      <button class="btn" id="againBtn" style="display:none">Play again</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://hqjclkkwsepdhtwnwsvp.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxamNsa2t3c2VwZGh0d253c3ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTY5NTMsImV4cCI6MjEwNTc3Mjk1M30.-OXxTRYmIi4snwJSiThFsAPr5YgVbwz4kwUY_DURFRA";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const LS_USER = 'ls_username';
+    const LS_TOKEN = 'ls_session_token';
+    const LS_MATCH = 'ls_shootout_match';
+
+    let me = '';
+    let token = '';
+    try {
+      me = (localStorage.getItem(LS_USER) || '').slice(0, 32);
+      token = localStorage.getItem(LS_TOKEN) || '';
+    } catch (e) {}
+    let MID = null;
+    try { MID = parseInt(localStorage.getItem(LS_MATCH) || '', 10) || null; } catch (e) {}
+    const practice = !MID;
+
+    const canvas = document.getElementById('pitch');
+    const ctx = canvas.getContext('2d');
+    const msgEl = document.getElementById('msg');
+    const bannerEl = document.getElementById('banner');
+    const zonesEl = document.getElementById('zones');
+    const dotsEl = document.getElementById('dots');
+
+    // 6 zones -> goal-mouth points (canvas 440x560)
+    const ZPTS = { 1: [130, 80], 2: [220, 70], 3: [310, 80], 4: [130, 150], 5: [220, 160], 6: [310, 150] };
+    const SPOT = [220, 470];
+    const KEEPER_HOME = [220, 110];
+
+    let round = 1;            // kick number (both players): odd = A shoots
+    let myGoals = 0, oppGoals = 0;
+    let history = [];         // {mine: bool (was I shooter), scored: bool}
+    let phase = 'loading';    // loading | pick | wait | anim | over
+    let role = null;          // 'shoot' | 'keep' | null
+    let oppName = '';
+    let pollTimer = null;
+    let aiKeeperZone = 0;
+
+    function msg(t, err) {
+      msgEl.textContent = t || '';
+      msgEl.classList.toggle('err', !!err);
+    }
+    function creds() { return { input_username: me, input_token: token }; }
+
+    function drawScene(ballPos, keeperPos) {
+      const W = canvas.width, H = canvas.height;
+      // stripes
+      for (let i = 0; i < 8; i++) {
+        ctx.fillStyle = i % 2 ? '#0d5c2e' : '#0e6a35';
+        ctx.fillRect(0, i * H / 8, W, H / 8 + 1);
+      }
+      // box + spot
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(90, 30, 260, 150);
+      ctx.beginPath();
+      ctx.arc(SPOT[0], SPOT[1], 5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fill();
+      // goal frame
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(90, 30); ctx.lineTo(90, 6); ctx.lineTo(350, 6); ctx.lineTo(350, 30);
+      ctx.stroke();
+      // keeper
+      const k = keeperPos || KEEPER_HOME;
+      ctx.beginPath();
+      ctx.arc(k[0], k[1], 22, 0, Math.PI * 2);
+      ctx.fillStyle = '#e1352b';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+      // ball
+      const b = ballPos || SPOT;
+      ctx.beginPath();
+      ctx.arc(b[0], b[1], 13, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#111';
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(b[0], b[1], 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#111';
+      ctx.fill();
+    }
+
+    function renderScore() {
+      document.getElementById('scoreMe').textContent = 'YOU ' + myGoals;
+      document.getElementById('scoreOpp').textContent = (oppName || 'OPP').toUpperCase().slice(0, 12) + ' ' + oppGoals;
+      const total = practice ? 5 : null;
+      document.getElementById('roundLabel').textContent =
+        phase === 'over' ? 'FULL TIME' : 'ROUND ' + round + (practice ? ' / 5' : '');
+      let dh = '';
+      history.forEach((h, i) => {
+        dh += '<span class="dot ' + (h.scored ? 'g' : 'm') + (i === history.length - 1 ? ' cur' : '') + '" title="R' + (i + 1) + '"></span>';
+      });
+      dotsEl.innerHTML = dh;
+    }
+
+    function setZonesVisible(v, who) {
+      zonesEl.style.display = v ? 'grid' : 'none';
+      document.querySelectorAll('#zones .zone').forEach(b => {
+        b.disabled = !v;
+        b.classList.remove('locked');
+      });
+      if (v) {
+        msg(who === 'shoot'
+          ? 'Your kick — tap a corner. The keeper picks blind.'
+          : 'Their kick — tap where you dive. They picked blind.');
+      }
+    }
+
+    function animateKick(sz, kz, done) {
+      phase = 'anim';
+      setZonesVisible(false);
+      const t0 = performance.now(), DUR = 750;
+      const zp = ZPTS[sz] || ZPTS[5], kp = ZPTS[kz] || ZPTS[5];
+      function frame(t) {
+        const p = Math.min(1, (t - t0) / DUR);
+        const e = 1 - Math.pow(1 - p, 3);
+        const bx = SPOT[0] + (zp[0] - SPOT[0]) * e;
+        const by = SPOT[1] + (zp[1] - SPOT[1]) * e;
+        const kx = KEEPER_HOME[0] + (kp[0] - KEEPER_HOME[0]) * e;
+        const ky = KEEPER_HOME[1] + (kp[1] - KEEPER_HOME[1]) * e;
+        drawScene([bx, by], [kx, ky]);
+        if (p < 1) requestAnimationFrame(frame);
+        else {
+          const scored = sz !== kz;
+          bannerEl.textContent = scored ? 'GOAL!' : 'SAVED!';
+          bannerEl.className = 'banner ' + (scored ? 'goal' : 'saved');
+          setTimeout(() => { bannerEl.textContent = ''; done(scored); }, 1100);
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    async function pollState() {
+      if (phase === 'anim' || phase === 'over') return;
+      try {
+        const { data, error } = await sb.rpc('shootout_state', {
+          input_username: me, input_token: token, match_id: MID, round_no: round
+        });
+        if (error) throw error;
+        if (!data || data.error) {
+          if (data && data.error === 'not found') return endDead('Tie not found.');
+          return;
+        }
+        if (data.match_status && data.match_status !== 'pending') return endRemoteDone();
+        oppName = (data.i_shoot ? data.keeper : data.shooter) || oppName;
+        if (data.resolved) {
+          onResolved(data.shoot_zone, data.keep_zone, data.i_shoot);
+        } else if (phase === 'loading' || phase === 'wait') {
+          role = data.i_shoot ? 'shoot' : 'keep';
+          if (data.my_pick) {
+            // Already locked this round (e.g. reloaded mid-wait): wait, don't re-pick.
+            phase = 'wait';
+            setZonesVisible(false);
+            msg('Locked in — waiting for ' + (oppName || 'opponent') + '…');
+          } else {
+            phase = 'pick';
+            setZonesVisible(true, role);
+          }
+          renderScore();
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    function onResolved(sz, kz, meShooting) {
+      if (phase === 'anim' || phase === 'over') return;
+      animateKick(sz, kz, scored => {
+        const mine = !!meShooting;
+        if (mine) { if (scored) myGoals++; }
+        else { if (!scored) { /* keeper (me) saved: opponent denied */ } else oppGoals++; }
+        // opponent goals = kicks where THEY shot and scored
+        history.push({ mine, scored });
+        renderScore();
+        const need = practice ? 5 : 10;
+        const roundDone = practice ? history.length : round;
+        if (practice) {
+          if (history.length >= 5) return endPractice();
+          round++;
+          phase = 'pick';
+          aiKeeperZone = 0;
+          setZonesVisible(true, 'shoot');
+          renderScore();
+          drawScene();
+          return;
+        }
+        if (round >= 10 && round % 2 === 0 && myGoals !== oppGoals) return submitScore();
+        round++;
+        phase = 'loading';
+        msg('Round ' + round + '…');
+        drawScene();
+        pollState();
+      });
+    }
+
+    // ---- practice mode (no tie): you shoot vs a guessing keeper ----
+    async function practicePick(zone) {
+      if (phase !== 'pick') return;
+      phase = 'anim';
+      setZonesVisible(false);
+      aiKeeperZone = 1 + Math.floor(Math.random() * 6);
+      onResolvedPractice(zone, aiKeeperZone);
+    }
+    function onResolvedPractice(sz, kz) {
+      animateKick(sz, kz, scored => {
+        if (scored) myGoals++;
+        history.push({ mine: true, scored });
+        renderScore();
+        if (history.length >= 5) return endPractice();
+        round++;
+        phase = 'pick';
+        setZonesVisible(true, 'shoot');
+        renderScore();
+        drawScene();
+      });
+    }
+    function endPractice() {
+      phase = 'over';
+      setZonesVisible(false);
+      bannerEl.textContent = myGoals >= 3 ? 'FULL TIME — CLINICAL!' : 'FULL TIME — ' + myGoals + '/5';
+      bannerEl.className = 'banner goal';
+      document.getElementById('againBtn').style.display = '';
+      renderScore();
+    }
+
+    // ---- tie mode submit + finish ----
+    async function submitScore() {
+      phase = 'wait';
+      msg('Submitting your score…');
+      try {
+        const { data, error } = await sb.rpc('tourney_submit', {
+          input_username: me, input_token: token, match_id: MID, goals: myGoals
+        });
+        if (error) throw error;
+        if (!data || !data.success) throw new Error((data && data.error) || 'failed');
+        if (data.decided) return endTie();
+        msg('Score in — waiting for ' + (oppName || 'opponent') + ' to finish…');
+        pollFinal();
+      } catch (e) {
+        console.error(e);
+        msg('Submit failed: ' + String((e && e.message) || '').slice(0, 100), true);
+        phase = 'loading';
+        pollState();
+      }
+    }
+    async function pollFinal() {
+      try {
+        const { data, error } = await sb.rpc('shootout_state', {
+          input_username: me, input_token: token, match_id: MID, round_no: round
+        });
+        if (!error && data && !data.error && data.match_status && data.match_status !== 'pending') {
+          return endTie();
+        }
+      } catch (e) {}
+      if (phase === 'wait') setTimeout(pollFinal, 3000);
+    }
+    function endTie() {
+      phase = 'over';
+      setZonesVisible(false);
+      try { localStorage.removeItem(LS_MATCH); } catch (e) {}
+      const win = myGoals > oppGoals;
+      bannerEl.textContent = win ? 'YOU WIN THE TIE!' : (myGoals < oppGoals ? 'KNOCKED OUT' : 'TIED — STAFF DECIDE');
+      bannerEl.className = 'banner ' + (win ? 'goal' : 'saved');
+      document.getElementById('againBtn').style.display = '';
+      document.getElementById('againBtn').textContent = 'Back to hub';
+      renderScore();
+    }
+    function endRemoteDone() {
+      phase = 'over';
+      setZonesVisible(false);
+      try { localStorage.removeItem(LS_MATCH); } catch (e) {}
+      msg('This tie is already decided — check the bracket.');
+    }
+    function endDead(t) {
+      phase = 'over';
+      setZonesVisible(false);
+      msg(t, true);
+    }
+
+    document.querySelectorAll('#zones .zone').forEach(b => {
+      b.addEventListener('click', async () => {
+        if (phase !== 'pick') return;
+        const z = parseInt(b.getAttribute('data-z'), 10);
+        b.classList.add('locked');
+        document.querySelectorAll('#zones .zone').forEach(x => { x.disabled = true; });
+        if (practice) return practicePick(z);
+        phase = 'wait';
+        msg('Locking in…');
+        try {
+          const { data, error } = await sb.rpc('shootout_pick', {
+            input_username: me, input_token: token, match_id: MID, round_no: round, zone: z
+          });
+          if (error) throw error;
+          if (!data || !data.success) throw new Error((data && data.error) || 'failed');
+          msg('Locked in — waiting for ' + (oppName || 'opponent') + '…');
+          if (data.resolved) pollState();
+        } catch (e) {
+          console.error(e);
+          msg('Pick failed: ' + String((e && e.message) || '').slice(0, 100), true);
+          phase = 'pick';
+          setZonesVisible(true, role);
+        }
+      });
+    });
+
+    document.getElementById('againBtn').addEventListener('click', () => {
+      if (practice) {
+        round = 1; myGoals = 0; oppGoals = 0; history = [];
+        bannerEl.textContent = '';
+        phase = 'pick';
+        setZonesVisible(true, 'shoot');
+        renderScore();
+        drawScene();
+      } else {
+        goHub();
+      }
+    });
+    document.getElementById('backBtn').addEventListener('click', goHub);
+    function goHub() {
+      try { if (window.parent && window.parent.closeGame) return void window.parent.closeGame(); } catch (e) {}
+      try { window.history.back(); } catch (e) {}
+    }
+
+    drawScene();
+    renderScore();
+    if (practice) {
+      document.getElementById('subtitle').textContent = 'Practice — keeper guesses. Tournament ties use this same game.';
+      phase = 'pick';
+      setZonesVisible(true, 'shoot');
+    } else {
+      if (!me || !token) {
+        endDead('Log in on the hub first, then open your tie.');
+      } else {
+        document.getElementById('subtitle').textContent = 'Tournament tie — human keeper every round.';
+        pollState();
+        pollTimer = setInterval(pollState, 2000);
+        window.addEventListener('pagehide', () => { try { clearInterval(pollTimer); } catch (e) {} });
+      }
+    }
+  </script>
+</body>
+</html>
