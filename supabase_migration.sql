@@ -788,7 +788,7 @@ BEGIN
   RETURN json_build_object(
     'tournament', row_to_json(tro),
     'entries', COALESCE((SELECT json_agg(e ORDER BY e.id) FROM (
-      SELECT username, created_at FROM tournament_entries
+      SELECT id, username, created_at FROM tournament_entries
       WHERE tournament_id = tid ORDER BY id) e), '[]'::json),
     'matches', COALESCE((SELECT json_agg(m ORDER BY m.round_no, m.match_no) FROM (
       SELECT id, round_no, match_no, player_a, player_b, score_a, score_b,
@@ -2397,3 +2397,31 @@ BEGIN
   RETURN COALESCE((SELECT json_agg(t ORDER BY t.created_at DESC) FROM (
     SELECT fp, reason, created_at FROM blacklist_devices ORDER BY created_at DESC LIMIT 100) t), '[]'::json);
 END; $$;
+
+-- ----------------------------------------------------------------------------
+-- STEP 10: lockdown for tables created after the STEP 1 loop.
+-- (The STEP 1 loop only covers tables that exist when it runs; anything
+-- created later keeps Postgres' default open access unless locked here.
+-- key_reset_requests holds name+key plaintext: must NOT stay open.)
+-- ----------------------------------------------------------------------------
+DO $$
+DECLARE
+  t TEXT;
+  tbls2 TEXT[] := ARRAY[
+    'key_reset_requests', 'staff_audit',
+    'tournaments', 'tournament_entries', 'tournament_matches'
+  ];
+  pol RECORD;
+BEGIN
+  FOREACH t IN ARRAY tbls2 LOOP
+    BEGIN
+      EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+      FOR pol IN SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = t LOOP
+        EXECUTE format('DROP POLICY %I ON public.%I', pol.policyname, t);
+      END LOOP;
+      EXECUTE format('REVOKE ALL ON public.%I FROM anon, authenticated', t);
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE 'late lockdown skipped for %: %', t, SQLERRM;
+    END;
+  END LOOP;
+END $$;

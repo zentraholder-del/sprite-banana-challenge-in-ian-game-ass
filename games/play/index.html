@@ -2784,6 +2784,18 @@ async function sha256hexFp(str) {
       o.style.display = 'none';
     }
 
+    // Game slug of the open bracket (sanitized on use). Lets players jump
+    // straight into the cup's game: play the tie, staff enters the score.
+    let openTourneyGame = '';
+    function playTourneyGame() {
+      const g = String(openTourneyGame || '').replace(/[^a-zA-Z0-9\-/]/g, '');
+      if (!g) { toast('No game set for this cup', 'err'); return; }
+      const label = g;
+      closeTourney();
+      try { openGame(g, prettyName(label)); }
+      catch (e) { console.error(e); toast('Could not open game', 'err'); }
+    }
+
     async function openTourney(id) {
       const o = document.getElementById('tourneyOverlay');
       const body = document.getElementById('tourneyBody');
@@ -2797,11 +2809,15 @@ async function sha256hexFp(str) {
         if (!data || data.error) throw new Error((data && data.error) || 'failed');
         const t = data.tournament || {};
         const me = meName();
+        openTourneyGame = t.game_slug || '';
         const rounds = {};
         (data.matches || []).forEach(m => { (rounds[m.round_no] = rounds[m.round_no] || []).push(m); });
         let html = '<h2 style="font-size:18px;font-weight:700;color:#ece9e2;margin-bottom:4px">' + escapeHtml(t.title || 'Tournament') + '</h2>' +
           '<p style="font-size:13px;color:#7d8590;margin-bottom:14px">' + escapeHtml(t.game_slug || '') + ' — ' + escapeHtml(t.status || '') +
-          ' — ' + (data.entries || []).length + ' players</p>';
+          ' — ' + (data.entries || []).length + ' players</p>' +
+          ((t.status === 'live' || t.status === 'signup')
+            ? '<button class="mini-btn" style="margin-bottom:14px" onclick="playTourneyGame()">Play ' + escapeHtml(t.game_slug || 'game') + ' now</button>'
+            : '');
         const rnos = Object.keys(rounds).map(Number).sort((a, b) => a - b);
         if (!rnos.length) {
           const inIt = (data.entries || []).some(e => e.username === me);
