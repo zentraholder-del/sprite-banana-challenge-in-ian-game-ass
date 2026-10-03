@@ -1124,7 +1124,8 @@ BEGIN
     AND shootout_picks.round_no = shootout_pick.round_no;
   IF NOT FOUND THEN
     INSERT INTO shootout_picks (match_id, round_no, shooter, keeper)
-    VALUES (match_id, round_no, shooter, keeper)
+    VALUES (shootout_pick.match_id, shootout_pick.round_no,
+      shootout_pick.shooter, shootout_pick.keeper)
     ON CONFLICT (match_id, round_no) DO NOTHING;
     SELECT * INTO r FROM shootout_picks
     WHERE shootout_picks.match_id = shootout_pick.match_id

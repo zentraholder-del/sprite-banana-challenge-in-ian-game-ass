@@ -358,12 +358,15 @@
         if (data.decided) return endTie();
         msg('Score in — waiting for ' + (oppName || 'opponent') + ' to finish…');
         pollFinal();
-      } catch (e) {
-        console.error(e);
-        msg('Submit failed: ' + String((e && e.message) || '').slice(0, 100), true);
-        phase = 'loading';
-        pollState();
-      }
+        } catch (e) {
+          console.error(e);
+          // Stay on the pick screen WITH the error visible (no auto-repoll
+          // wiping it): tap a corner again to retry.
+          msg('Pick failed: ' + String((e && e.message) || 'try again').slice(0, 140), true);
+          phase = 'pick';
+          zonesEl.style.display = 'grid';
+          document.querySelectorAll('#zones .zone').forEach(x => { x.disabled = false; x.classList.remove('locked'); });
+        }
     }
     async function pollFinal() {
       try {
