@@ -16,6 +16,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e1352b'/%3E%3Ctext x='32' y='45' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EL%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
@@ -937,6 +939,12 @@
     .user-meta .mi { font-size: 14px; vertical-align: -3px; }
     .keyrow .mi { font-size: 16px; vertical-align: -3px; }
     .muted .mi { font-size: 14px; vertical-align: -2px; }
+    .tab-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 22px; height: 22px; padding: 0 6px; margin-left: 8px;
+      background: #e1352b; border-radius: 12px; color: #fff;
+      font-size: 11px; font-weight: 800;
+    }
   </style>
 </head>
 <body>
@@ -973,8 +981,8 @@
       <div class="admin-shell">
       <div class="tabs sidebar">
         <button class="active" data-tab="dashboard" onclick="showTab('dashboard', this)"><span class="mi">dashboard</span> Dashboard</button>
-        <button data-tab="requests" onclick="showTab('requests', this)"><span class="mi">inbox</span> Key requests</button>
-        <button data-tab="resets" onclick="showTab('resets', this)"><span class="mi">sync</span> Key resets</button>
+        <button data-tab="requests" onclick="showTab('requests', this)"><span class="mi">inbox</span> Key requests<span class="tab-badge" id="badge-requests" style="display:none"></span></button>
+        <button data-tab="resets" onclick="showTab('resets', this)"><span class="mi">sync</span> Key resets<span class="tab-badge" id="badge-resets" style="display:none"></span></button>
         <button data-tab="tourneys" onclick="showTab('tourneys', this)"><span class="mi">emoji_events</span> Tournaments</button>
         <button data-tab="adminreqs" onclick="showTab('adminreqs', this)"><span class="mi">shield</span> Admin requests</button>
         <button data-tab="keys" onclick="showTab('keys', this)"><span class="mi">key</span> Manage keys</button>
@@ -982,7 +990,7 @@
         <button data-tab="messages" onclick="showTab('messages', this)"><span class="mi">chat_bubble</span> Messaging</button>
         <button data-tab="users" onclick="showTab('users', this)"><span class="mi">group</span> Users</button>
         <button data-tab="playerdms" onclick="showTab('playerdms', this)"><span class="mi">mail</span> Player DMs</button>
-        <button data-tab="reports" onclick="showTab('reports', this)"><span class="mi">flag</span> Reports</button>
+        <button data-tab="reports" onclick="showTab('reports', this)"><span class="mi">flag</span> Reports<span class="tab-badge" id="badge-reports" style="display:none"></span></button>
         <button data-tab="troll" onclick="showTab('troll', this)"><span class="mi">theater_comedy</span> Troll</button>
         <button data-tab="activity" onclick="showTab('activity', this)"><span class="mi">history</span> Activity</button>
         <button data-tab="audit" onclick="showTab('audit', this)"><span class="mi">fact_check</span> Audit log</button>
@@ -1021,6 +1029,9 @@
 
       <div class="card section" id="sec-requests">
         <h2>Pending key requests</h2>
+        <div class="inline-form">
+          <input id="reqSearch" placeholder="Filter by name…" maxlength="64" oninput="loadRequests()" aria-label="Filter requests by name" />
+        </div>
         <div id="reqList"><p class="muted">Loading…</p></div>
       </div>
 
@@ -1042,6 +1053,9 @@
       <div class="card section" id="sec-resets">
         <h2>Key reset requests</h2>
         <p class="sub">Staff-approved unlocks for stuck keys — approving signs every session on that key out. Owner and admin only.</p>
+        <div class="inline-form">
+          <input id="resetSearch" placeholder="Filter by name…" maxlength="64" oninput="loadResetRequests()" aria-label="Filter reset requests by name" />
+        </div>
         <div id="resetReqList"><p class="muted">Loading…</p></div>
       </div>
 
@@ -1246,6 +1260,9 @@
       <div class="card section" id="sec-audit">
         <h2>Staff audit log</h2>
         <p class="sub">Every privileged staff action — who did what to whom, when. Owner only, newest first, append-only.</p>
+        <div class="inline-form">
+          <input id="auditSearch" placeholder="Filter by staff, action, target…" maxlength="64" oninput="renderAuditRows()" aria-label="Filter audit log" />
+        </div>
         <div id="auditList"><p class="muted">Loading…</p></div>
       </div>
       <div class="card section" id="sec-perms">
@@ -1749,7 +1766,7 @@ async function sha256hexFp(str) {
     }
     async function savePerms() {
       const st = document.getElementById('permsStatus');
-      if (st) st.textContent = 'Saving?';
+      if (st) st.textContent = 'Saving…';
       try {
         const perms = { admin: {}, mod: {} };
         document.querySelectorAll('#permsMatrix input[type="checkbox"]').forEach(cb => {
@@ -1906,6 +1923,7 @@ async function sha256hexFp(str) {
         return;
       }
       stopAllPollers();
+      refreshBadges();
       document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
       if (btn) btn.classList.add('active');
       const nextSec = document.getElementById('sec-' + name);
@@ -1935,6 +1953,23 @@ async function sha256hexFp(str) {
       if (name === 'activity') startPoller('activity', loadActivity, 5000);
       if (name === 'audit') startPoller('audit', loadAudit, 5000);
       if (name === 'perms') renderPermsMatrix();
+    }
+
+    function setTabBadge(which, n) {
+      const el = document.getElementById('badge-' + which);
+      if (!el) return;
+      n = parseInt(n, 10) || 0;
+      el.style.display = n > 0 ? '' : 'none';
+      el.textContent = n > 99 ? '99+' : String(n);
+    }
+    async function refreshBadges() {
+      try {
+        const data = await srpc('dashboard_stats', staffCreds());
+        if (!data || data.error) return;
+        setTabBadge('requests', data.pending);
+        setTabBadge('resets', data.resets_pending);
+        setTabBadge('reports', data.reports_pending);
+      } catch (e) { console.error('badges failed:', e); }
     }
 
     /* ---------- dashboard ---------- */
@@ -1993,6 +2028,9 @@ async function sha256hexFp(str) {
         setTick('tickKeys', keys);
         setTick('tickPending', pending);
         setTick('tickOnline', online);
+        setTabBadge('requests', pending);
+        setTabBadge('resets', data.resets_pending);
+        setTabBadge('reports', data.reports_pending);
         dashLoaded = true;
         renderDashPreview();
       } catch (e) {
@@ -2078,7 +2116,7 @@ async function sha256hexFp(str) {
         html += '<div class="tl-item" style="animation-delay:' + Math.min(ai, 10) * 40 + 'ms">' +
           '<span class="tl-dot"></span>' +
           '<div class="tt">' + activityIcon(r.kind) + ' ' + esc(r.detail) + '</div>' +
-          '<div class="tw">' + esc(r.kind) + ' ? ' + esc(activityWhen(r.when)) + '</div></div>';
+          '<div class="tw">' + esc(r.kind) + ' — ' + esc(activityWhen(r.when)) + '</div></div>';
       });
       html += '</div>';
       if (activityShown < activityRows.length) {
@@ -2110,6 +2148,7 @@ async function sha256hexFp(str) {
 
     /* ---------- staff audit log (owner only) ---------- */
 
+    let lastAuditRows = [];
     async function loadAudit() {
       const box = document.getElementById('auditList');
       if (!box) return;
@@ -2119,24 +2158,34 @@ async function sha256hexFp(str) {
         const data = await srpc('audit_list', staffCreds());
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
-        if (!data.length) {
-          setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">fact_check</span></div>No staff actions logged yet.</div>');
-          return;
-        }
-        let html = '<div class="keys-table-wrap"><table><tr><th>When</th><th>Staff</th><th>Action</th><th>Target</th><th>Detail</th></tr>';
-        data.forEach(a => {
-          html += '<tr><td class="muted">' + esc(a.created_at ? new Date(a.created_at).toLocaleString() : '—') + '</td>' +
-            '<td><strong>' + esc(a.actor || '?') + '</strong></td>' +
-            '<td><span class="pill rank-user">' + esc(a.action || '') + '</span></td>' +
-            '<td class="mono">' + esc(a.target || '—') + '</td>' +
-            '<td>' + esc(a.detail || '') + '</td></tr>';
-        });
-        html += '</table></div>';
-        setHTMLifChanged(box, html);
+        lastAuditRows = data || [];
+        renderAuditRows();
       } catch (e) {
         console.error('audit log failed:', e);
         if (firstAudit) box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">warning</span></div>Failed to load audit log.</div>';
       }
+    }
+    function renderAuditRows() {
+      const box = document.getElementById('auditList');
+      if (!box) return;
+      const q = ((document.getElementById('auditSearch') || {}).value || '').trim().toLowerCase();
+      const rows = !q ? lastAuditRows : lastAuditRows.filter(a =>
+        ((a.actor || '') + ' ' + (a.action || '') + ' ' + (a.target || '') + ' ' + (a.detail || '')).toLowerCase().indexOf(q) !== -1);
+      if (!rows.length) {
+        setHTMLifChanged(box, '<div class="empty-state"><div class="big"><span class="mi">fact_check</span></div>' +
+          (q ? 'No audit entries match.' : 'No staff actions logged yet.') + '</div>');
+        return;
+      }
+      let html = '<div class="keys-table-wrap"><table><tr><th>When</th><th>Staff</th><th>Action</th><th>Target</th><th>Detail</th></tr>';
+      rows.forEach(a => {
+        html += '<tr><td class="muted">' + esc(a.created_at ? activityWhen(a.created_at) : '—') + '</td>' +
+          '<td><strong>' + esc(a.actor || '?') + '</strong></td>' +
+          '<td><span class="pill rank-user">' + esc(a.action || '') + '</span></td>' +
+          '<td class="mono">' + esc(a.target || '—') + '</td>' +
+          '<td>' + esc(a.detail || '') + '</td></tr>';
+      });
+      html += '</table></div>';
+      setHTMLifChanged(box, html);
     }
 
     /* ---------- troll control ---------- */
@@ -2641,9 +2690,11 @@ async function sha256hexFp(str) {
         const data = await srpc('req_list', staffCreds());
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
-        const pending = (data || []).filter(r => r.status === 'pending');
-        if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>No pending requests.</div>';
+      const allPendingReq = (data || []).filter(r => r.status === 'pending');
+      const _rq = ((document.getElementById('reqSearch') || {}).value || '').trim().toLowerCase();
+      const pending = !_rq ? allPendingReq : allPendingReq.filter(r => (r.name || '').toLowerCase().indexOf(_rq) !== -1);
+      if (pending.length === 0) {
+        box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>' + (_rq ? 'No requests match.' : 'No pending requests.') + '</div>';
           knownReqIds = {};
           return;
         }
@@ -2968,9 +3019,11 @@ async function sha256hexFp(str) {
         const data = await srpc('resetreq_list', staffCreds());
         if (!data) throw new Error('failed');
         if (data.error) throw new Error(data.error);
-        const pending = (data || []).filter(r => r.status === 'pending');
+        const allPendingReset = (data || []).filter(r => r.status === 'pending');
+        const _rsq = ((document.getElementById('resetSearch') || {}).value || '').trim().toLowerCase();
+        const pending = !_rsq ? allPendingReset : allPendingReset.filter(r => (r.name || '').toLowerCase().indexOf(_rsq) !== -1);
         if (pending.length === 0) {
-          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>No pending reset requests.</div>';
+          box.innerHTML = '<div class="empty-state"><div class="big"><span class="mi">inbox</span></div>' + (_rsq ? 'No reset requests match.' : 'No pending reset requests.') + '</div>';
           knownResetReqIds = {};
           return;
         }
@@ -3828,7 +3881,7 @@ try {
           '<span class="un">' + esc(u.username) + '</span>' + presencePill(u.last_seen) + '</div>' +
           '<div class="user-meta">' + rankCell + '</div>' +
           '<div class="user-meta"><span class="mi" style="font-size:14px">sports_esports</span> ' + esc(u.current_game || 'Browsing') + '</div>' +
-          '<div class="user-meta"><span class="mi" style="font-size:14px">schedule</span> ' + esc(u.last_seen ? new Date(u.last_seen).toLocaleString() : '—') + '</div>' +
+          '<div class="user-meta"><span class="mi" style="font-size:14px">schedule</span> ' + esc(u.last_seen ? activityWhen(u.last_seen) : '—') + '</div>' +
           '<div class="row-actions">' +
             '<button class="btn small" data-user="' + esc(u.username) + '" onclick="openDm(this)">Message</button>' +
             warnBtn + muteBtn + banBtns + xpBtn + watchBtn + delUserBtn +
@@ -4317,7 +4370,7 @@ try {
     }
 
     /* Bump together with schema_version() in supabase_migration.sql */
-    const EXPECTED_SCHEMA = 1;
+    const EXPECTED_SCHEMA = 2;
     async function checkSchema() {
       try {
         const { data, error } = await sb.rpc('schema_version');
@@ -4373,7 +4426,7 @@ try {
           '<span class="un">' + esc(u) + '</span> ' + rankPill((k && k.rank) || 'user') + ' ' +
           presencePill(s ? s.last_seen : null) + '</div>';
         html += '<div class="user-meta"><span class="mi" style="font-size:14px">sports_esports</span> ' + esc((s && s.current_game) || 'offline') + '</div>';
-        html += '<div class="user-meta">⏱ last seen ' + esc(s && s.last_seen ? new Date(s.last_seen).toLocaleString() : '—') + '</div>';
+        html += '<div class="user-meta"><span class="mi" style="font-size:14px">schedule</span> last seen ' + esc(s && s.last_seen ? activityWhen(s.last_seen) : '—') + '</div>';
         html += '<div class="user-meta"><span class="mi" style="font-size:14px">trending_up</span> today ' + fmtDur(secs) + ' — <span class="mi" style="font-size:14px">star</span> level ' + (Math.floor(life / 500) + 1) + ' (' + life + ' XP)</div>';
         html += '<div class="user-meta"><span class="mi" style="font-size:14px">warning</span> ' + ((w.warnings || []).length) + ' warning(s)' +
           ((w.mute && w.mute.expires_at) ? ' — <span class="mi" style="font-size:14px">volume_off</span> muted until ' + esc(new Date(w.mute.expires_at).toLocaleString()) : '') +

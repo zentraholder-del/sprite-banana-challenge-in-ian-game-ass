@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e1352b'/%3E%3Ctext x='32' y='45' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EL%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
@@ -868,6 +870,7 @@
     }
     .gm-btn:hover { background: #e1352b; }
     .gm-btn:active { transform: scale(0.97); }
+    .gm-btn.rated { background: #e1352b; border-color: #e1352b; color: #fff; }
     .game-frame-wrap {
       position: relative;
       flex: 1;
@@ -1318,6 +1321,16 @@
       <div id="tourneyList"><div class="skel" style="height:32px"></div></div>
     </div>
 
+    <div class="leader-card" id="likedCard">
+      <h3><span class="mi">favorite</span> Most liked</h3>
+      <div id="likedList"><div class="skel" style="height:32px"></div></div>
+    </div>
+
+    <div class="leader-card" id="playedCard">
+      <h3><span class="mi">trending_up</span> Most played <small style="color:#7d8590;font-weight:400">(30d)</small></h3>
+      <div id="playedList"><div class="skel" style="height:32px"></div></div>
+    </div>
+
     <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
       <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()"><span class="mi" style="font-size:16px">star</span> Favorites</button>
@@ -1429,6 +1442,8 @@
     <div class="game-modal-card" id="gameModalCard">
       <div class="game-modal-head">
         <span id="gameModalTitle">Game</span>
+        <button id="rateUpBtn" class="gm-btn" onclick="rateGame(1)" aria-label="Like this game"><span class="mi">thumb_up</span></button>
+        <button id="rateDownBtn" class="gm-btn" onclick="rateGame(-1)" aria-label="Dislike this game"><span class="mi">thumb_down</span></button>
         <button id="gameFsBtn" class="gm-btn" onclick="toggleGameFullscreen()" aria-label="Enter fullscreen"><span class="mi">fullscreen</span></button>
         <button class="gm-btn" onclick="closeGame()" aria-label="Close game"><span class="mi">close</span></button>
       </div>
@@ -2907,7 +2922,7 @@ async function sha256hexFp(str) {
     }
 
     /* Bump together with schema_version() in supabase_migration.sql */
-    const EXPECTED_SCHEMA = 1;
+    const EXPECTED_SCHEMA = 2;
     async function checkSchema() {
       try {
         const { data, error } = await sb.rpc('schema_version');
@@ -2928,6 +2943,65 @@ async function sha256hexFp(str) {
           }
           toast('Database outdated — re-run the migration', 'err');
         }
+      }
+    }
+
+    /* ---------- Game ratings (thumbs in the game modal + top boards) --- */
+
+    let currentGameSlug = '';
+    let myRatings = {};
+    function paintRateButtons() {
+      const mine = myRatings[currentGameSlug] || 0;
+      const up = document.getElementById('rateUpBtn');
+      const dn = document.getElementById('rateDownBtn');
+      if (up) up.classList.toggle('rated', mine === 1);
+      if (dn) dn.classList.toggle('rated', mine === -1);
+    }
+    async function rateGame(v) {
+      if (!currentGameSlug) return;
+      const next = (myRatings[currentGameSlug] || 0) === v ? 0 : v;
+      try {
+        const { data, error } = await sb.rpc('rate_game', Object.assign(myCreds(), { game_slug: currentGameSlug, stars: next }));
+        if (error) throw error;
+        if (!data || !data.success) throw new Error((data && data.error) || 'failed');
+        myRatings[currentGameSlug] = data.mine || 0;
+        paintRateButtons();
+        toast(next === 0 ? 'Rating cleared' : (next === 1 ? 'Liked!' : 'Noted'), 'ok');
+        loadTops();
+      } catch (e) {
+        console.error(e);
+        toast('Rate failed', 'err');
+      }
+    }
+    function topRow(i, name, sub, slug) {
+      return '<div class="leader-row arow" style="animation-delay:' + (i * 40) + 'ms;cursor:pointer" onclick="openGame(\'' + slug.replace(/[^a-zA-Z0-9\-/]/g, '') + '\', this.getAttribute(\'data-nm\'))" data-nm="' + escapeHtml(name) + '">' +
+        '<span class="leader-rank">' + (i + 1) + '.</span><span>' + escapeHtml(name) + '</span>' +
+        '<span class="leader-time">' + escapeHtml(sub) + '</span></div>';
+    }
+    async function loadTops() {
+      const liked = document.getElementById('likedList');
+      const played = document.getElementById('playedList');
+      if (!liked && !played) return;
+      try {
+        const { data, error } = await sb.rpc('game_tops', myCreds());
+        if (error) throw error;
+        if (!data || data.error) throw new Error((data && data.error) || 'failed');
+        if (data.mine) myRatings = data.mine;
+        paintRateButtons();
+        if (liked) {
+          const rows = data.liked || [];
+          setHTMLifChanged(liked, rows.length ? rows.map((r, i) =>
+            topRow(i, prettyName(r.game_slug), '+' + r.up + (r.down > 0 ? ' / -' + r.down : ''), r.game_slug)
+          ).join('') : '<div class="muted">No ratings yet — be the first.</div>');
+        }
+        if (played) {
+          const rows = data.played || [];
+          setHTMLifChanged(played, rows.length ? rows.map((r, i) =>
+            topRow(i, prettyName(r.game_slug), r.plays + ' plays', r.game_slug)
+          ).join('') : '<div class="muted">No plays tracked yet.</div>');
+        }
+      } catch (e) {
+        console.error('tops failed:', e);
       }
     }
 
@@ -4097,6 +4171,8 @@ async function sha256hexFp(str) {
       closeGame(); // teardown first: rapid switches never stack iframes
       trackDailyGame(path);
       document.getElementById('gameModalTitle').textContent = name;
+      currentGameSlug = path;
+      paintRateButtons();
       const wrap = document.getElementById('gameFrameWrap');
       const frame = document.createElement('iframe');
       frame.id = 'gameFrame';
@@ -4745,6 +4821,12 @@ async function sha256hexFp(str) {
           const card = document.createElement('div');
           card.className = 'game-card';
           card.onclick = () => { openGame(path, name); };
+          card.setAttribute('role', 'button');
+          card.tabIndex = 0;
+          card.setAttribute('aria-label', 'Play ' + name);
+          card.addEventListener('keydown', ev => {
+            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openGame(path, name); }
+          });
           const star = document.createElement('button');
           star.className = 'fav-star' + (favs.indexOf(path) !== -1 ? ' on' : '');
           star.innerHTML = '<span class="mi">star</span>';
@@ -4807,6 +4889,7 @@ async function sha256hexFp(str) {
       startPoller('trivia', renderTrivia, 60000);
       startPoller('schools', loadSchoolBoard, 30000);
       startPoller('tourney', loadTourneys, 10000);
+      startPoller('tops', loadTops, 60000);
       try { localStorage.removeItem('ls_dragged'); } catch (e) {}
       startPoller('myturn', pollMyTurn, 10000);
       loadMyXp();
@@ -4816,6 +4899,7 @@ async function sha256hexFp(str) {
       loadMySchool();
       loadSchoolBoard();
       loadTourneys();
+      loadTops();
       checkSchema();
       renderTrivia();
       armPanicLogo();

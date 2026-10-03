@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e1352b'/%3E%3Ctext x='32' y='45' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EL%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
@@ -427,6 +429,15 @@
       border-color: #e1352b !important;
       box-shadow: none !important;
     }
+    .input-wrap input.has-eye { padding-right: 52px; }
+    .input-wrap .eye {
+      position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #7d8590; cursor: pointer;
+      min-width: 44px; min-height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      touch-action: manipulation;
+    }
+    .input-wrap .eye:hover { color: #ece9e2; }
     .btn {
       background: #e1352b !important;
       border: none !important;
@@ -675,7 +686,8 @@
       <div class="field">
         <label>Access Key</label>
         <div class="input-wrap">
-          <input type="password" id="keyInput" class="mono" placeholder="Enter your key" autocomplete="off" />
+          <input type="password" id="keyInput" class="mono has-eye" placeholder="Enter your key" autocomplete="off" />
+          <button type="button" class="eye" onclick="toggleVis('keyInput', this)" aria-label="Show key"><span class="mi">visibility</span></button>
         </div>
       </div>
 
@@ -727,12 +739,13 @@
             <input type="text" id="resetName" placeholder="Your full name" autocomplete="username" maxlength="64" />
           </div>
         </div>
-        <div class="field">
-          <label>Access Key</label>
-          <div class="input-wrap">
-            <input type="password" id="resetKey" class="mono" placeholder="Your key" autocomplete="off" />
-          </div>
+      <div class="field">
+        <label>Access Key</label>
+        <div class="input-wrap">
+          <input type="password" id="resetKey" class="mono has-eye" placeholder="Your key" autocomplete="off" />
+          <button type="button" class="eye" onclick="toggleVis('resetKey', this)" aria-label="Show key"><span class="mi">visibility</span></button>
         </div>
+      </div>
         <div class="field">
           <label>Why do you need a reset? (optional)</label>
           <div class="input-wrap">
@@ -1167,6 +1180,15 @@
       } catch (e) {
         console.error('reset status realtime failed:', e);
       }
+    }
+
+    function toggleVis(id, btn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const show = el.type === 'password';
+      el.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-label', show ? 'Hide key' : 'Show key');
+      btn.innerHTML = '<span class="mi">' + (show ? 'visibility_off' : 'visibility') + '</span>';
     }
 
     function authShake() {
@@ -1739,6 +1761,12 @@
     subscribeResetStatus();
     syncSchoolDD();
     updateRequestTabs();
+    try {
+      const remembered = localStorage.getItem(LS_USER) || '';
+      if (remembered && !document.getElementById('usernameInput').value) {
+        document.getElementById('usernameInput').value = remembered;
+      }
+    } catch (e) {}
     try {
       if (localStorage.getItem('pending_request_name')) {
         switchAuthTab('request');
