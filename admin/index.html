@@ -1832,6 +1832,7 @@ async function sha256hexFp(str) {
         myRank = rank;
         try { localStorage.setItem(LS_RANK, rank); } catch (e) {}
         openDash();
+        checkSchema();
       } catch (e) {
         console.error(e);
         document.getElementById('gateStatus').textContent =
@@ -4313,6 +4314,22 @@ try {
             if (relevant) { loadDmHistory(true); loadDmContacts(); }
           })
         .subscribe();
+    }
+
+    /* Bump together with schema_version() in supabase_migration.sql */
+    const EXPECTED_SCHEMA = 1;
+    async function checkSchema() {
+      try {
+        const { data, error } = await sb.rpc('schema_version');
+        if (error) throw error;
+        if (data && data.success && data.v === EXPECTED_SCHEMA) return;
+        throw new Error('mismatch');
+      } catch (e) {
+        const m = String((e && e.message) || '');
+        if (/not find|does not exist|PGRST20|mismatch/i.test(m)) {
+          toast('Database outdated — re-run the SQL migration', 'err');
+        }
+      }
     }
 
     /* ---------- Watch mode (owner only ? live user activity) ----------

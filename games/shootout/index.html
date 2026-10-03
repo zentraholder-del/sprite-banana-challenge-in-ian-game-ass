@@ -146,7 +146,6 @@
     let role = null;          // 'shoot' | 'keep' | null
     let oppName = '';
     let pollTimer = null;
-    let aiKeeperZone = 0;
 
     function msg(t, err) {
       msgEl.textContent = t || '';
@@ -268,7 +267,7 @@
         }
         oppName = (data.i_shoot ? data.keeper : data.shooter) || oppName;
         if (data.resolved) {
-          onResolved(data.shoot_zone, data.keep_zone, data.i_shoot);
+          onResolved(data.shoot_zone, data.keep_zone, data.i_shoot, round);
         } else if (phase === 'loading' || phase === 'wait') {
           role = data.i_shoot ? 'shoot' : 'keep';
           if (data.my_pick) {
@@ -285,27 +284,19 @@
       } catch (e) { console.error(e); }
     }
 
-    function onResolved(sz, kz, meShooting) {
-      if (phase === 'anim' || phase === 'over') return;
+    let lastAnimatedRound = 0;
+    let submitting = false;
+
+    function onResolved(sz, kz, meShooting, forRound) {
+      if (phase === 'anim' || phase === 'over' || submitting) return;
+      if (forRound <= lastAnimatedRound) return;
+      lastAnimatedRound = forRound;
       animateKick(sz, kz, scored => {
         const mine = !!meShooting;
         if (mine) { if (scored) myGoals++; }
-        else { if (!scored) { /* keeper (me) saved: opponent denied */ } else oppGoals++; }
-        // opponent goals = kicks where THEY shot and scored
+        else if (scored) { oppGoals++; }
         history.push({ mine, scored });
         renderScore();
-        const need = practice ? 5 : 10;
-        const roundDone = practice ? history.length : round;
-        if (practice) {
-          if (history.length >= 5) return endPractice();
-          round++;
-          phase = 'pick';
-          aiKeeperZone = 0;
-          setZonesVisible(true, 'shoot');
-          renderScore();
-          drawScene();
-          return;
-        }
         if (round >= 10 && round % 2 === 0 && myGoals !== oppGoals) return submitScore();
         round++;
         phase = 'loading';
@@ -315,38 +306,10 @@
       });
     }
 
-    // ---- practice mode (no tie): you shoot vs a guessing keeper ----
-    async function practicePick(zone) {
-      if (phase !== 'pick') return;
-      phase = 'anim';
-      setZonesVisible(false);
-      aiKeeperZone = 1 + Math.floor(Math.random() * 6);
-      onResolvedPractice(zone, aiKeeperZone);
-    }
-    function onResolvedPractice(sz, kz) {
-      animateKick(sz, kz, scored => {
-        if (scored) myGoals++;
-        history.push({ mine: true, scored });
-        renderScore();
-        if (history.length >= 5) return endPractice();
-        round++;
-        phase = 'pick';
-        setZonesVisible(true, 'shoot');
-        renderScore();
-        drawScene();
-      });
-    }
-    function endPractice() {
-      phase = 'over';
-      setZonesVisible(false);
-      bannerEl.textContent = myGoals >= 3 ? 'FULL TIME — CLINICAL!' : 'FULL TIME — ' + myGoals + '/5';
-      bannerEl.className = 'banner goal';
-      document.getElementById('againBtn').style.display = '';
-      renderScore();
-    }
-
     // ---- tie mode submit + finish ----
     async function submitScore() {
+      if (submitting) return;
+      submitting = true;
       phase = 'wait';
       msg('Submitting your score…');
       try {
@@ -385,6 +348,7 @@
       try { localStorage.removeItem(LS_MATCH); } catch (e) {}
       const win = myGoals > oppGoals;
       bannerEl.textContent = win ? 'YOU WIN THE TIE!' : (myGoals < oppGoals ? 'KNOCKED OUT' : 'TIED — STAFF DECIDE');
+      msg(win ? 'Winner advances automatically — you will be dragged into your next tie.' : 'Check the bracket on the hub for what is next.');
       bannerEl.className = 'banner ' + (win ? 'goal' : 'saved');
       document.getElementById('againBtn').style.display = '';
       document.getElementById('againBtn').textContent = 'Back to hub';
@@ -408,7 +372,6 @@
         const z = parseInt(b.getAttribute('data-z'), 10);
         b.classList.add('locked');
         document.querySelectorAll('#zones .zone').forEach(x => { x.disabled = true; });
-        if (practice) return practicePick(z);
         phase = 'wait';
         msg('Locking in…');
         try {
@@ -419,27 +382,17 @@
           if (!data || !data.success) throw new Error((data && data.error) || 'failed');
           msg('Locked in — waiting for ' + (oppName || 'opponent') + '…');
           if (data.resolved) pollState();
-        } catch (e) {
-          console.error(e);
-          msg('Pick failed: ' + String((e && e.message) || '').slice(0, 100), true);
-          phase = 'pick';
-          setZonesVisible(true, role);
-        }
+      } catch (e) {
+        console.error(e);
+        msg('Submit failed: ' + String((e && e.message) || '').slice(0, 100), true);
+        submitting = false;
+        phase = 'loading';
+        pollState();
+      }
       });
     });
 
-    document.getElementById('againBtn').addEventListener('click', () => {
-      if (practice) {
-        round = 1; myGoals = 0; oppGoals = 0; history = [];
-        bannerEl.textContent = '';
-        phase = 'pick';
-        setZonesVisible(true, 'shoot');
-        renderScore();
-        drawScene();
-      } else {
-        goHub();
-      }
-    });
+    document.getElementById('againBtn').addEventListener('click', () => { goHub(); });
     document.getElementById('backBtn').addEventListener('click', goHub);
     function goHub() {
       try { if (window.parent && window.parent.closeGame) return void window.parent.closeGame(); } catch (e) {}
@@ -508,9 +461,9 @@
     drawScene();
     renderScore();
     if (practice) {
-      document.getElementById('subtitle').textContent = 'Practice — keeper guesses. Tournament ties use this same game.';
-      phase = 'pick';
-      setZonesVisible(true, 'shoot');
+      // Tournament-only game: no tie loaded means something went wrong
+      // upstream (never a practice mode) — say so plainly.
+      endDead('Open your tie from the hub — Tournaments → Bracket → Play this tie.');
     } else {
       if (!me || !token) {
         endDead('Log in on the hub first, then open your tie.');

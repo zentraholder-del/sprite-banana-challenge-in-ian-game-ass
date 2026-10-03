@@ -2547,6 +2547,15 @@ BEGIN
   ) t), '[]'::json);
 END; $$;
 
+-- Schema version: bump the number every time this file changes behavior.
+-- Clients compare it on load and warn when the database is behind, so a
+-- forgotten re-run shows up as a banner instead of mystery failures.
+CREATE OR REPLACE FUNCTION schema_version()
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  RETURN json_build_object('success', true, 'v', 1);
+END; $$;
+
 -- ----------------------------------------------------------------------------
 -- STEP 8: lock down function execution — anon may call ONLY these RPCs.
 -- ----------------------------------------------------------------------------
@@ -2555,8 +2564,9 @@ DECLARE f TEXT;
 BEGIN
   FOR f IN SELECT p.oid::regprocedure::TEXT FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public'
-      AND p.proname IN ('caller_rank_of','has_perm','session_user_ok',
+      WHERE n.nspname = 'public'
+        AND p.proname IN ('caller_rank_of','has_perm','session_user_ok',
+        'schema_version',
         'validate_key','verify_session','submit_key_request','check_request_status',
         'presence_upsert','presence_touch','req_list','approve_key_request','deny_key_request',
         'adminreq_list','adminreq_decide','keys_list','key_create_bulk','toggle_key','reset_key',

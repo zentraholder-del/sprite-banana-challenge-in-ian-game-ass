@@ -1246,6 +1246,7 @@
   </nav>
 
   <div id="announceBar" aria-live="polite"></div>
+  <div id="schemaWarn" style="display:none;position:relative;z-index:96;background:#2a1210;border-bottom:1px solid #e1352b;color:#ece9e2;font-size:13px;padding:10px 16px;text-align:center"></div>
 
   <div id="sideBackdrop" onclick="toggleSidebar(false)"></div>
 
@@ -2786,6 +2787,12 @@ async function sha256hexFp(str) {
       o.classList.remove('show');
       o.style.display = 'none';
     }
+    function playTieNow(mid) {
+      try { localStorage.setItem('ls_shootout_match', String(mid)); } catch (e) {}
+      try { localStorage.setItem('ls_dragged', String(mid)); } catch (e) {}
+      closeTourney();
+      try { openGame('shootout', 'Shootout'); } catch (e) { console.error(e); }
+    }
 
     // Game slug of the open bracket (sanitized on use). Lets players jump
     // straight into the cup's game: play the tie, staff enters the score.
@@ -2846,6 +2853,9 @@ async function sha256hexFp(str) {
                 (m.score_b !== null && typeof m.score_b !== 'undefined' ? ' <b>' + m.score_b + '</b>' : '') +
                 (me && m.player_b === me ? ' <span class="game-tag">you</span>' : '') + '</div>' +
                 (m.status === 'bye' ? '<div class="tstat">bye advances</div>' : m.status === 'decided' ? '<div class="tstat">final</div>' : '<div class="tstat">to play</div>') +
+                ((m.status === 'pending' && me && (m.player_a === me || m.player_b === me))
+                  ? '<button class="mini-btn" style="margin-top:8px" onclick="playTieNow(' + m.id + ')">Play this tie</button>'
+                  : '') +
                 '</div>';
             });
             html += '</div>';
@@ -2894,6 +2904,31 @@ async function sha256hexFp(str) {
       try { localStorage.setItem('ls_shootout_match', String(turnInfo.match_id)); } catch (e) {}
       hideTurnPill();
       try { openGame('shootout', 'Shootout'); } catch (e) { console.error(e); }
+    }
+
+    /* Bump together with schema_version() in supabase_migration.sql */
+    const EXPECTED_SCHEMA = 1;
+    async function checkSchema() {
+      try {
+        const { data, error } = await sb.rpc('schema_version');
+        if (error) throw error;
+        if (data && data.success && data.v === EXPECTED_SCHEMA) {
+          const w = document.getElementById('schemaWarn');
+          if (w) w.style.display = 'none';
+          return;
+        }
+        throw new Error('mismatch');
+      } catch (e) {
+        const m = String((e && e.message) || '');
+        if (/not find|does not exist|PGRST20|mismatch/i.test(m)) {
+          const w = document.getElementById('schemaWarn');
+          if (w) {
+            w.textContent = 'Site database is outdated — ask staff to re-run the SQL migration. Some features will fail until then.';
+            w.style.display = 'block';
+          }
+          toast('Database outdated — re-run the migration', 'err');
+        }
+      }
     }
 
     /* ---------- Panic button (snap back to the boring calculator) ---------- */
@@ -4781,6 +4816,7 @@ async function sha256hexFp(str) {
       loadMySchool();
       loadSchoolBoard();
       loadTourneys();
+      checkSchema();
       renderTrivia();
       armPanicLogo();
     })();
