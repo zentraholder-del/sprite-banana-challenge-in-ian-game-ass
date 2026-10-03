@@ -261,6 +261,11 @@
           return;
         }
         if (data.match_status && data.match_status !== 'pending') return endRemoteDone();
+        if (data.tournament_status && data.tournament_status !== 'live') {
+          return endDead(data.tournament_status === 'signup'
+            ? 'Cup hasn\u2019t started yet — staff must press Start bracket.'
+            : 'This cup is over.');
+        }
         oppName = (data.i_shoot ? data.keeper : data.shooter) || oppName;
         if (data.resolved) {
           onResolved(data.shoot_zone, data.keep_zone, data.i_shoot);
@@ -438,6 +443,65 @@
       try { window.history.back(); } catch (e) {}
     }
 
+    // Boot: replay every resolved round first, so reloading mid-tie can
+    // never double-count goals or replay the wrong round. Lands on the
+    // first unresolved round, or submits when a decided pair is complete.
+    async function fastForward() {
+      let first = null;
+      try {
+        const { data, error } = await sb.rpc('shootout_state', {
+          input_username: me, input_token: token, match_id: MID, round_no: 1
+        });
+        if (error) throw error;
+        first = data;
+      } catch (e) {
+        console.error(e);
+        msg('Could not load tie. Check connection.', true);
+        return false;
+      }
+      if (!first || first.error) { msg('Could not load tie.', true); return false; }
+      if (first.match_status && first.match_status !== 'pending') { endRemoteDone(); return true; }
+      if (first.tournament_status && first.tournament_status !== 'live') {
+        endDead(first.tournament_status === 'signup'
+          ? 'Cup hasn\u2019t started yet — staff must press Start bracket.'
+          : 'This cup is over.');
+        return true;
+      }
+      oppName = (((first.i_shoot ? first.keeper : first.shooter) || '').slice(0, 32));
+      document.getElementById('subtitle').textContent =
+        'Tournament tie vs ' + (oppName || 'opponent') + ' — human keeper every round.';
+      try {
+        const jobs = [];
+        for (let r = 1; r <= 30; r++) {
+          jobs.push(sb.rpc('shootout_state', { input_username: me, input_token: token, match_id: MID, round_no: r })
+            .then(res => ({ r, d: res && res.data })).catch(() => ({ r, d: null })));
+        }
+        const out = await Promise.all(jobs);
+        const byR = {};
+        out.forEach(o => { if (o.d && !o.d.error) byR[o.r] = o.d; });
+        myGoals = 0; oppGoals = 0; history = [];
+        let cur = 1;
+        for (let r = 1; r <= 30; r++) {
+          const d = byR[r];
+          if (!d || !d.found || !d.resolved) { cur = r; break; }
+          const mine = !!d.i_shoot;
+          const scored = d.shoot_zone !== d.keep_zone;
+          if (mine) { if (scored) myGoals++; }
+          else { if (scored) oppGoals++; }
+          history.push({ mine, scored });
+          cur = r + 1;
+        }
+        round = cur;
+        renderScore();
+        if (round > 10 && round % 2 === 0 && myGoals !== oppGoals) { submitScore(); return true; }
+      } catch (e) { console.error(e); }
+      phase = 'loading';
+      msg('Round ' + round + '…');
+      drawScene();
+      pollState();
+      return true;
+    }
+
     drawScene();
     renderScore();
     if (practice) {
@@ -448,8 +512,9 @@
       if (!me || !token) {
         endDead('Log in on the hub first, then open your tie.');
       } else {
-        document.getElementById('subtitle').textContent = 'Tournament tie — human keeper every round.';
-        pollState();
+        phase = 'loading';
+        msg('Loading your tie…');
+        fastForward();
         pollTimer = setInterval(pollState, 2000);
         window.addEventListener('pagehide', () => { try { clearInterval(pollTimer); } catch (e) {} });
       }

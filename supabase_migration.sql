@@ -1158,7 +1158,7 @@ CREATE OR REPLACE FUNCTION shootout_state(input_username TEXT, input_token TEXT,
   match_id BIGINT, round_no INT)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE m tournament_matches%ROWTYPE; r shootout_picks%ROWTYPE;
-DECLARE shooter TEXT; keeper TEXT; resolved BOOLEAN := FALSE;
+DECLARE shooter TEXT; keeper TEXT; resolved BOOLEAN := FALSE; tstat TEXT;
 BEGIN
   IF NOT session_user_ok(input_username, input_token) THEN
     RETURN json_build_object('error', 'auth');
@@ -1167,6 +1167,7 @@ BEGIN
   IF NOT FOUND THEN
     RETURN json_build_object('error', 'not found');
   END IF;
+  SELECT status INTO tstat FROM tournaments WHERE id = m.tournament_id;
   IF round_no % 2 = 1 THEN shooter := m.player_a; keeper := m.player_b;
   ELSE shooter := m.player_b; keeper := m.player_a; END IF;
   SELECT * INTO r FROM shootout_picks
@@ -1178,6 +1179,7 @@ BEGIN
   RETURN json_build_object(
     'found', FOUND,
     'match_status', m.status,
+    'tournament_status', tstat,
     'player_a', m.player_a, 'player_b', m.player_b,
     'winner', m.winner,
     'shooter', shooter, 'keeper', keeper,
