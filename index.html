@@ -170,8 +170,8 @@
       transition: background var(--t-micro) var(--ease), transform var(--t-micro) var(--ease), border-color var(--t-micro) var(--ease);
       touch-action: manipulation;
     }
-    .keys button:hover { background: #242b33; border-color: var(--border-strong); }
-    .keys button:active { transform: scale(0.96); background: #242b33; }
+    .keys button:hover { background: var(--surface-hover); border-color: transparent; }
+    .keys button:active { transform: scale(0.96); background: var(--surface-hover); }
     .keys button.op { color: var(--accent); font-weight: 700; }
     .keys button.fn { color: var(--text-secondary); font-size: 14px; font-weight: 600; }
     .keys button.eq {
@@ -191,11 +191,10 @@
       padding: 12px 16px 16px;
     }
     .history h4 {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      font-size: 14px;
+      line-height: 18px;
+      font-weight: 400;
+      color: var(--text-2);
       margin-bottom: 8px;
     }
     .history ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
@@ -351,6 +350,20 @@
       -webkit-font-smoothing: antialiased; user-select: none;
     }
     button .mi { pointer-events: none; }
+    /* ===== APPLE CALC SYSTEM: same quiet language as sign-in. */
+    .brand h1 { font-weight: 600 !important; }
+    .gear-btn { background: transparent !important; border: none !important; color: var(--text-2) !important; }
+    .gear-btn:hover { color: var(--text-1) !important; }
+    .calc { border: none !important; box-shadow: none !important; }
+    .keys button:hover { background: var(--surface-hover) !important; border-color: transparent !important; }
+    .keys button:active { background: var(--surface-hover) !important; }
+    .modal { border: none !important; box-shadow: none !important; }
+    .modal h2 { font-size: 20px !important; line-height: 26px !important; font-weight: 600 !important; }
+    .modal p.sub { font-size: 15px !important; line-height: 22px !important; color: var(--text-2) !important; }
+    .modal-tabs { background: var(--surface) !important; border-radius: 14px !important; padding: 4px !important; gap: 4px !important; }
+    .modal-tabs button { background: transparent !important; border: none !important; font-weight: 500 !important; }
+    .modal-tabs button.active { background: var(--surface-hover) !important; color: var(--text-1) !important; }
+    .theme-opt input { accent-color: var(--accent); width: 22px !important; height: 22px !important; }
   </style>
 </head>
 <body>
