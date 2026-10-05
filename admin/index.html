@@ -1031,8 +1031,12 @@
         <h2>Pending key requests</h2>
         <div class="inline-form">
           <input id="reqSearch" placeholder="Filter by name…" maxlength="64" oninput="loadRequests()" aria-label="Filter requests by name" />
+          <button class="btn small ghost" onclick="bulkDecideRequests(true)">Approve all</button>
+          <button class="btn small ghost" onclick="bulkDecideRequests(false)">Deny all</button>
+          <button class="btn small ghost" onclick="toggleDecided('req')">Decided</button>
         </div>
         <div id="reqList"><p class="muted">Loading…</p></div>
+        <div id="reqDecided"></div>
       </div>
 
       <div class="card section" id="sec-tourneys">
@@ -1055,8 +1059,10 @@
         <p class="sub">Staff-approved unlocks for stuck keys — approving signs every session on that key out. Owner and admin only.</p>
         <div class="inline-form">
           <input id="resetSearch" placeholder="Filter by name…" maxlength="64" oninput="loadResetRequests()" aria-label="Filter reset requests by name" />
+          <button class="btn small ghost" onclick="toggleDecided('reset')">Decided</button>
         </div>
         <div id="resetReqList"><p class="muted">Loading…</p></div>
+        <div id="resetDecided"></div>
       </div>
 
       <div class="card section" id="sec-adminreqs">
@@ -1092,6 +1098,8 @@
           <button onclick="setKeyRankFilter('mod', this)">mod</button>
           <button onclick="setKeyRankFilter('admin', this)">admin</button>
           <button onclick="setKeyRankFilter('owner', this)">owner</button>
+          <button onclick="setKeyActiveFilter('active', this)">active only</button>
+          <button onclick="setKeyActiveFilter('off', this)">off only</button>
         </div>
         <div class="inline-form">
           <input id="keySearch" placeholder="Filter by username…" maxlength="32" oninput="renderKeys()" aria-label="Filter keys by username" />
@@ -1262,6 +1270,7 @@
         <p class="sub">Every privileged staff action — who did what to whom, when. Owner only, newest first, append-only.</p>
         <div class="inline-form">
           <input id="auditSearch" placeholder="Filter by staff, action, target…" maxlength="64" oninput="renderAuditRows()" aria-label="Filter audit log" />
+          <button class="btn small ghost" onclick="exportAuditCsv()">Export CSV</button>
         </div>
         <div id="auditList"><p class="muted">Loading…</p></div>
       </div>
@@ -3109,8 +3118,72 @@ async function sha256hexFp(str) {
       }
     }
 
-    /* ---------- tournaments (staff-run cups) ---------- */
+    /* ---------- bulk request decisions + decided history + audit export --- */
 
+    async function bulkDecideRequests(approve) {
+      if (!can('requests.decide')) { toast('Insufficient rank', 'err'); return; }
+      let ids = [];
+      try {
+        const data = await srpc('req_list', staffCreds());
+        if (!data || data.error) throw new Error('failed');
+        const q = ((document.getElementById('reqSearch') || {}).value || '').trim().toLowerCase();
+        ids = (Array.isArray(data) ? data : []).filter(r => r.status === 'pending' && (!q || (r.name || '').toLowerCase().indexOf(q) !== -1)).map(r => r.id);
+      } catch (e) { toast('Load failed', 'err'); return; }
+      if (!ids.length) { toast('Nothing to decide', 'err'); return; }
+      if (!confirm((approve ? 'Approve ' : 'Deny ') + ids.length + ' request(s)?')) return;
+      let ok = 0, fail = 0;
+      for (const id of ids) {
+        try {
+          const res = approve
+            ? await srpc('approve_key_request', callerArgs({ request_id: id, custom_key: null, key_rank: 'user' }))
+            : await srpc('deny_key_request', callerArgs({ request_id: id, input_reason: null }));
+          if (res && res.success) ok++; else fail++;
+        } catch (e) { fail++; }
+      }
+      toast('Done: ' + ok + ' ok, ' + fail + ' failed', fail ? 'err' : 'ok');
+      loadRequests();
+    }
+
+    async function toggleDecided(which) {
+      const box = document.getElementById(which === 'req' ? 'reqDecided' : 'resetDecided');
+      if (!box) return;
+      if (box.dataset.open === '1') { box.innerHTML = ''; box.dataset.open = ''; return; }
+      box.dataset.open = '1';
+      box.innerHTML = '<p class="muted">Loading…</p>';
+      try {
+        const isReq = which === 'req';
+        const data = await srpc(isReq ? 'req_list' : 'resetreq_list', staffCreds());
+        if (!data || data.error) throw new Error('failed');
+        const rows = (Array.isArray(data) ? data : []).filter(r => r.status && r.status !== 'pending').slice(0, 20);
+        if (!rows.length) { box.innerHTML = '<p class="muted">Nothing decided yet.</p>'; return; }
+        let html = '';
+        rows.forEach(r => {
+          html += '<div class="mini-row"><span>' + esc(r.name || '?') + '</span>' +
+            '<span class="pill ' + (r.status === 'approved' ? 'on' : 'off') + '">' + esc(r.status) + '</span>' +
+            '<span class="muted">' + esc(r.status_updated_at ? activityWhen(r.status_updated_at) : '') + '</span></div>';
+        });
+        box.innerHTML = html;
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p class="muted">Failed to load.</p>';
+      }
+    }
+
+    function exportAuditCsv() {
+      const rows = lastAuditRows || [];
+      if (!rows.length) { toast('Nothing to export', 'err'); return; }
+      const cell = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+      const csv = 'when,staff,action,target,detail\n' +
+        rows.map(a => [a.created_at, a.actor, a.action, a.target, a.detail].map(cell).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const u = URL.createObjectURL(blob);
+      const l = document.createElement('a');
+      l.href = u; l.download = 'audit.csv'; document.body.appendChild(l); l.click();
+      setTimeout(() => { URL.revokeObjectURL(u); l.remove(); }, 500);
+      toast('Exported ' + rows.length + ' rows', 'ok');
+    }
+
+    /* ---------- tournaments (staff-run cups) ---------- */
     async function createTourney() {
       if (!can('tournaments.manage')) { toast('Insufficient rank', 'err'); return; }
       const title = (document.getElementById('tourneyTitle').value || '').trim();
@@ -3290,6 +3363,17 @@ async function sha256hexFp(str) {
     let lastKeys = [];
     let keySort = { col: 'created', dir: -1 };
     let keyRankFilter = 'all';
+    let keyActiveFilter = 'all';
+    function setKeyActiveFilter(which, btn) {
+      keyActiveFilter = (keyActiveFilter === which) ? 'all' : which;
+      document.querySelectorAll('#keyRankPills button').forEach(b => {
+        if (b.textContent !== 'active only' && b.textContent !== 'off only') return;
+        b.classList.toggle('active',
+          (b.textContent === 'active only' && keyActiveFilter === 'active') ||
+          (b.textContent === 'off only' && keyActiveFilter === 'off'));
+      });
+      renderKeys();
+    }
 
     function setKeySort(col) {
       if (keySort.col === col) keySort.dir = -keySort.dir;
@@ -3335,6 +3419,7 @@ async function sha256hexFp(str) {
       const q = ((document.getElementById('keySearch') || {}).value || '').trim().toLowerCase();
       let rows = lastKeys.filter(k => {
         if (keyRankFilter !== 'all' && rankOf(k) !== keyRankFilter) return false;
+        if (keyActiveFilter !== 'all' && (k.is_active ? 'active' : 'off') !== keyActiveFilter) return false;
         if (q && (k.used_by || '').toLowerCase().indexOf(q) === -1) return false;
         return true;
       });
@@ -3364,7 +3449,7 @@ async function sha256hexFp(str) {
           '</td><td>' + esc(k.used_by) + '</td><td>' + rankPill(trank) + '</td>' +
           '<td><span class="pill ' + (k.is_active ? 'on' : 'off') + '">' +
           (k.is_active ? 'active' : 'off') + '</span></td>' +
-          '<td class="muted">' + (k.created_at ? esc(new Date(k.created_at).toLocaleString()) : '?') + '</td>' +
+          '<td class="muted">' + (k.created_at ? esc(activityWhen(k.created_at)) : '—') + '</td>' +
           '<td><div class="row-actions">' +
           (editable
             ? '<button class="tswitch' + (k.is_active ? ' on' : '') + '" onclick="toggleKey(' + k.id + ',' + (!k.is_active) + ', this, \'' + esc(trank) + '\')" title="' + (k.is_active ? 'Active — tap to disable' : 'Inactive — tap to enable') + '" aria-label="Toggle key active"><span class="track"><span class="thumb"></span></span></button>' +

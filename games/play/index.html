@@ -884,6 +884,15 @@
       display: block;
       background: #000;
     }
+    #gameLoader {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 5;
+    }
     .troll-full {
       position: absolute;
       inset: 0;
@@ -1332,8 +1341,13 @@
     </div>
 
     <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+    <div id="recentWrap" style="display:none;margin-bottom:4px">
+      <div class="result-count" style="margin:0 0 8px">Recently played</div>
+      <div id="recentRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+    </div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
       <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()"><span class="mi" style="font-size:16px">star</span> Favorites</button>
+      <button class="fav-btn" id="randomBtn" onclick="randomGame()"><span class="mi" style="font-size:16px">casino</span> Random</button>
     </div>
     <div class="result-count" id="resultCount"></div>
 
@@ -3005,6 +3019,48 @@ async function sha256hexFp(str) {
       }
     }
 
+    /* ---------- Recently played + random game ---------- */
+
+    function getRecent() {
+      try { return JSON.parse(localStorage.getItem('ls_recent') || '[]'); }
+      catch (e) { return []; }
+    }
+    function pushRecent(path) {
+      try {
+        let r = getRecent().filter(p => p !== path);
+        r.unshift(path);
+        localStorage.setItem('ls_recent', JSON.stringify(r.slice(0, 8)));
+      } catch (e) {}
+      renderRecent();
+    }
+    function renderRecent() {
+      const wrap = document.getElementById('recentWrap');
+      const row = document.getElementById('recentRow');
+      if (!wrap || !row) return;
+      const items = getRecent().filter(p => GAMES.indexOf(p) !== -1).slice(0, 8);
+      if (!items.length) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      row.innerHTML = '';
+      items.forEach(p => {
+        const b = document.createElement('button');
+        b.className = 'fav-btn';
+        b.textContent = prettyName(p);
+        b.setAttribute('aria-label', 'Play ' + prettyName(p));
+        b.onclick = () => { openGame(p, prettyName(p)); };
+        row.appendChild(b);
+      });
+    }
+    function randomGame() {
+      const q = (document.getElementById('search').value || '').trim().toLowerCase();
+      const pool = GAMES.filter(p =>
+        (prettyName(p).toLowerCase().indexOf(q) !== -1 || p.toLowerCase().indexOf(q) !== -1) &&
+        (!favOnly || getFavs().indexOf(p) !== -1) &&
+        (activeCat === 'All' || gameCat(p) === activeCat));
+      if (!pool.length) { toast('No games match', 'err'); return; }
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      openGame(pick, prettyName(pick));
+    }
+
     /* ---------- Panic button (snap back to the boring calculator) ---------- */
 
     function panic() {
@@ -4170,14 +4226,21 @@ async function sha256hexFp(str) {
       }
       closeGame(); // teardown first: rapid switches never stack iframes
       trackDailyGame(path);
+      pushRecent(path);
       document.getElementById('gameModalTitle').textContent = name;
       currentGameSlug = path;
       paintRateButtons();
       const wrap = document.getElementById('gameFrameWrap');
+      const loader = document.createElement('div');
+      loader.id = 'gameLoader';
+      loader.innerHTML = '<div class="troll-spin"></div>';
+      wrap.appendChild(loader);
       const frame = document.createElement('iframe');
       frame.id = 'gameFrame';
       frame.title = name;
       frame.src = '../' + path + '/index.html';
+      frame.onload = () => { const l = document.getElementById('gameLoader'); if (l && l.parentNode) l.parentNode.removeChild(l); };
+      setTimeout(() => { const l = document.getElementById('gameLoader'); if (l && l.parentNode) l.parentNode.removeChild(l); }, 15000);
       wrap.appendChild(frame);
       const layer = trollLayer();
       wrap.appendChild(layer);
@@ -4204,6 +4267,8 @@ async function sha256hexFp(str) {
         try { frame.src = 'about:blank'; } catch (e) {}
         if (frame.parentNode) frame.parentNode.removeChild(frame);
       }
+      const loader = document.getElementById('gameLoader');
+      if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
       const layer = document.getElementById('trollLayer');
       if (layer) {
         layer.classList.remove('in-modal');
@@ -4855,8 +4920,9 @@ async function sha256hexFp(str) {
       renderGames(document.getElementById('search').value);
     }
 
-    renderGames();
-    renderCatChips();
+      renderGames();
+      renderCatChips();
+      renderRecent();
     (async () => {
       try { if (await siteWall()) return; } catch (e) {}
       const me = await checkAuth();
@@ -4914,6 +4980,10 @@ async function sha256hexFp(str) {
     (function () {
       const ci = document.getElementById('chatInput');
       if (ci) ci.addEventListener('input', () => sendTyping('global'));
+      const si = document.getElementById('search');
+      if (si) si.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && si.value) { si.value = ''; renderGames(''); }
+      });
       const di = document.getElementById('dmInput');
       if (di) di.addEventListener('input', () => sendTyping(dmPairKey(meName(), (typeof dmPeer !== 'undefined' ? dmPeer : 'admin'))));
     })();
