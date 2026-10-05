@@ -112,7 +112,7 @@
       color: #9ca3af;
       cursor: pointer;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.35);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .logout-btn:hover {
       color: #fff;
@@ -181,7 +181,7 @@
     .fav-btn {
       background: var(--surface-2); border: 1.5px solid #242b33; border-radius: 10px; color: var(--text-muted);
       font-size: 13px; padding: 8px 14px; cursor: pointer; min-height: 44px;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: border-color 0.2s var(--ease-apple), color 0.2s var(--ease-apple);
       touch-action: manipulation;
     }
     .fav-btn.active { border-color: var(--accent); color: var(--accent); }
@@ -211,7 +211,7 @@
       display: flex; align-items: center; gap: 12px; text-align: left;
       background: var(--surface-2); border: 1px solid #242b33; border-radius: 12px;
       padding: 12px; width: 100%; color: var(--text-primary); cursor: pointer; min-height: 44px;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: border-color 0.2s var(--ease-apple);
       font-family: inherit;
     }
     .shop-item:hover { border-color: var(--accent); }
@@ -242,7 +242,7 @@
       position: fixed; left: 22px; bottom: 86px; z-index: 50;
       width: 52px; height: 52px; border: none; border-radius: 50%;
       background: var(--accent); color: #fff; font-size: 22px; cursor: pointer;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple);
     }
     .friends-fab:hover { background: var(--accent-hover); }
     .friends-fab:active { transform: scale(0.97); }
@@ -251,7 +251,7 @@
       width: 300px; max-width: calc(100vw - 44px); max-height: 420px; display: none; flex-direction: column; overflow: hidden;
       background: var(--surface); border: 1px solid #262c33; border-radius: 16px;
     }
-    .friends-panel.open { display: flex; animation: panelUp 0.2s cubic-bezier(0.22,1,0.36,1); }
+    .friends-panel.open { display: flex; animation: panelUp 0.2s var(--ease-apple); }
     .friend-row {
       display: flex; align-items: center; gap: 8px; padding: 8px 12px;
       font-size: 13px; color: var(--text-primary); border-bottom: 1px solid #262c33;
@@ -293,7 +293,7 @@
       backdrop-filter: blur(24px) saturate(1.4);
       -webkit-backdrop-filter: blur(24px) saturate(1.4);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3);
-      transition: border-color 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: border-color 0.3s var(--ease-apple), box-shadow 0.3s var(--ease-apple);
     }
 
     .search-wrap input::placeholder { color: #4b5563; }
@@ -320,13 +320,13 @@
       -webkit-backdrop-filter: blur(24px) saturate(1.4);
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 32px rgba(0,0,0,0.45),
         inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(255,255,255,0.03);
-      transition: all 0.32s cubic-bezier(0.2, 0, 0, 1);
-      animation: cardIn 0.35s cubic-bezier(0.2, 0, 0, 1) backwards;
+      transition: all 0.32s var(--ease-apple);
+      animation: cardIn 0.35s var(--ease-apple) backwards;
     }
 
     .game-card:hover {
       transform: translateY(-6px);
-      border-color: rgba(139,92,246,0.5);
+      border-color: transparent;
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 18px 48px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.25),
         inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.05);
     }
@@ -339,7 +339,7 @@
     .game-thumb {
       width: 100%;
       aspect-ratio: 16/9;
-      background: #101315;
+      background: var(--surface);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -411,7 +411,7 @@
       cursor: pointer;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2),
         0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.5);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .chat-fab:hover {
       transform: scale(1.08);
@@ -441,7 +441,7 @@
     }
     .chat-panel.open {
       display: flex;
-      animation: panelIn 0.32s cubic-bezier(0.2, 0, 0, 1);
+      animation: panelIn 0.32s var(--ease-apple);
     }
     @keyframes panelIn {
       from { opacity: 0; transform: translateY(12px) scale(0.97); }
@@ -514,7 +514,7 @@
       font-size: 13px;
       color: #fff;
       outline: none;
-      transition: border-color 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: border-color 0.3s var(--ease-apple), box-shadow 0.3s var(--ease-apple);
     }
     .chat-form input:focus {
       border-color: rgba(0,0,0,0.65);
@@ -530,7 +530,7 @@
       font-weight: 600;
       cursor: pointer;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 2px 6px rgba(0,0,0,0.4), 0 6px 20px rgba(0,0,0,0.4);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .chat-form button:hover {
       background: var(--accent-hover);
@@ -556,10 +556,10 @@
       font-weight: 600;
       text-decoration: none;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 2px 6px rgba(0,0,0,0.4), 0 10px 28px rgba(0,0,0,0.45);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .admin-fab:hover {
-      border-color: rgba(139,92,246,0.8);
+      border-color: transparent;
       color: #fff;
       transform: translateY(-1px);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.4);
@@ -582,7 +582,7 @@
       cursor: pointer;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2),
         0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.5);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .dm-fab:hover {
       transform: scale(1.08);
@@ -625,7 +625,7 @@
     }
     .dm-panel.open {
       display: flex;
-      animation: panelIn 0.32s cubic-bezier(0.2, 0, 0, 1);
+      animation: panelIn 0.32s var(--ease-apple);
     }
     .dm-note {
       padding: 8px 14px;
@@ -684,7 +684,7 @@
       background: var(--surface); border: 1px solid #262c33; border-radius: 12px;
       padding: 12px 14px; font-size: 14px; font-weight: 600; color: var(--text-primary);
       cursor: pointer; min-height: 48px; font-family: inherit; text-align: left;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: border-color 0.2s var(--ease-apple), transform 0.2s var(--ease-apple);
       touch-action: manipulation;
     }
     .side-link:hover { border-color: var(--accent); }
@@ -726,7 +726,7 @@
       border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--text-primary);
       outline: none; resize: none; min-height: 44px; max-height: 120px;
       font-family: inherit; line-height: 1.4;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: border-color 0.2s var(--ease-apple);
     }
     .chat-form textarea:focus { border-color: var(--accent); }
     #chatAnnounce { display: flex; flex-direction: column; gap: 8px; padding: 10px 14px 0; }
@@ -778,14 +778,14 @@
         width: 280px; padding: 20px 16px; background: var(--surface);
         border-right: 1px solid #262c33; border-radius: 0;
         transform: translateX(-105%);
-        transition: transform 0.25s cubic-bezier(0.22,1,0.36,1);
+        transition: transform 0.25s var(--ease-apple);
       }
       #sidebar.open { transform: none; }
       #hamBtn { display: inline-flex; align-items: center; justify-content: center; }
       #sideBackdrop {
         display: block; position: fixed; inset: 0; z-index: 105;
         background: rgba(0,0,0,0.6); opacity: 0; pointer-events: none;
-        transition: opacity 0.25s cubic-bezier(0.22,1,0.36,1);
+        transition: opacity 0.25s var(--ease-apple);
       }
       #sideBackdrop.show { opacity: 1; pointer-events: auto; }
       .side-link.chat-only { display: flex; }
@@ -817,7 +817,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1);
+      animation: modalUp 0.2s var(--ease-apple);
     }
     #gameModal:fullscreen .game-modal-card {
       width: 100%;
@@ -854,7 +854,7 @@
       font-size: 17px;
       cursor: pointer;
       touch-action: manipulation;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple);
     }
     .gm-btn:hover { background: var(--accent); }
     .gm-btn:active { transform: scale(0.97); }
@@ -916,7 +916,7 @@
     }
     body.troll-flip, #gameFrameWrap.troll-flip {
       transform: rotate(180deg);
-      transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1);
+      transition: transform 0.5s var(--ease-apple);
     }
     body.troll-invert, #gameFrameWrap.troll-invert { filter: invert(1); }
     .troll-spin {
@@ -958,7 +958,7 @@
       backdrop-filter: blur(24px) saturate(1.4);
       -webkit-backdrop-filter: blur(24px) saturate(1.4);
       box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.16);
-      animation: toastIn 0.3s cubic-bezier(0.2, 0, 0, 1);
+      animation: toastIn 0.3s var(--ease-apple);
     }
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(10px); }
@@ -996,7 +996,7 @@
       overflow: hidden;
       text-align: center;
       box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-      animation: panelIn 0.3s cubic-bezier(0.2, 0, 0, 1);
+      animation: panelIn 0.3s var(--ease-apple);
       pointer-events: auto;
     }
     .ios-alert h3 {
@@ -1039,7 +1039,7 @@
     .logout-btn, .admin-fab {
       background: var(--surface-2) !important; border: 1.5px solid #242b33 !important;
       border-radius: 10px !important; box-shadow: none !important; color: var(--text-primary) !important;
-      min-height: 44px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      min-height: 44px; transition: background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple) !important;
     }
     .logout-btn:hover, .admin-fab:hover { background: #242b33 !important; color: #fff !important; border-color: #242b33 !important; transform: none !important; box-shadow: none !important; }
     .logout-btn:active, .admin-fab:active { transform: scale(0.97) !important; }
@@ -1049,14 +1049,14 @@
       background: var(--surface-2) !important; border: 1.5px solid #242b33 !important;
       border-radius: 10px !important; box-shadow: none !important; color: var(--text-primary) !important;
       min-height: 44px; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      transition: border-color 0.2s var(--ease-apple) !important;
     }
     .search-wrap input:focus, .chat-form input:focus { border-color: var(--accent) !important; box-shadow: none !important; }
     .game-card {
       background: var(--surface) !important; border: 1px solid #262c33 !important; border-radius: 16px !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-      animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1) backwards !important;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      animation: pageIn 0.2s var(--ease-apple) backwards !important;
+      transition: border-color 0.2s var(--ease-apple), transform 0.2s var(--ease-apple) !important;
     }
     .game-card:hover { transform: none !important; border-color: var(--accent) !important; background: var(--surface) !important; box-shadow: none !important; }
     .game-thumb { box-shadow: none !important; }
@@ -1066,7 +1066,7 @@
     .chat-fab, .dm-fab {
       background: var(--accent) !important; border: none !important; box-shadow: none !important;
       min-width: 52px; min-height: 52px;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      transition: background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple) !important;
     }
     .chat-fab:hover, .dm-fab:hover { background: var(--accent-hover) !important; transform: none !important; box-shadow: none !important; }
     .chat-fab:active, .dm-fab:active { transform: scale(0.97) !important; }
@@ -1074,7 +1074,7 @@
       background: var(--surface) !important; border: 1px solid #262c33 !important; border-radius: 16px !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
     }
-    .chat-panel.open, .dm-panel.open { animation: panelUp 0.2s cubic-bezier(0.22,1,0.36,1) !important; }
+    .chat-panel.open, .dm-panel.open { animation: panelUp 0.2s var(--ease-apple) !important; }
     @keyframes panelUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .chat-head small, .dm-note { color: var(--text-muted) !important; }
     .chat-msg .meta { color: var(--text-muted) !important; }
@@ -1086,7 +1086,7 @@
     .chat-form button {
       background: var(--accent) !important; border: none !important; border-radius: 10px !important;
       box-shadow: none !important; min-height: 44px; min-width: 44px;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      transition: background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple) !important;
     }
     .chat-form button:hover { background: var(--accent-hover) !important; transform: none !important; }
     .chat-form button:active { transform: scale(0.97) !important; }
@@ -1107,14 +1107,14 @@
     .reply-btn {
       background: var(--surface-2); border: 1px solid #242b33; border-radius: 10px; color: var(--text-muted);
       font-size: 12px; padding: 6px 10px; cursor: pointer; min-height: 44px; min-width: 44px; margin-left: 6px;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: border-color 0.2s var(--ease-apple), color 0.2s var(--ease-apple);
     }
     .reply-btn:hover { border-color: var(--accent); color: var(--text-primary); }
     .reply-bar {
       display: none; align-items: center; gap: 8px; padding: 8px 12px;
       background: var(--surface-2); border-bottom: 1px solid #242b33; font-size: 12px; color: var(--text-muted);
     }
-    .reply-bar.show { display: flex; animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1); }
+    .reply-bar.show { display: flex; animation: pageIn 0.2s var(--ease-apple); }
     .reply-bar .preview { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
     .reply-bar button { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; min-width: 44px; min-height: 44px; }
     .quote-block {
@@ -1127,7 +1127,7 @@
     .req-banner {
       background: var(--surface); border: 1px solid #262c33; border-radius: 16px;
       padding: 14px 16px; font-size: 13px; color: var(--text-primary); line-height: 1.5;
-      animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1);
+      animation: pageIn 0.2s var(--ease-apple);
     }
     .req-banner.denied { border-left: 4px solid #ef4444; }
     .req-banner.approved { border-left: 4px solid #22c55e; }
@@ -1139,7 +1139,7 @@
     .mini-btn {
       background: var(--accent); border: none; border-radius: 10px; color: var(--accent-on);
       font-size: 13px; font-weight: 600; padding: 10px 14px; cursor: pointer; min-height: 44px;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple);
     }
     .mini-btn:hover { background: var(--accent-hover); }
     .mini-btn:active { transform: scale(0.97); }
@@ -1225,8 +1225,44 @@
     /* Icon sizing per context (base .mi is 20px) */
     .fav-btn .mi, .new-msg-pill .mi { font-size: 16px; vertical-align: -3px; }
     .leader-rank .mi { font-size: 16px; vertical-align: -2px; }
-    /* Brand pass: pill primary buttons per the design system. */
-    .mini-btn { border-radius: 999px !important; padding-left: 20px !important; padding-right: 20px !important; }
+    /* ===== APPLE HUB SYSTEM (batch 4): quiet chrome, colour lives in game art. */
+    body { background: var(--bg) !important; color: var(--text-1) !important; }
+    nav { position: sticky !important; top: 0 !important; z-index: 50 !important; height: 44px !important; padding: 0 16px !important; background: rgba(0,0,0,0.72) !important; backdrop-filter: saturate(180%) blur(20px) !important; -webkit-backdrop-filter: saturate(180%) blur(20px) !important; border-bottom: none !important; box-shadow: none !important; }
+    .nav-logo { font-weight: 600 !important; letter-spacing: -0.005em !important; }
+    .nav-right { font-size: 13px !important; }
+    .nav-user { color: var(--text-2) !important; }
+    .logout-btn { background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-2) !important; font-size: 13px !important; }
+    .logout-btn:hover { color: var(--text-1) !important; transform: none !important; }
+    .main { max-width: 1200px !important; padding: 64px 24px !important; }
+    .page-header h1 { font-size: 40px !important; line-height: 48px !important; font-weight: 600 !important; letter-spacing: 0 !important; color: var(--text-1) !important; }
+    .page-header p { font-size: 15px !important; line-height: 22px !important; color: var(--text-2) !important; }
+    .sec-label { font-size: 14px !important; font-weight: 400 !important; color: var(--text-2) !important; text-transform: none !important; letter-spacing: normal !important; }
+    .search-wrap input { background: var(--surface) !important; border: none !important; border-radius: 14px !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; min-height: 52px !important; padding: 0 16px !important; font-size: 17px !important; color: var(--text-1) !important; }
+    .search-wrap input::placeholder { color: var(--text-2) !important; }
+    .search-wrap input:focus { box-shadow: 0 0 0 3px rgba(41,151,255,0.55) !important; }
+    .game-card { background: var(--surface) !important; border: none !important; border-radius: 20px !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+    .game-card:hover { background: var(--surface-hover) !important; border-color: transparent !important; transform: none !important; box-shadow: none !important; }
+    .game-info h3 { font-size: 17px !important; font-weight: 600 !important; letter-spacing: -0.022em !important; color: var(--text-1) !important; }
+    .game-info p { font-size: 14px !important; line-height: 18px !important; color: var(--text-2) !important; }
+    .leader-card { background: var(--surface) !important; border: none !important; border-radius: 20px !important; box-shadow: none !important; }
+    .leader-card h3 { font-size: 15px !important; font-weight: 600 !important; }
+    .leader-row { padding: 12px 0 !important; border-bottom: 1px solid var(--separator) !important; font-variant-numeric: tabular-nums !important; }
+    .staff-pill { background: var(--surface) !important; border: none !important; }
+    .ban-card { background: var(--surface) !important; border: none !important; border-left: 3px solid var(--danger) !important; border-radius: 14px !important; font-size: 14px !important; color: var(--text-1) !important; }
+    .fav-btn { background: transparent !important; border: none !important; color: var(--text-2) !important; }
+    .mini-btn { border-radius: 14px !important; font-weight: 500 !important; }
+    .mini-btn.ghost { background: transparent !important; border: 1px solid var(--separator) !important; color: var(--link) !important; }
+    .modal { background: var(--surface) !important; border: none !important; border-radius: 28px !important; box-shadow: none !important; padding: 28px !important; }
+    .modal h2 { font-size: 20px !important; line-height: 26px !important; font-weight: 600 !important; }
+    .modal p { font-size: 15px !important; line-height: 22px !important; color: var(--text-2) !important; }
+    .keyline { background: var(--surface-hover) !important; border: none !important; border-radius: 12px !important; font-family: var(--font-mono) !important; }
+    .toast { background: var(--surface) !important; border: none !important; border-radius: 14px !important; box-shadow: none !important; }
+    .toast.err { border-left: 3px solid var(--danger) !important; }
+    .toast.ok { border-left: 3px solid var(--success) !important; }
+    .chat-fab:hover, .dm-fab:hover, .admin-fab:hover { transform: none !important; }
+    .chat-fab:active, .dm-fab:active, .admin-fab:active { transform: scale(0.96) !important; }
+    footer { font-size: 12px !important; color: var(--text-3) !important; letter-spacing: normal !important; }
+    .empty-state, .result-count { font-size: 15px !important; color: var(--text-2) !important; }
   </style>
 </head>
 <body>

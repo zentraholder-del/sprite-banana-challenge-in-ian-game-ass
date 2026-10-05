@@ -104,7 +104,7 @@
       color: #9ca3af;
       cursor: pointer;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,0,0,0.35);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .logout-btn:hover {
       color: #fff;
@@ -156,7 +156,7 @@
       color: #fff;
       outline: none;
       font-family: inherit;
-      transition: border-color 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: border-color 0.3s var(--ease-apple), box-shadow 0.3s var(--ease-apple);
     }
     .field input.mono { font-family: monospace; letter-spacing: 2px; }
     .field input:focus, .field textarea:focus {
@@ -177,7 +177,7 @@
       cursor: pointer;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.2),
         0 2px 6px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.35);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .btn:hover {
       background: var(--accent-hover);
@@ -216,7 +216,7 @@
       cursor: pointer;
       text-decoration: none;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.3);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .tabs button:hover, .tabs a.tablink:hover {
       color: #fff;
@@ -243,7 +243,7 @@
     .section { display: none; }
     .section.active {
       display: block;
-      animation: sectionIn 0.32s cubic-bezier(0.2, 0, 0, 1);
+      animation: sectionIn 0.32s var(--ease-apple);
     }
     @keyframes sectionIn {
       from { opacity: 0; transform: translateY(10px) scale(0.99); }
@@ -319,7 +319,7 @@
       font-size: 13px;
       color: #fff;
       outline: none;
-      transition: border-color 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: border-color 0.3s var(--ease-apple), box-shadow 0.3s var(--ease-apple);
     }
     .inline-form input:focus {
       border-color: rgba(0,0,0,0.65);
@@ -385,7 +385,7 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.35),
         inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04);
       text-align: center;
-      animation: modalIn 0.34s cubic-bezier(0.2, 0, 0, 1);
+      animation: modalIn 0.34s var(--ease-apple);
     }
     @keyframes modalIn {
       from { opacity: 0; transform: translateY(14px) scale(0.96); }
@@ -436,7 +436,7 @@
       color: #9ca3af;
       cursor: pointer;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.3);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
     }
     .seg-btn.active {
       background: var(--accent);
@@ -486,14 +486,14 @@
       color: #fff;
       cursor: pointer;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.3);
-      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: all 0.3s var(--ease-apple);
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
     .trick-btn span { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
     .trick-btn:active { transform: scale(0.96); }
     .trick-btn.selected {
-      border-color: rgba(139,92,246,0.7);
+      border-color: rgba(41,151,255,0.5);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 20px rgba(0,0,0,0.45);
     }
     .trick-btn.selected span { color: #fff; }
@@ -540,7 +540,7 @@
     .logout-btn {
       background: var(--surface-2) !important; border: 1.5px solid #242b33 !important;
       border-radius: 10px !important; box-shadow: none !important; color: var(--text-primary) !important;
-      min-height: 44px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      min-height: 44px; transition: background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple) !important;
     }
     .logout-btn:hover { background: #242b33 !important; color: #fff !important; transform: none !important; box-shadow: none !important; }
     .logout-btn:active { transform: scale(0.97) !important; }
@@ -554,7 +554,7 @@
     .field input, .field textarea, .field select, .inline-form input {
       background: var(--surface-2) !important; border: 1.5px solid #242b33 !important;
       border-radius: 10px !important; box-shadow: none !important; color: var(--text-primary) !important;
-      min-height: 44px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      min-height: 44px; transition: border-color 0.2s var(--ease-apple) !important;
     }
     .field input:focus, .field textarea:focus, .field select:focus, .inline-form input:focus {
       border-color: var(--accent) !important; box-shadow: none !important;
@@ -562,7 +562,7 @@
     .btn {
       background: var(--accent) !important; color: var(--accent-on); border: none !important; border-radius: 10px !important;
       box-shadow: none !important; min-height: 44px;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      transition: background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple) !important;
     }
     .btn:hover { background: var(--accent-hover) !important; transform: none !important; box-shadow: none !important; }
     .btn:active { transform: scale(0.97) !important; }
@@ -574,7 +574,7 @@
     .tabs button, .tabs a.tablink {
       background: var(--surface-2) !important; border: 1px solid #242b33 !important;
       border-radius: 10px !important; box-shadow: none !important; color: var(--text-muted) !important;
-      min-height: 44px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      min-height: 44px; transition: background 0.2s var(--ease-apple), color 0.2s var(--ease-apple) !important;
     }
     .tabs button:hover, .tabs a.tablink:hover { color: var(--text-primary) !important; border-color: var(--accent) !important; transform: none !important; }
     .tabs button.active { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; box-shadow: none !important; }
@@ -608,7 +608,7 @@
     .modal {
       background: var(--surface) !important; border: 1px solid #262c33 !important; border-radius: 16px !important;
       box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-      animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      animation: modalUp 0.2s var(--ease-apple) !important;
     }
     @keyframes modalUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .stat-card { background: var(--surface-2) !important; border: 1px solid #262c33 !important; border-radius: 16px !important; box-shadow: none !important; }
@@ -617,14 +617,14 @@
     .seg-btn {
       background: var(--surface-2) !important; border: 1.5px solid #242b33 !important;
       border-radius: 10px !important; box-shadow: none !important; color: var(--text-muted) !important;
-      min-height: 48px; transition: background 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      min-height: 48px; transition: background 0.2s var(--ease-apple), color 0.2s var(--ease-apple) !important;
     }
     .seg-btn.active { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; box-shadow: none !important; }
     .field select option { background: var(--surface) !important; color: var(--text-primary) !important; }
     .trick-btn {
       background: var(--surface-2) !important; border: 1.5px solid #242b33 !important;
       border-radius: 16px !important; box-shadow: none !important;
-      min-height: 88px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1), background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
+      min-height: 88px; transition: border-color 0.2s var(--ease-apple), background 0.2s var(--ease-apple), transform 0.2s var(--ease-apple) !important;
       touch-action: manipulation;
     }
     .trick-btn span { color: var(--text-muted) !important; }
@@ -725,12 +725,12 @@
     .tswitch .track {
       position: relative; width: 40px; height: 22px; border-radius: 20px;
       background: #242b33;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: background 0.2s var(--ease-apple);
     }
     .tswitch .thumb {
       position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
       background: var(--text-primary);
-      transition: transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: transform 0.2s var(--ease-apple);
     }
     .tswitch.on .track { background: var(--accent); }
     .tswitch.on .thumb { transform: translateX(18px); }
@@ -738,12 +738,12 @@
     /* mini pill toggle inside trick buttons mirrors ON/OFF */
     .trick-btn .tpill {
       width: 40px; height: 22px; border-radius: 20px; background: #242b33; position: relative;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: background 0.2s var(--ease-apple);
     }
     .trick-btn .tpill::after {
       content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
       border-radius: 50%; background: var(--text-primary);
-      transition: transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: transform 0.2s var(--ease-apple);
     }
     .trick-btn.on .tpill { background: var(--accent); }
     .trick-btn.on .tpill::after { transform: translateX(18px); }
@@ -768,7 +768,7 @@
       display: inline-flex; align-items: center; justify-content: center;
       background: var(--surface-2); border: 1.5px solid #242b33; border-radius: 10px;
       color: var(--text-primary); font-size: 16px; cursor: pointer;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: border-color 0.2s var(--ease-apple);
     }
     .icon-btn:hover { border-color: var(--accent); }
     .admin-shell { display: flex; align-items: flex-start; gap: 16px; }
@@ -823,7 +823,7 @@
       min-height: 44px; padding: 8px 14px; border-radius: 20px;
       background: var(--surface-2); border: 1.5px solid #242b33; color: var(--text-muted);
       font-size: 12px; font-weight: 700; cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.22,1,0.36,1);
+      transition: all 0.2s var(--ease-apple);
     }
     .rankpills button.active { border-color: var(--accent); color: #fff; background: var(--accent); }
     .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
@@ -849,7 +849,7 @@
     .dm-contact {
       text-align: left; background: var(--surface-2); border: 1.5px solid #242b33; border-radius: 10px;
       padding: 10px 12px; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer;
-      min-height: 44px; transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+      min-height: 44px; transition: border-color 0.2s var(--ease-apple);
     }
     .dm-contact:hover { border-color: var(--accent); }
     .dm-contact.active { border-color: var(--accent); background: var(--accent-soft); }
@@ -934,10 +934,63 @@
       background: var(--accent); border-radius: 12px; color: #fff;
       font-size: 11px; font-weight: 800;
     }
-    /* Brand pass: pill primary buttons per the design system. */
-    .btn { border-radius: 999px !important; padding-left: 24px !important; padding-right: 24px !important; }
-    /* Brand pass: striped table rows for readability. */
-    table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.025); }
+    /* Tables read by row separators (56px rows, tabular numerals). */
+    /* Jumpscare preview (staff screen only — never sent anywhere). */
+    .scare-preview-row { display: flex; align-items: center; gap: 12px; }
+    #scarePreviewImg { width: 132px; height: 76px; object-fit: cover; border-radius: 10px; border: 1px solid var(--separator); background: #000; }
+    #scarePreviewOverlay { position: fixed; inset: 0; z-index: 500; background: #000; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+    #scarePreviewOverlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    #scarePreviewOverlay span { position: absolute; bottom: 18px; left: 0; right: 0; text-align: center; font-size: 13px; color: var(--text-2); }
+    /* ===== APPLE ADMIN SYSTEM (batch 4): quiet chrome, blue earns its place. */
+    body { background: var(--bg) !important; color: var(--text-1) !important; }
+    .card { background: var(--surface) !important; border: none !important; border-radius: 28px !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; padding: 28px !important; }
+    .card h1 { font-size: 28px !important; line-height: 32px !important; font-weight: 600 !important; letter-spacing: 0.004em !important; }
+    .card h2 { font-size: 20px !important; line-height: 26px !important; font-weight: 600 !important; letter-spacing: 0.004em !important; }
+    .card p.sub { font-size: 15px !important; line-height: 22px !important; color: var(--text-2) !important; }
+    .field label, .stat-label { font-size: 14px !important; line-height: 18px !important; font-weight: 400 !important; color: var(--text-2) !important; letter-spacing: normal !important; text-transform: none !important; }
+    .stat-label { font-size: 12px !important; line-height: 16px !important; }
+    .stat-num { font-weight: 600 !important; letter-spacing: 0.004em !important; font-variant-numeric: tabular-nums !important; }
+    th { font-size: 12px !important; font-weight: 500 !important; color: var(--text-2) !important; text-transform: none !important; letter-spacing: normal !important; }
+    table th, table td { padding: 16px 12px !important; border-bottom: 1px solid var(--separator) !important; font-variant-numeric: tabular-nums !important; }
+    .field input, .field textarea, .field select, .inline-form input, .deny-box input { background: var(--surface) !important; border: none !important; border-radius: 14px !important; box-shadow: none !important; min-height: 52px !important; font-size: 17px !important; color: var(--text-1) !important; }
+    .field input:focus, .field textarea:focus, .field select:focus, .inline-form input:focus, .deny-box input:focus { box-shadow: 0 0 0 3px rgba(41,151,255,0.55) !important; }
+    .field input::placeholder, .field textarea::placeholder { color: var(--text-2) !important; }
+    .btn { border-radius: 14px !important; font-weight: 500 !important; box-shadow: none !important; border: none !important; }
+    .btn:hover { transform: none !important; }
+    .btn:active { transform: scale(0.98) !important; }
+    .btn:disabled { background: rgba(255,255,255,0.12) !important; color: var(--text-3) !important; opacity: 1 !important; cursor: not-allowed !important; }
+    .btn.small { font-size: 13px !important; }
+    .btn.ghost { background: transparent !important; border: 1px solid var(--separator) !important; color: var(--link) !important; }
+    .btn.ghost:hover { background: var(--surface) !important; }
+    .topbar { background: var(--surface) !important; border: none !important; border-radius: 14px !important; box-shadow: none !important; }
+    @media (min-width: 769px) {
+      .tabs.sidebar { background: transparent !important; border: none !important; padding: 0 !important; }
+    }
+    .tabs.sidebar button, .tabs.sidebar a.tablink { background: transparent !important; border: none !important; border-radius: 12px !important; box-shadow: none !important; color: var(--text-2) !important; font-size: 14px !important; font-weight: 400 !important; }
+    .tabs.sidebar button.active { background: var(--surface) !important; color: var(--text-1) !important; font-weight: 500 !important; }
+    .tabs button { background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-2) !important; font-weight: 400 !important; }
+    .tabs button.active { background: var(--surface) !important; color: var(--text-1) !important; font-weight: 500 !important; }
+    .segrow { background: var(--surface) !important; border-radius: 14px !important; padding: 4px !important; gap: 4px !important; }
+    .seg-btn { background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-2) !important; font-weight: 500 !important; border-radius: 10px !important; }
+    .seg-btn.active { background: var(--surface-hover) !important; color: var(--text-1) !important; }
+    .trick-btn { background: var(--surface) !important; border: none !important; border-radius: 20px !important; box-shadow: none !important; }
+    .trick-btn:hover { background: var(--surface-hover) !important; }
+    .trick-btn span { color: var(--text-2) !important; font-weight: 500 !important; font-size: 13px !important; }
+    .trick-btn .tstate { font-size: 12px !important; font-weight: 400 !important; letter-spacing: normal !important; color: var(--text-3) !important; }
+    .trick-btn.on, .trick-btn.selected { background: var(--surface) !important; border: none !important; box-shadow: none !important; }
+    .trick-btn.on .tstate { color: var(--success) !important; font-weight: 500 !important; }
+    .trick-btn .tpill { background: var(--surface-hover) !important; }
+    .trick-btn.on .tpill { background: var(--success) !important; }
+    .stat-card, .user-card, .req-card, .dm-contact, .active-strip, .rankpills button, .icon-btn { background: var(--surface) !important; border: none !important; border-radius: 20px !important; box-shadow: none !important; }
+    .dm-contact.active { background: var(--surface-hover) !important; }
+    .rankpills button { color: var(--text-2) !important; font-weight: 500 !important; }
+    .rankpills button.active { background: var(--surface-hover) !important; color: var(--text-1) !important; }
+    .icon-btn:hover, .dm-contact:hover { background: var(--surface-hover) !important; }
+    .modal { background: var(--surface) !important; border: none !important; border-radius: 28px !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; padding: 28px !important; }
+    .modal h2 { font-size: 20px !important; line-height: 26px !important; font-weight: 600 !important; color: var(--text-1) !important; }
+    .modal p.sub { font-size: 15px !important; line-height: 22px !important; color: var(--text-2) !important; }
+    .empty-state { font-size: 15px !important; color: var(--text-2) !important; }
+    footer { font-size: 12px !important; color: var(--text-3) !important; letter-spacing: normal !important; }
   </style>
 </head>
 <body>
@@ -1223,6 +1276,14 @@
             <option value="scare6.jpg">scare6.jpg</option>
             <option value="custom">Custom upload</option>
           </select>
+        </div>
+        <div class="field" id="scarePreviewWrap">
+          <label>Preview</label>
+          <div class="scare-preview-row">
+            <img id="scarePreviewImg" alt="Selected scare preview" />
+            <button type="button" class="btn small ghost" onclick="previewScare()">Preview fullscreen</button>
+          </div>
+          <div id="scarePreviewOverlay" style="display:none" onclick="closeScarePreview()"><img id="scarePreviewFull" alt="Scare fullscreen preview" /><span>Click anywhere or press Esc to close</span></div>
         </div>
         <div class="field" id="customScareWrap" style="display:none">
           <label>Custom jumpscare image</label>
@@ -2444,6 +2505,7 @@ async function sha256hexFp(str) {
           if (url) { prev.src = url; prev.style.display = ''; }
           else prev.style.display = 'none';
         }
+        refreshScarePreview();
         const st = document.getElementById('customScareStatus');
         if (st && !st.textContent) st.textContent = url ? 'Custom image set — pick "Custom upload" above to use it.' : 'No custom image yet.';
       } catch (e) { console.error('load custom scare failed:', e); }
@@ -2487,6 +2549,7 @@ async function sha256hexFp(str) {
         if (prev) { prev.src = dataUrl; prev.style.display = ''; }
         if (st) st.textContent = 'Custom image saved — select "Custom upload" in the picker to fire it.';
         toast('Custom scare saved', 'ok');
+        refreshScarePreview();
       } catch (e) { console.error('upload custom scare failed:', e); if (st) st.textContent = 'Upload failed.'; toast('Upload failed', 'err'); }
     }
     async function removeCustomScare() {
@@ -2503,8 +2566,43 @@ async function sha256hexFp(str) {
         if (inp) inp.value = '';
         if (st) st.textContent = 'Custom image removed.';
         toast('Custom scare removed', 'ok');
+        refreshScarePreview();
       } catch (e) { console.error('remove custom scare failed:', e); if (st) st.textContent = 'Remove failed.'; }
     }
+
+    /* ---------- jumpscare preview (staff screen only, sends nothing) ---------- */
+    function scarePreviewURL() {
+      const sel = document.getElementById('scareImg');
+      const v = (sel && sel.value) || 'scare1.jpg';
+      if (v === 'custom') {
+        const prev = document.getElementById('customScarePreview');
+        return (prev && prev.src) || null;
+      }
+      return v;
+    }
+    function refreshScarePreview() {
+      const img = document.getElementById('scarePreviewImg');
+      if (!img) return;
+      const url = scarePreviewURL();
+      if (url) { img.src = url; img.style.display = ''; }
+      else { img.removeAttribute('src'); img.style.display = 'none'; }
+    }
+    function previewScare() {
+      const url = scarePreviewURL();
+      if (!url) { toast('Upload a custom image first (or pick a built-in).', 'err'); return; }
+      const ov = document.getElementById('scarePreviewOverlay');
+      const full = document.getElementById('scarePreviewFull');
+      if (!ov || !full) return;
+      full.src = url;
+      ov.style.display = 'flex';
+    }
+    function closeScarePreview() {
+      const ov = document.getElementById('scarePreviewOverlay');
+      if (ov) ov.style.display = 'none';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeScarePreview(); });
+    document.getElementById('scareImg').onchange = refreshScarePreview;
+    refreshScarePreview();
 
     /* Send Trick button removed ? cards fire directly via toggleTrick (toggles) and fireInstant (one-shots). */
 
