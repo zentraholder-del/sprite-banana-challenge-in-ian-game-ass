@@ -1,50 +1,38 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0a0a0f">
+  <meta name="theme-color" content="#08090A">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e1352b'/%3E%3Ctext x='32' y='45' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EL%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/tokens.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
   <title>Lightspeed</title>
   <style>
     /* ===== SHARED DESIGN TOKENS (identical in all 4 files ? do not drift) ===== */
     :root {
-      --bg-base: #0e1113;
-      --surface: #161a1f;
-      --surface-2: #1e242b;
-      --border-subtle: #262c33;
-      --border-strong: #e1352b;
-      --text-primary: #ece9e2;
-      --text-secondary: #a7adb5;
-      --text-muted: #7d8590;
-      --accent: #e1352b;
-      --accent-hover: #c62a21;
-      --accent-pressed: #a3231b;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --rank-owner: #f59e0b;
-      --rank-admin: #60a5fa;
-      --rank-mod: #22c55e;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      /* Legacy aliases — values resolve to assets/tokens.css (single source). */
+      --bg-base: var(--bg);
+      --border-subtle: var(--border);
+      --text-primary: var(--text-1);
+      --text-secondary: var(--text-2);
+      --text-muted: var(--text-3);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Inter", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       --radius-sm: 6px;
       --radius-md: 12px;
       --radius-lg: 20px;
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
       --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
       --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
-      --ease: cubic-bezier(0.22, 1, 0.36, 1);
       --t-micro: 0.15s;
       --t-standard: 0.25s;
       --t-entrance: 0.35s;
     }
-    body { font-family: var(--font-sans) !important; }
-    h1, h2, h3 { letter-spacing: -0.02em; }
+    body { font-family: var(--font-sans) !important; font-optical-sizing: auto; font-synthesis: none; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+    h1, h2, h3 { letter-spacing: -0.02em; font-feature-settings: "cv11", "ss01"; }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -55,15 +43,11 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      background: #0e1113;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      overflow: hidden;
+      font-family: var(--font-sans);
+      font-weight: 400;
+      background: var(--bg);
+      min-height: 100svh;
+      color: var(--text-1);
     }
 
     /* Background glow blobs */
@@ -79,191 +63,247 @@
       filter: blur(140px);
       opacity: 0.22;
     }
-    .blob1 { width: 460px; height: 460px; background: #e1352b; top: -100px; left: -120px; }
-    .blob2 { width: 400px; height: 400px; background: #60a5fa; bottom: -80px; right: -100px; }
-    .blob3 { width: 240px; height: 240px; background: #a7adb5; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .blob1 { width: 460px; height: 460px; background: var(--accent); top: -100px; left: -120px; }
+    .blob2 { width: 400px; height: 400px; background: #fff; bottom: -80px; right: -100px; }
+    .blob3 { width: 240px; height: 240px; background: var(--text-secondary); top: 50%; left: 50%; transform: translate(-50%,-50%); }
 
-    /* CARD */
-    .card {
+    /* AUTH — one centred column on pure black. No card, no box. */
+    .auth {
       position: relative;
       z-index: 1;
-      background-color: rgba(14,14,26,0.5);
-      border: 1px solid rgba(255,255,255,0.11);
-      border-radius: 24px;
-      padding: 44px 40px;
-      width: 100%;
-      max-width: 440px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.5), 0 32px 96px rgba(0,0,0,0.3),
-        inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,255,255,0.04);
+      width: calc(100% - 48px);
+      max-width: 380px;
+      margin: 0 auto;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-bottom: 8vh;
+    }
+    /* The one brand moment: a single hairline of light anchored under
+       the brand block, centred on the column. Nearly subliminal. */
+    .beam {
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 24px);
+      width: min(60vw, 720px);
+      height: 1px;
+      transform: translateX(-50%) scaleX(0);
+      opacity: 0;
+      background: linear-gradient(90deg, transparent, rgba(245,245,247,0.9), transparent);
+      box-shadow: 0 0 24px rgba(245,245,247,0.2);
+      pointer-events: none;
+      animation: beamDraw 900ms cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes beamDraw {
+      to { transform: translateX(-50%) scaleX(1); opacity: 0.25; }
+    }
+    /* Entrance: staggered fade + 8px rise, 60ms apart.
+       `both` keeps the end state so elements stay visible, and applies
+       the start state during the delay. Only static elements may use
+       .rise — nothing that later needs its transform (e.g. buttons). */
+    .rise { opacity: 0; animation: riseIn 600ms cubic-bezier(0.16,1,0.3,1) both; }
+    .rise-1 { animation-delay: 0ms; }
+    .rise-2 { animation-delay: 60ms; }
+    .rise-3 { animation-delay: 120ms; }
+    .rise-4 { animation-delay: 180ms; }
+    .rise-5 { animation-delay: 240ms; }
+    .rise-6 { animation-delay: 300ms; }
+    .rise-7 { animation-delay: 360ms; }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .logo {
-      text-align: center;
-      margin-bottom: 36px;
+    .brand { position: relative; margin-bottom: 0; }
+    .brand .mark { display: block; color: var(--text-1); margin-bottom: 28px; }
+    .brand h1 {
+      font-size: 32px;
+      line-height: 36px;
+      letter-spacing: 0.004em;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+    .brand p {
+      font-size: 21px;
+      line-height: 29px;
+      letter-spacing: 0.011em;
+      font-weight: 400;
+      color: var(--text-2);
+      margin-top: 8px;
+    }
+    @media (max-width: 480px) {
+      .brand h1 { font-size: 28px; line-height: 32px; }
     }
 
-    .logo-icon {
-      width: 48px;
-      height: 48px;
-      margin: 0 auto 14px;
-      background: #e1352b;
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 16px;
+    /* FUSED FORM GROUP — one surface, 14px radius, separator between rows. */
+    .field-group {
+      background: var(--surface);
+      border-radius: 14px;
+      margin-top: 40px;
+      transition: box-shadow 150ms ease-out;
+    }
+    .field-group:focus-within {
+      box-shadow: 0 0 0 3px rgba(41,151,255,0.55);
+    }
+    .field-group:has(.error-input) {
+      box-shadow: inset 0 0 0 1px var(--danger);
+    }
+    .field-group:focus-within:has(.error-input) {
+      box-shadow: inset 0 0 0 1px var(--danger), 0 0 0 3px rgba(41,151,255,0.55);
+    }
+    .frow { position: relative; display: flex; min-height: 56px; }
+    .frow + .frow { border-top: 1px solid var(--separator); }
+    .frow input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 22px 16px 6px;
+      font-size: 17px;
+      line-height: 25px;
+      letter-spacing: -0.022em;
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      caret-color: var(--link);
+    }
+    .frow input.has-eye { padding-right: 60px; }
+    .frow label {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 17px;
+      line-height: 25px;
+      color: var(--text-2);
+      pointer-events: none;
+      transition: top 150ms ease-out, transform 150ms ease-out, font-size 150ms ease-out;
+    }
+    .frow input:focus + label,
+    .frow input:not(:placeholder-shown) + label {
+      top: 7px;
+      transform: none;
+      font-size: 12px;
+      line-height: 16px;
+    }
+    .frow .eye {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 6px rgba(0,0,0,0.4), 0 8px 24px rgba(124,58,237,0.45);
-    }
-
-    .logo h1 {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      color: #ece9e2;
-    }
-
-    .logo p {
-      font-size: 13px;
-      color: #4b5563;
-      margin-top: 5px;
-    }
-
-    /* INPUT */
-    .field { margin-bottom: 14px; }
-
-    .field label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: #6b7280;
-      margin-bottom: 7px;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-    }
-
-    .input-wrap {
-      position: relative;
-    }
-
-    .input-wrap input {
-      width: 100%;
-      background-color: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px;
-      padding: 13px 16px;
-      font-size: 15px;
-      color: #fff;
-      outline: none;
-      transition: border-color 0.3s cubic-bezier(0.22, 1.15, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
-      font-family: monospace;
-    }
-
-    .input-wrap input.mono {
-      letter-spacing: 3px;
-      font-family: monospace;
-    }
-
-    .input-wrap input::placeholder {
-      letter-spacing: 0;
-      color: #374151;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-    }
-
-    .input-wrap input:focus {
-      border-color: rgba(124,58,237,0.65);
-      box-shadow: 0 0 0 4px rgba(124,58,237,0.16), inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 20px rgba(124,58,237,0.2);
-    }
-
-    .input-wrap input.error-input {
-      border-color: rgba(239,68,68,0.6);
-      box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
-    }
-
-    /* BUTTON */
-    .btn {
-      width: 100%;
-      margin-top: 6px;
-      padding: 14px;
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 14px;
-      background: #e1352b;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.2),
-        0 2px 6px rgba(0,0,0,0.4), 0 8px 24px rgba(124,58,237,0.4);
-      letter-spacing: 0.2px;
-    }
-
-    .btn:hover {
-      background: #60a5fa;
-      transform: translateY(-1px);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.32), inset 0 -1px 0 rgba(0,0,0,0.2),
-        0 2px 6px rgba(0,0,0,0.4), 0 12px 32px rgba(124,58,237,0.55);
-    }
-
-    .btn:active { opacity: 0.9; transform: translateY(0) scale(0.98); }
-
-    .btn:disabled { opacity: 0.55; cursor: wait; transform: none; }
-
-    .error-msg {
-      margin-top: 10px;
-      font-size: 12.5px;
-      color: #f87171;
-      text-align: center;
-      min-height: 18px;
-      transition: opacity 0.2s;
-    }
-
-    .status-msg {
-      margin-top: 10px;
-      font-size: 12.5px;
-      color: #93c5fd;
-      text-align: center;
-      min-height: 18px;
-    }
-
-    /* DIVIDER */
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 24px 0;
-    }
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(255,255,255,0.06);
-    }
-    .divider span {
-      font-size: 11px;
-      color: #374151;
-      letter-spacing: 0.5px;
-    }
-
-    /* REQUEST LINK */
-    .request-link {
-      text-align: center;
-      font-size: 13px;
-      color: #6b7280;
-    }
-    .request-link button {
       background: none;
       border: none;
-      color: #a7adb5;
-      font-size: 13px;
+      color: var(--text-2);
       cursor: pointer;
-      font-weight: 500;
-      transition: color 0.15s;
-      padding: 0;
+      touch-action: manipulation;
     }
-    .request-link button:hover { color: #a7adb5; }
+    .frow .eye:hover { color: var(--text-1); }
+    .frow .eye .mi { font-size: 20px; }
+    /* Autofill keeps surface + type colour. */
+    .frow input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 60px var(--surface) inset;
+      -webkit-text-fill-color: var(--text-1);
+      caret-color: var(--link);
+    }
+    /* Request / reset panes: single surface rows, plain sentence-case labels. */
+    .field { margin-bottom: 12px; }
+    .field > label {
+      display: block;
+      font-size: 14px;
+      line-height: 18px;
+      color: var(--text-2);
+      margin: 0 0 8px 2px;
+    }
+    .field > input,
+    .field > textarea {
+      width: 100%;
+      background: var(--surface);
+      border: none;
+      border-radius: 14px;
+      min-height: 56px;
+      padding: 0 16px;
+      font-size: 17px;
+      line-height: 25px;
+      color: var(--text-1);
+      outline: none;
+      font-family: var(--font-sans);
+      caret-color: var(--link);
+      transition: box-shadow 150ms ease-out;
+    }
+    .field > textarea {
+      padding: 16px;
+      min-height: 112px;
+      resize: none;
+    }
+    .field > input:focus,
+    .field > textarea:focus {
+      box-shadow: 0 0 0 3px rgba(41,151,255,0.55);
+    }
+
+    /* PRIMARY BUTTON — full width, 50px, 14px radius, blue. */
+    .btn {
+      width: 100%;
+      margin-top: 16px;
+      min-height: 50px;
+      border: none;
+      border-radius: 14px;
+      background: var(--accent);
+      color: var(--accent-on);
+      font-size: 17px;
+      font-weight: 500;
+      letter-spacing: -0.022em;
+      cursor: pointer;
+      transition: background 150ms ease-out, transform 100ms ease-out;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled {
+      background: rgba(255,255,255,0.12);
+      color: var(--text-3);
+      cursor: not-allowed;
+    }
+    .btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    .error-msg {
+      display: none;
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 18px;
+      letter-spacing: -0.016em;
+      color: var(--danger);
+    }
+    .error-msg:not(:empty) {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .error-msg:not(:empty)::before {
+      content: "!";
+      flex: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--danger);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 13px;
+      text-align: center;
+      margin-top: 1px;
+    }
+    .status-msg {
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 18px;
+      letter-spacing: -0.016em;
+      color: var(--text-2);
+      min-height: 18px;
+    }
 
     /* MODAL OVERLAY */
     .overlay {
@@ -272,12 +312,10 @@
       inset: 0;
       z-index: 10;
       background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(24px) saturate(1.3);
-      -webkit-backdrop-filter: blur(24px) saturate(1.3);
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transition: opacity 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
+      transition: opacity 0.3s var(--ease-apple);
     }
     .overlay.show {
       display: flex;
@@ -288,16 +326,12 @@
     }
 
     .modal {
-      background-color: rgba(17,17,24,0.72);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 24px;
-      padding: 36px 32px;
+      background: var(--surface);
+      border: none;
+      border-radius: 28px;
+      padding: 28px;
       width: 100%;
       max-width: 360px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 16px 48px rgba(0,0,0,0.55), 0 32px 96px rgba(0,0,0,0.35),
-        inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04);
       transform: translateY(20px);
       transition: transform 0.25s ease-out, opacity 0.25s ease-out;
       opacity: 0;
@@ -312,162 +346,91 @@
       position: absolute;
       top: 16px;
       right: 16px;
-      background: rgba(255,255,255,0.06);
+      background: transparent;
       border: none;
-      color: #6b7280;
+      color: var(--text-2);
       font-size: 16px;
       width: 30px;
       height: 30px;
-      border-radius: 8px;
+      border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s, color 0.15s;
+      transition: background 150ms ease-out, color 150ms ease-out;
     }
-    .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .modal-close:hover { background: var(--surface-hover); color: var(--text-1); }
 
     .modal h2 {
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 20px;
+      line-height: 26px;
+      font-weight: 600;
+      letter-spacing: 0.004em;
       margin-bottom: 6px;
-      color: #fff;
+      color: var(--text-1);
     }
     .modal > p {
-      font-size: 13px;
-      color: #4b5563;
-      margin-bottom: 22px;
-      line-height: 1.5;
+      font-size: 15px;
+      line-height: 22px;
+      color: var(--text-2);
+      margin-bottom: 20px;
     }
 
-    .modal .field input,
-    .modal .field textarea {
-      width: 100%;
-      background-color: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 14px;
-      color: #fff;
-      outline: none;
-      transition: border-color 0.3s cubic-bezier(0.22, 1.15, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1.15, 0.36, 1);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      letter-spacing: 0;
-    }
-    .modal .field input:focus,
-    .modal .field textarea:focus {
-      border-color: rgba(124,58,237,0.65);
-      box-shadow: 0 0 0 4px rgba(124,58,237,0.16), inset 0 1px 0 rgba(255,255,255,0.08);
-    }
-    .modal .field input::placeholder,
-    .modal .field textarea::placeholder { color: #374151; }
+    /* (No field elements exist inside modals on this page; the shared
+       .field system above covers every form row.) */
 
-    .modal .field textarea {
-      resize: none;
-      height: 90px;
-    }
-
-    .success-state {
-      display: none;
-      text-align: center;
-      padding: 10px 0;
-    }
-    .success-state .tick {
-      font-size: 36px;
-      margin-bottom: 12px;
-    }
-    .success-state h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 6px;
-    }
-    .success-state p {
-      font-size: 13px;
-      color: #4b5563;
-    }
+    /* (Unused legacy block removed: success-state.) */
 
     footer {
-      position: relative;
+      position: fixed;
+      bottom: 24px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--text-3);
       z-index: 1;
-      margin-top: 28px;
-      font-size: 11px;
-      color: #7d8590;
-      letter-spacing: 0.5px;
     }
 
     /* ===== FLAT DESIGN OVERRIDE (no glow, no blur, no shadow) ===== */
-    body { background: #0a0a0f !important; color: #ece9e2 !important; animation: pageIn 0.3s ease-out; }
+    body { background: var(--bg) !important; color: var(--text-primary) !important; animation: pageIn 0.3s ease-out; }
     @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .bg, .blob { display: none !important; }
     * { text-shadow: none !important; }
     .card, .modal {
-      background: #161a1f !important;
-      border: 1px solid #262c33 !important;
-      border-radius: 16px !important;
+      background: var(--surface) !important;
+      border: none !important;
+      border-radius: 28px !important;
       box-shadow: none !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
     }
     .overlay { background: rgba(0,0,0,0.7) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-    .modal { animation: modalUp 0.2s cubic-bezier(0.22,1,0.36,1) !important; }
+    .modal { animation: modalUp 0.2s var(--ease-apple) !important; }
     @keyframes modalUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-    .logo h1 { background: none !important; -webkit-text-fill-color: #ece9e2 !important; color: #ece9e2 !important; }
-    .logo-icon { background: #e1352b !important; border: none !important; box-shadow: none !important; }
-    .logo p { color: #7d8590 !important; }
-    .field label { color: #7d8590 !important; }
-    .input-wrap input, .modal .field input, .modal .field textarea {
-      background: #1e242b !important;
-      border: 1.5px solid #242b33 !important;
-      border-radius: 10px !important;
-      box-shadow: none !important;
-      color: #ece9e2 !important;
-      min-height: 44px;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1) !important;
-    }
-    .input-wrap input:focus, .modal .field input:focus, .modal .field textarea:focus {
-      border-color: #e1352b !important;
-      box-shadow: none !important;
-    }
-    .input-wrap input.has-eye { padding-right: 52px; }
-    .input-wrap .eye {
-      position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; color: #7d8590; cursor: pointer;
-      min-width: 44px; min-height: 44px;
-      display: flex; align-items: center; justify-content: center;
-      touch-action: manipulation;
-    }
-    .input-wrap .eye:hover { color: #ece9e2; }
-    .btn {
-      background: #e1352b !important;
-      border: none !important;
-      border-radius: 10px !important;
-      box-shadow: none !important;
-      min-height: 44px;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1) !important;
-    }
-    .btn:hover { background: #c62a21 !important; transform: none !important; box-shadow: none !important; }
-    .btn:active { transform: scale(0.97) !important; }
-    .btn:disabled { opacity: 0.55; cursor: wait; }
+    /* (Brand/field colours are defined in the system block above.) */
+    /* (Key visibility toggle is .frow .eye in the system block above.) */
+    /* (Login primary button is defined above in the system block.) */
     .modal-close { min-width: 44px; min-height: 44px; }
-    .request-link button { min-height: 44px; }
     ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track { background: #242b33; }
-    ::-webkit-scrollbar-thumb { background: #e1352b; border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
     /* request status banners */
     #reqStatusWrap { position: relative; z-index: 1; width: 100%; max-width: 400px; margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
     .req-banner {
-      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
-      padding: 14px 16px; font-size: 13px; color: #ece9e2; line-height: 1.5;
-      animation: pageIn 0.2s cubic-bezier(0.22,1,0.36,1);
+      background: var(--surface); border: none; border-radius: 14px;
+      padding: 14px 16px; font-size: 14px; line-height: 18px; color: var(--text-1);
+      animation: pageIn 200ms var(--ease-apple);
     }
-    .req-banner.muted-note { color: #7d8590; text-align: center; }
-    .req-banner.denied { border-left: 4px solid #ef4444; }
-    .req-banner.approved { border-left: 4px solid #22c55e; }
+    .req-banner.muted-note { color: var(--text-2); text-align: center; }
+    .req-banner.denied { border-left: 3px solid var(--danger); }
+    .req-banner.approved { border-left: 3px solid var(--success); }
     .keyline, .req-banner .keyline {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      margin-top: 10px; background: #1e242b; border: 1px solid #242b33;
-      border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 14px;
+      margin-top: 10px; background: var(--surface-hover); border: none;
+      border-radius: 12px; padding: 10px 12px; font-family: var(--font-mono); font-size: 14px;
+      color: var(--text-1);
       flex-wrap: wrap;
     }
     .keyline > span, .req-banner .keyline > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
@@ -478,151 +441,129 @@
     }
     .req-banner button { min-height: 44px; }
     .mini-btn {
-      background: #e1352b; border: none; border-radius: 10px; color: #fff;
-      font-size: 13px; font-weight: 600; padding: 10px 14px; cursor: pointer; min-height: 44px;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      background: var(--accent); border: none; border-radius: 14px; color: var(--accent-on);
+      font-size: 13px; font-weight: 500; padding: 10px 14px; cursor: pointer; min-height: 44px;
+      transition: background 150ms ease-out, transform 100ms ease-out;
     }
-    .mini-btn:hover { background: #c62a21; }
+    .mini-btn:hover { background: var(--accent-hover); }
     .mini-btn:active { transform: scale(0.97); }
-    .mini-btn.ghost { background: #1e242b; border: 1.5px solid #242b33; }
+    .mini-btn.ghost { background: transparent; border: 1px solid var(--separator); color: var(--link); }
     /* toasts */
     #toastWrap { position: fixed; top: 16px; right: 16px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
     .toast {
-      background: #161a1f; border: 1px solid #262c33; border-radius: 16px;
-      padding: 12px 16px; font-size: 13px; color: #ece9e2; max-width: 300px;
-      animation: toastIn 0.25s ease-out;
-      transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+      background: var(--surface); border: none; border-radius: 14px;
+      padding: 12px 16px; font-size: 13px; color: var(--text-1); max-width: 300px;
+      animation: toastIn 200ms var(--ease-apple);
+      transition: opacity 200ms ease-out, transform 200ms ease-out;
     }
-    .toast.err { border-left: 4px solid #ef4444; }
-    .toast.ok { border-left: 4px solid #22c55e; }
+    .toast.err { border-left: 3px solid var(--danger); }
+    .toast.ok { border-left: 3px solid var(--success); }
     .toast.out { opacity: 0; transform: translateX(110%); }
     @keyframes toastIn { from { opacity: 0; transform: translateX(110%); } to { opacity: 1; transform: translateX(0); } }
     /* custom dropdown (same component language as the admin panel) */
     .dd { position: relative; }
     .dd-trigger {
-      width: 100%; min-height: 48px;
+      width: 100%; min-height: 56px;
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      background: #1e242b; border: 1.5px solid #242b33; border-radius: 10px;
-      padding: 12px 14px; font-size: 16px; color: #ece9e2; cursor: pointer; font-family: inherit;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
+      background: var(--surface); border: none; border-radius: 14px;
+      padding: 12px 16px; font-size: 17px; color: var(--text-1); cursor: pointer; font-family: inherit;
+      transition: background 150ms ease-out, box-shadow 150ms ease-out;
       touch-action: manipulation;
     }
-    .dd-trigger:hover { border-color: #e1352b; }
-    .dd.open .dd-trigger { border-color: #e1352b; }
-    .dd-trigger .chev { font-style: normal; color: #7d8590; transition: transform 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1); }
-    .dd.open .chev { transform: rotate(180deg); color: #ece9e2; }
+    .dd-trigger:hover { background: var(--surface-hover); }
+    .dd.open .dd-trigger { box-shadow: 0 0 0 3px rgba(41,151,255,0.55); }
+    .dd-trigger .chev { font-style: normal; color: var(--text-muted); transition: transform 0.2s var(--ease-apple), color 0.2s var(--ease-apple); }
+    .dd.open .chev { transform: rotate(180deg); color: var(--text-primary); }
     .dd-panel {
       position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60;
-      background: #161a1f; border: 1px solid #242b33; border-radius: 12px;
+      background: var(--surface); border: none; border-radius: 14px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.4);
       display: none; max-height: 240px; overflow-y: auto;
       transform-origin: top;
     }
-    .dd.open .dd-panel { display: block; animation: ddOpen 0.15s ease-out; }
+    .dd.open .dd-panel { display: block; animation: ddOpen 150ms var(--ease-apple); }
     @keyframes ddOpen { from { opacity: 0; transform: scaleY(0); } to { opacity: 1; transform: scaleY(1); } }
     .dd-opt {
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      width: 100%; padding: 10px 14px; background: none; border: none;
-      font-size: 14px; color: #ece9e2; cursor: pointer; min-height: 44px; text-align: left;
+      width: 100%; padding: 12px 16px; background: none; border: none;
+      font-size: 15px; color: var(--text-1); cursor: pointer; min-height: 52px; text-align: left;
       font-family: inherit;
-      transition: background 0.15s ease-out;
+      transition: background 150ms ease-out;
       touch-action: manipulation;
     }
-    .dd-opt:hover { background: #262c33; }
-    .dd-opt.sel { color: #e1352b; font-weight: 600; }
+    .dd-opt + .dd-opt { border-top: 1px solid var(--separator); }
+    .dd-opt:hover { background: var(--surface-hover); }
+    .dd-opt.sel { color: var(--accent-text); font-weight: 600; }
     .dd-opt .tick { visibility: hidden; }
     .dd-opt.sel .tick { visibility: visible; }
 
-    /* ===== SECTION 3: two-tab auth + mesh background ===== */
-    .mesh {
-      position: fixed;
-      inset: -10%;
-      z-index: 0;
-      pointer-events: none;
-      opacity: 0.5;
-      background:
-        radial-gradient(420px 420px at 20% 25%, rgba(124,58,237,0.16), transparent 70%),
-        radial-gradient(520px 520px at 80% 70%, rgba(37,99,235,0.12), transparent 70%),
-        radial-gradient(360px 360px at 60% 10%, rgba(167,139,250,0.1), transparent 70%);
-      animation: meshDrift 26s ease-in-out infinite alternate;
-    }
-    @keyframes meshDrift {
-      from { transform: translate3d(-2%, -1%, 0) scale(1); }
-      to { transform: translate3d(2%, 2%, 0) scale(1.06); }
-    }
-    .authtabs {
+    /* The mesh glow era is over: pure black canvas + the one hairline. */
+    .mesh { display: none; }
+    /* Mode links: the page title is the current mode; the other two
+       modes are text links under the button. The active one hides itself. */
+    .authlinks {
       display: flex;
-      gap: 8px;
-      margin-bottom: 22px;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 28px;
     }
     .authtab {
-      flex: 1;
-      min-height: 48px;
-      background: #1e242b;
-      border: 1.5px solid #242b33;
-      border-radius: 12px;
-      color: #7d8590;
+      background: none;
+      border: none;
+      padding: 12px 4px;
+      min-height: 44px;
+      color: var(--link);
       font-size: 14px;
-      font-weight: 600;
+      line-height: 18px;
+      font-weight: 400;
       cursor: pointer;
       font-family: inherit;
-      transition: background 0.2s cubic-bezier(0.22,1,0.36,1), color 0.2s cubic-bezier(0.22,1,0.36,1), border-color 0.2s cubic-bezier(0.22,1,0.36,1), transform 0.2s cubic-bezier(0.22,1,0.36,1);
       touch-action: manipulation;
     }
-    .authtab:hover { color: #ece9e2; }
-    .authtab:active { transform: scale(0.97); }
-    .authtab.active { background: #e1352b; border-color: #e1352b; color: #fff; }
+    .authtab:hover { text-decoration: underline; }
+    .authtab.active { display: none; }
     .pane { display: none; }
-    .pane.active { display: block; animation: paneIn 0.25s ease-out; }
-    @keyframes paneIn {
-      from { opacity: 0; transform: translateX(14px); }
-      to { opacity: 1; transform: translateX(0); }
+    .pane.active { display: block; animation: paneFade 200ms ease-out; }
+    @keyframes paneFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
     .btn .spin {
       display: inline-block;
-      width: 15px;
-      height: 15px;
+      width: 20px;
+      height: 20px;
       margin-right: 8px;
-      vertical-align: -2px;
+      vertical-align: -4px;
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.35);
+      border: 1.5px solid rgba(255,255,255,0.4);
       border-top-color: #fff;
-      animation: btnSpin 0.7s linear infinite;
+      animation: btnSpin 700ms linear infinite;
     }
     @keyframes btnSpin { to { transform: rotate(360deg); } }
-    .input-wrap input.error-input { border-color: #ef4444 !important; }
+    /* (Error state is the group-level danger outline in the system block.) */
     @keyframes shakeX {
       0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-7px); }
-      75% { transform: translateX(7px); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
     }
-    .shake { animation: shakeX 0.25s ease-out; }
-    .char-count { font-size: 11px; color: #7d8590; text-align: right; margin-top: 6px; }
-    #requestStatusView.pane-in { animation: paneIn 0.25s ease-out; }
-    #paneRequest .field input,
-    #paneRequest .field textarea {
-      width: 100%;
-      background: #1e242b;
-      border: 1.5px solid #242b33;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 14px;
-      color: #ece9e2;
-      outline: none;
-      transition: border-color 0.2s cubic-bezier(0.22,1,0.36,1);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      letter-spacing: 0;
+    .shake { animation: shakeX 360ms ease-out; }
+    .fineprint {
+      font-size: 12px;
+      line-height: 16px;
+      letter-spacing: -0.01em;
+      color: var(--text-2);
+      margin: 12px 0 0;
     }
-    #paneRequest .field input:focus,
-    #paneRequest .field textarea:focus { border-color: #e1352b; }
-    #paneRequest .field input::placeholder,
-    #paneRequest .field textarea::placeholder { color: #7d8590; }
-    #paneRequest .field input.error-input { border-color: #ef4444; }
-    #paneRequest .field textarea { resize: none; height: 90px; }
-    .btn.ghost { background: #1e242b !important; border: 1.5px solid #242b33 !important; }
-    .btn.ghost:hover { background: #242b33 !important; }
+    .char-count { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 6px; }
+    #requestStatusView.pane-in { animation: paneFade 200ms ease-out; }
+    /* (Request rows use the shared .field system above: borderless
+       surface rows with the blue focus ring. No overrides.) */
+    .btn.ghost { background: transparent !important; border: 1px solid var(--separator) !important; color: var(--link) !important; border-radius: 14px !important; }
+    .btn.ghost:hover { background: var(--surface) !important; }
     @media (max-width: 480px) {
-      .card { padding: 32px 24px; }
+      .auth { width: calc(100% - 32px); }
     }
     @media (max-width: 640px) {
       .overlay { align-items: flex-end; padding: 0; }
@@ -634,7 +575,7 @@
       }
     }
   
-    body { font-weight: 500; }
+    body { font-weight: 400; }
     .mi {
       font-family: 'Material Symbols Rounded', fallback;
       font-weight: 400; font-style: normal; line-height: 1;
@@ -651,6 +592,7 @@
     /* Icon sizing per context (base .mi is 20px) */
     .tick .mi { font-size: 16px; }
     .chev.mi { font-size: 16px; }
+    /* Pill radius is reserved for standalone marketing CTAs, not form buttons. */
   </style>
 </head>
 <body>
@@ -662,48 +604,42 @@
   </div>
   <div class="mesh" aria-hidden="true"></div>
 
-  <div class="card" id="authCard">
-    <div class="logo">
-      <div class="logo-icon"><span class="mi">bolt</span></div>
-      <h1>Lightspeed</h1>
-      <p id="logoSub">Enter your access key to continue</p>
-    </div>
-
-    <div class="authtabs" role="tablist">
-      <button class="authtab active" id="tabLogin" role="tab" onclick="switchAuthTab('login')">Log In</button>
-      <button class="authtab" id="tabRequest" role="tab" onclick="switchAuthTab('request')">Request Access</button>
-      <button class="authtab" id="tabReset" role="tab" onclick="switchAuthTab('reset')">Reset key</button>
+  <main class="auth" id="authCard">
+    <div class="brand">
+      <svg class="mark rise rise-1" width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16 L18 34"/><path d="M24 6 L30 42 L42 42"/></g></svg>
+      <h1 class="rise rise-2" id="logoTitle">Sign in to Lightspeed</h1>
+      <p class="rise rise-3" id="logoSub">Use your username and access key.</p>
+      <div class="beam" aria-hidden="true"></div>
     </div>
 
     <div class="pane active" id="paneLogin" role="tabpanel">
-      <div class="field">
-        <label>Username</label>
-        <div class="input-wrap">
-          <input type="text" id="usernameInput" placeholder="Pick a username" autocomplete="username" maxlength="32" />
+      <div class="field-group" id="loginGroup">
+        <div class="frow">
+          <input type="text" id="usernameInput" placeholder=" " autocomplete="username" maxlength="32" autocapitalize="off" spellcheck="false" />
+          <label for="usernameInput">Username</label>
         </div>
-      </div>
-
-      <div class="field">
-        <label>Access Key</label>
-        <div class="input-wrap">
-          <input type="password" id="keyInput" class="mono has-eye" placeholder="Enter your key" autocomplete="off" />
-          <button type="button" class="eye" onclick="toggleVis('keyInput', this)" aria-label="Show key"><span class="mi">visibility</span></button>
+        <div class="frow">
+          <input type="password" id="keyInput" class="has-eye" placeholder=" " autocomplete="current-password" autocapitalize="off" spellcheck="false" />
+          <label for="keyInput">Access key</label>
+          <button type="button" class="eye" onclick="toggleVis('keyInput', this)" aria-label="Show access key"><span class="mi">visibility</span></button>
         </div>
       </div>
 
       <button class="btn" id="loginBtn" onclick="tryLogin()">Continue</button>
-      <div class="error-msg" id="error"></div>
+      <div class="error-msg" id="error" aria-live="polite"></div>
       <div class="status-msg" id="status"></div>
     </div>
 
     <div class="pane" id="paneRequest" role="tabpanel">
       <div id="requestFormView">
-        <div class="field">
-          <label>Your Name</label>
-          <input type="text" id="reqName" placeholder="Enter your name" maxlength="64" />
+        <div class="field-group">
+          <div class="frow">
+            <input type="text" id="reqName" placeholder=" " maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <label for="reqName">Your name</label>
+          </div>
         </div>
-        <div class="field" style="margin-top:10px">
-          <label>School</label>
+        <div class="field" style="margin-top:12px">
+          <label for="reqSchool">School</label>
           <div class="dd" id="dd-school" data-select="reqSchool">
             <button type="button" class="dd-trigger" onclick="toggleSchoolDD(event)" aria-label="School"><span class="dd-label">Select school</span><em class="chev mi">expand_more</em></button>
             <div class="dd-panel"></div>
@@ -714,18 +650,18 @@
             <option value="Lenham">Lenham</option>
           </select>
         </div>
-        <div class="field" style="margin-top:10px">
-          <label>Reason</label>
-          <textarea id="reqMsg" placeholder="Why do you want access?" maxlength="500"></textarea>
+        <div class="field" style="margin-top:12px">
+          <label for="reqMsg">Why do you want access?</label>
+          <textarea id="reqMsg" maxlength="500"></textarea>
           <div class="char-count" id="charCount">0/500</div>
         </div>
-        <button class="btn" id="reqBtn" style="margin-top:14px" onclick="submitRequest()">Send Request</button>
-        <div class="error-msg" id="reqError"></div>
+        <button class="btn" id="reqBtn" onclick="submitRequest()">Send request</button>
+        <div class="error-msg" id="reqError" aria-live="polite"></div>
       </div>
 
       <div id="requestStatusView" style="display:none">
         <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Request status</h2>
-        <p style="font-size:13px;color:#7d8590;margin-bottom:16px;line-height:1.5">Live updates — no need to refresh.</p>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.5">Live updates — no need to refresh.</p>
         <div id="reqStatusWrap" aria-live="polite"></div>
         <button class="btn ghost" style="margin-top:14px" onclick="showRequestForm()">Back to form</button>
       </div>
@@ -733,40 +669,42 @@
 
     <div class="pane" id="paneReset" role="tabpanel">
       <div id="resetFormView">
-        <div class="field">
-          <label>Full name (as requested)</label>
-          <div class="input-wrap">
-            <input type="text" id="resetName" placeholder="Your full name" autocomplete="username" maxlength="64" />
+        <div class="field-group">
+          <div class="frow">
+            <input type="text" id="resetName" placeholder=" " autocomplete="username" maxlength="64" autocapitalize="off" spellcheck="false" />
+            <label for="resetName">Full name</label>
+          </div>
+          <div class="frow">
+            <input type="password" id="resetKey" class="has-eye" placeholder=" " autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <label for="resetKey">Access key</label>
+            <button type="button" class="eye" onclick="toggleVis('resetKey', this)" aria-label="Show access key"><span class="mi">visibility</span></button>
+          </div>
+          <div class="frow">
+            <input type="text" id="resetReason" placeholder=" " maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <label for="resetReason">Reason (optional)</label>
           </div>
         </div>
-      <div class="field">
-        <label>Access Key</label>
-        <div class="input-wrap">
-          <input type="password" id="resetKey" class="mono has-eye" placeholder="Your key" autocomplete="off" />
-          <button type="button" class="eye" onclick="toggleVis('resetKey', this)" aria-label="Show key"><span class="mi">visibility</span></button>
-        </div>
-      </div>
-        <div class="field">
-          <label>Why do you need a reset? (optional)</label>
-          <div class="input-wrap">
-            <input type="text" id="resetReason" placeholder="e.g. stuck signed in elsewhere" maxlength="200" />
-          </div>
-        </div>
-        <p style="font-size:12px;color:#7d8590;margin:10px 0 14px;line-height:1.5">Resets need staff approval — only ask if your key is stuck signed in somewhere else.</p>
+        <p class="fineprint">Resets need staff approval. Only ask if your key is stuck signed in somewhere else.</p>
         <button class="btn" id="resetBtn" onclick="submitResetRequest()">Request reset</button>
-        <div class="error-msg" id="resetError"></div>
+        <div class="error-msg" id="resetError" aria-live="polite"></div>
         <div class="status-msg" id="resetOk"></div>
       </div>
       <div id="resetStatusView" style="display:none">
         <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Reset request status</h2>
-        <p style="font-size:13px;color:#7d8590;margin-bottom:16px;line-height:1.5">Live updates — no need to refresh.</p>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.5">Live updates — no need to refresh.</p>
         <div id="resetStatusWrap" aria-live="polite"></div>
         <button class="btn ghost" style="margin-top:14px" onclick="showResetForm()">Back to form</button>
       </div>
     </div>
-  </div>
 
-  <footer>LIGHTSPEED &copy; 2026</footer>
+    <div class="authlinks rise rise-6" role="tablist">
+      <button class="authtab active" id="tabLogin" role="tab" onclick="switchAuthTab('login')">Back to sign in</button>
+      <button class="authtab" id="tabRequest" role="tab" onclick="switchAuthTab('request')">Request access</button>
+      <button class="authtab" id="tabReset" role="tab" onclick="switchAuthTab('reset')">Reset your access key</button>
+    </div>
+  </main>
+
+  <footer class="rise rise-7">© 2026 Lightspeed</footer>
   <div id="toastWrap" aria-live="polite"></div>
 
   <!-- MISSED SCHEDULED ALERTS (offline returners catch up here, then continue) -->
@@ -1006,11 +944,18 @@
       document.getElementById('tabReset').classList.toggle('active', which === 'reset');
       ['paneLogin', 'paneRequest', 'paneReset'].forEach(id => document.getElementById(id).classList.remove('active'));
       const next = document.getElementById(which === 'login' ? 'paneLogin' : which === 'request' ? 'paneRequest' : 'paneReset');
-      void next.offsetWidth; // restart the cross-fade/slide animation
+      void next.offsetWidth; // restart the crossfade animation
       next.classList.add('active');
+      // The page title is the current mode (redesign); subtitles stay factual.
+      document.getElementById('logoTitle').textContent = login
+        ? 'Sign in to Lightspeed'
+        : which === 'request' ? 'Request access' : 'Reset your access key';
       document.getElementById('logoSub').textContent = login
-        ? 'Enter your access key to continue'
-        : which === 'request' ? 'Request an access key from staff' : 'Ask staff to reset your key';
+        ? 'Use your username and access key.'
+        : which === 'request' ? 'Send your details and staff will issue an access key.' : 'Ask staff to reset your key.';
+      // Move focus to the first field of the new mode (redesign).
+      const first = next.querySelector('input, textarea, select');
+      if (first) { try { first.focus({ preventScroll: true }); } catch (e) { try { first.focus(); } catch (x) {} } }
     }
     // Recent requesters get Reset instead of Request (they have a key coming).
     // The Reset tab itself is always visible: locked-out users need it.
@@ -1137,7 +1082,7 @@
             '<div style="margin-top:10px"><button class="mini-btn ghost" onclick="dismissResetBanner()">Dismiss</button></div></div>';
         } else if (data.status === 'approved') {
           html = '<div class="req-banner approved"><strong>Reset approved!</strong>' +
-            '<div class="muted-note" style="margin-top:8px">Your key is free — head to Log In and hit Continue.</div>' +
+            '<div class="muted-note" style="margin-top:8px">Your key is free — go back to sign in and hit Continue.</div>' +
             '<div style="margin-top:10px"><button class="mini-btn" onclick="goResetLogin()">Log in now</button></div></div>';
         } else {
           html = '';
@@ -1196,7 +1141,7 @@
       card.classList.remove('shake');
       void card.offsetWidth;
       card.classList.add('shake');
-      setTimeout(() => card.classList.remove('shake'), 300);
+      setTimeout(() => card.classList.remove('shake'), 400);
     }
 
     function setLoginBusy(busy) {
@@ -1408,6 +1353,27 @@
       document.getElementById('charCount').textContent = len + '/500';
     });
 
+    /* Redesign: primary buttons stay disabled until their required fields
+       have values. Visual/state only — every validation path is untouched. */
+    function syncAuthButtons() {
+      const loginReady = document.getElementById('usernameInput').value.trim() !== ''
+        && document.getElementById('keyInput').value.trim() !== '';
+      document.getElementById('loginBtn').disabled = !loginReady;
+      const resetReady = document.getElementById('resetName').value.trim() !== ''
+        && document.getElementById('resetKey').value.trim() !== '';
+      document.getElementById('resetBtn').disabled = !resetReady;
+      const reqReady = document.getElementById('reqName').value.trim() !== ''
+        && document.getElementById('reqMsg').value.trim() !== ''
+        && document.getElementById('reqSchool').value !== '';
+      document.getElementById('reqBtn').disabled = !reqReady;
+    }
+    ['usernameInput', 'keyInput', 'resetName', 'resetKey', 'resetReason', 'reqName', 'reqMsg'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', syncAuthButtons);
+    });
+    document.getElementById('dd-school').addEventListener('click', () => setTimeout(syncAuthButtons, 0));
+    syncAuthButtons();
+
     /* ---------- request form (inline tab, no modal) ---------- */
 
     /* ---------- school dropdown (mirrors hidden native select) ---------- */
@@ -1523,7 +1489,7 @@
         toast('Request failed', 'err');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Send Request';
+        btn.textContent = 'Send request';
       }
     }
 

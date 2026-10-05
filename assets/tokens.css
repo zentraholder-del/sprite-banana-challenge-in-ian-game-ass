@@ -1,0 +1,177 @@
+/* ==========================================================================
+   Lightspeed design tokens — single source of truth (Apple restraint).
+   Every page links this file FIRST. Change a value here and the site follows.
+   Dark default: pure black canvas, white type, ONE blue accent (#0071E3).
+   Blue is for primary buttons, links and focus rings only — never decoration.
+   Type: system stack (real SF Pro on Apple devices), self-hosted Inter 4
+   variable (OFL) as the cross-platform match. Browsers fetch Inter only when
+   nothing earlier in the stack applies.
+   ========================================================================== */
+
+/* Self-hosted Inter 4 variable, optical-size axis, woff2, font-display swap. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/Inter-var-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/Inter-var-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/Inter-var-italic-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/Inter-var-italic-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* Canonical colour tokens. */
+  --bg: #000000;
+  --surface: #1D1D1F;
+  --surface-hover: #2C2C2E;
+  --separator: rgba(255, 255, 255, 0.12);
+  --text-1: #F5F5F7;
+  --text-2: #98989D;
+  --text-3: #86868B;
+  --accent: #0071E3;
+  --accent-hover: #0066CC;
+  --accent-on: #FFFFFF;
+  --link: #2997FF;
+  --danger: #FF453A;
+  --success: #30D158;
+
+  /* Type stacks. One family everywhere; mono for code/IDs only. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Radius system: 14 form groups, 28 large cards, pill marketing CTAs only. */
+  --radius-form: 14px;
+  --radius-card: 28px;
+  --radius-pill: 980px;
+
+  /* Motion: fast hover/focus, Apple ease for entrances, nothing loops. */
+  --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 150ms;
+  --t-med: 200ms;
+  --t-slow: 320ms;
+
+  /* ---- Backward-compat aliases (pages migrate to canonical names) ---- */
+  --bg-base: var(--bg);
+  --surface-1: var(--surface);
+  --surface-2: var(--surface);
+  --surface-3: var(--surface-hover);
+  --border: var(--separator);
+  --border-subtle: var(--separator);
+  --border-strong: var(--separator);
+  --text-primary: var(--text-1);
+  --text-secondary: var(--text-2);
+  --text-muted: var(--text-3);
+  --text-4: var(--text-3);
+  --accent-text: var(--link);
+  --accent-soft: rgba(0, 113, 227, 0.14);
+  --accent-pressed: #0052A3;
+  --rank-owner: #F59E0B;
+  --rank-admin: #60A5FA;
+  --rank-mod: #22C55E;
+  --warning: #FCA600;
+  --bg-alt: #F5F5F7;
+  --radius-sm: 6px;
+  --radius-md: var(--radius-form);
+  --radius-lg: var(--radius-card);
+  --ease: var(--ease-apple);
+  --t-micro: var(--t-fast);
+  --t-standard: var(--t-med);
+  --t-entrance: 600ms;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+
+  color-scheme: dark;
+}
+
+/* Light theme tokens. */
+[data-theme="light"] {
+  --bg: #FFFFFF;
+  --bg-alt: #F5F5F7;
+  --surface: #F5F5F7;
+  --surface-hover: #E8E8ED;
+  --separator: #D2D2D7;
+  --text-1: #1D1D1F;
+  --text-2: #6E6E73;
+  --text-3: #86868B;
+  --accent: #0071E3;
+  --accent-hover: #0066CC;
+  --accent-on: #FFFFFF;
+  --link: #0066CC;
+  --danger: #D30005;
+  --success: #007D48;
+  color-scheme: light;
+}
+
+/* Global typography. */
+body {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 25px;
+  letter-spacing: -0.022em;
+  font-optical-sizing: auto;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: var(--bg);
+  color: var(--text-1);
+}
+
+/* Type scale (size / line-height / letter-spacing / weight). */
+.t-display { font-size: 96px; line-height: 100px; letter-spacing: -0.015em; font-weight: 600; }
+.t-h1 { font-size: 56px; line-height: 60px; letter-spacing: -0.005em; font-weight: 600; }
+.t-h2 { font-size: 40px; line-height: 48px; letter-spacing: 0; font-weight: 600; }
+.t-title { font-size: 32px; line-height: 36px; letter-spacing: 0.004em; font-weight: 600; }
+.t-lead { font-size: 21px; line-height: 29px; letter-spacing: 0.011em; font-weight: 400; }
+.t-body { font-size: 17px; line-height: 25px; letter-spacing: -0.022em; font-weight: 400; }
+.t-caption { font-size: 14px; line-height: 18px; letter-spacing: -0.016em; font-weight: 400; }
+.t-micro { font-size: 12px; line-height: 16px; letter-spacing: -0.01em; font-weight: 400; }
+@media (max-width: 480px) {
+  .t-display { font-size: 44px; line-height: 48px; }
+}
+
+::selection { background: rgba(41, 151, 255, 0.25); }
+
+/* Visible keyboard focus everywhere (blue rings only). */
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+/* Neutral scrollbars (chrome stays out of the way). */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--separator); border-radius: 8px; }
+
+/* Reduced motion respected globally. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
