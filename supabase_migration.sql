@@ -8,7 +8,7 @@
 
 -- AFTER it succeeds: deploy the matching client code, then hard-refresh.
 
--- Until both are done, the site will show errors Ã¢â‚¬â€ that is expected.
+-- Until both are done (client deploy + this migration), new features will error. That is expected.
 
 -- ============================================================================
 
@@ -2561,6 +2561,66 @@ BEGIN
 END; $$;
 
 -- Top-3 most liked (30d? no — all-time score) + most played (30d plays).
+CREATE OR REPLACE FUNCTION game_tops(input_username TEXT, input_token TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('error', 'auth');
+  END IF;
+  RETURN json_build_object(
+    'liked', COALESCE((SELECT json_agg(t) FROM (
+      SELECT game_slug, COUNT(*) FILTER (WHERE rating = 1) AS up,
+        COUNT(*) FILTER (WHERE rating = -1) AS down
+      FROM game_ratings GROUP BY game_slug
+      HAVING COUNT(*) FILTER (WHERE rating = 1) > 0
+      ORDER BY COUNT(*) FILTER (WHERE rating = 1) DESC,
+        COUNT(*) FILTER (WHERE rating = -1) ASC LIMIT 3) t), '[]'::json),
+    'played', COALESCE((SELECT json_agg(t) FROM (
+      SELECT game AS game_slug, COUNT(*) AS plays FROM daily_games
+      WHERE day > CURRENT_DATE - 30 GROUP BY game ORDER BY plays DESC LIMIT 3) t), '[]'::json),
+    'mine', COALESCE((SELECT json_object_agg(game_slug, rating) FROM game_ratings
+      WHERE username = input_username), '{}'::json));
+END; $$;
+
+CREATE TABLE IF NOT EXISTS game_ratings (
+  username TEXT NOT NULL,
+  game_slug TEXT NOT NULL,
+  rating SMALLINT NOT NULL DEFAULT 1,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (username, game_slug)
+);
+
+-- Thumbs up (+1), down (-1), or 0 to clear. One row per player per game.
+CREATE OR REPLACE FUNCTION rate_game(input_username TEXT, input_token TEXT,
+  game_slug TEXT, stars INT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE ups INT; downs INT; mine INT;
+BEGIN
+  IF NOT session_user_ok(input_username, input_token) THEN
+    RETURN json_build_object('success', false, 'error', 'auth');
+  END IF;
+  IF game_slug IS NULL OR trim(game_slug) = '' OR length(game_slug) > 64 THEN
+    RETURN json_build_object('success', false, 'error', 'Bad game');
+  END IF;
+  IF stars IS NULL OR stars NOT IN (-1, 0, 1) THEN
+    RETURN json_build_object('success', false, 'error', 'Bad rating');
+  END IF;
+  IF stars = 0 THEN
+    DELETE FROM game_ratings
+    WHERE game_ratings.username = input_username AND game_ratings.game_slug = rate_game.game_slug;
+  ELSE
+    INSERT INTO game_ratings (username, game_slug, rating, updated_at)
+    VALUES (input_username, trim(game_slug), stars, NOW())
+    ON CONFLICT (username, game_slug)
+    DO UPDATE SET rating = EXCLUDED.rating, updated_at = NOW();
+  END IF;
+  SELECT COUNT(*) FILTER (WHERE rating = 1), COUNT(*) FILTER (WHERE rating = -1),
+    COALESCE(MAX(rating) FILTER (WHERE username = input_username), 0)
+  INTO ups, downs, mine FROM game_ratings WHERE game_ratings.game_slug = rate_game.game_slug;
+  RETURN json_build_object('success', true, 'up', ups, 'down', downs, 'mine', mine);
+END; $$;
+
+-- Top-3 most liked (all-time score) + most played (30d plays).
 CREATE OR REPLACE FUNCTION game_tops(input_username TEXT, input_token TEXT)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
