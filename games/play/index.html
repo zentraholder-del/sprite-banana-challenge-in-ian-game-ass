@@ -3864,7 +3864,9 @@ async function sha256hexFp(str) {
     function startPoller(name, fn, ms) {
       stopPoller(name);
       try { fn(); } catch (e) { console.error('poller ' + name + ' failed:', e); }
-      pollers[name] = setInterval(fn, ms);
+      // Backend diet: background tabs stay silent (realtime still delivers
+      // while visible; intervals resume on return). No behaviour change.
+      pollers[name] = setInterval(() => { if (!document.hidden) fn(); }, ms);
     }
     function stopPoller(name) {
       if (pollers[name]) { clearInterval(pollers[name]); delete pollers[name]; }
@@ -4199,6 +4201,7 @@ async function sha256hexFp(str) {
       // Only the timestamp is rewritten; current_game is left as-is.
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       heartbeatTimer = setInterval(() => {
+        if (document.hidden) return; // background tabs stay silent (backend diet)
         sb.rpc('presence_touch', myCreds())
           .then(({ error }) => { if (error) console.error(error); });
         trackPlaytime();
@@ -4977,23 +4980,26 @@ async function sha256hexFp(str) {
       loadAnnouncements();
       subscribeAnnouncements();
       loadAdminRequestState();
-      startPoller('trolls', pollTrolls, 3000);
-      startPoller('announce', loadAnnouncements, 3000);
-      startPoller('online', loadOnlineCount, 3000);
-      startPoller('session', refreshSession, 3000);
-      startPoller('quests', loadQuests, 10000);
-      startPoller('xpboard', loadXpBoard, 10000);
-      startPoller('typing', loadTyping, 3000);
-      startPoller('dms', loadDms, 5000);
-      startPoller('reqstat', checkPlayRequestStatus, 5000);
-      startPoller('mycos', loadMyXp, 15000);
-      startPoller('cosmap', loadCosmeticsMap, 15000);
-      startPoller('trivia', renderTrivia, 60000);
-      startPoller('schools', loadSchoolBoard, 30000);
-      startPoller('tourney', loadTourneys, 10000);
-      startPoller('tops', loadTops, 60000);
+      // Backend diet (Oct 2026): realtime is the fast path everywhere it is
+      // subscribed; these intervals are fallbacks only, so they run slow.
+      // Foreground behaviour is unchanged.
+      startPoller('trolls', pollTrolls, 15000);
+      startPoller('announce', loadAnnouncements, 30000);
+      startPoller('online', loadOnlineCount, 15000);
+      startPoller('session', refreshSession, 15000);
+      startPoller('quests', loadQuests, 30000);
+      startPoller('xpboard', loadXpBoard, 30000);
+      startPoller('typing', loadTyping, 15000);
+      startPoller('dms', loadDms, 10000);
+      startPoller('reqstat', checkPlayRequestStatus, 15000);
+      startPoller('mycos', loadMyXp, 60000);
+      startPoller('cosmap', loadCosmeticsMap, 60000);
+      startPoller('trivia', renderTrivia, 120000);
+      startPoller('schools', loadSchoolBoard, 60000);
+      startPoller('tourney', loadTourneys, 30000);
+      startPoller('tops', loadTops, 120000);
       try { localStorage.removeItem('ls_dragged'); } catch (e) {}
-      startPoller('myturn', pollMyTurn, 10000);
+      startPoller('myturn', pollMyTurn, 30000);
       loadMyXp();
       loadXpBoard();
       loadQuests();

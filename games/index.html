@@ -1112,16 +1112,17 @@
             { event: '*', schema: 'public', table: 'key_reset_requests', filter: 'name=eq.' + name },
             () => checkResetStatus())
           .subscribe();
-        // 3s heartbeat as well, same as key requests: banner flips with
+        // 10s fallback (backend diet) as well, same as key requests: banner flips with
         // no user action even if realtime drops an event.
         if (resetReqPoll) clearInterval(resetReqPoll);
         resetReqPoll = setInterval(() => {
+          if (document.hidden) return;
           try {
             let n = null;
             try { n = localStorage.getItem('pending_reset_name'); } catch (e) {}
             if (n) checkResetStatus();
           } catch (e) { console.error(e); }
-        }, 3000);
+        }, 10000);
       } catch (e) {
         console.error('reset status realtime failed:', e);
       }
@@ -1607,16 +1608,17 @@
             { event: '*', schema: 'public', table: 'key_requests', filter: 'name=eq.' + name },
             () => checkRequestStatus())
           .subscribe();
-        // 3s heartbeat as well ? banner flips pending ? approved ? denied
+        // 10s fallback (backend diet) — banner flips pending → approved → denied
         // with no user action even if realtime drops an event.
         if (reqPoll) clearInterval(reqPoll);
         reqPoll = setInterval(() => {
+          if (document.hidden) return;
           try {
             let n = null;
             try { n = localStorage.getItem('pending_request_name'); } catch (e) {}
             if (n) checkRequestStatus();
           } catch (e) { console.error(e); }
-        }, 3000);
+        }, 10000);
       } catch (e) {
         console.error('request status realtime failed:', e);
       }

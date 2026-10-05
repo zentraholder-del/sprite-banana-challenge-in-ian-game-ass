@@ -124,15 +124,18 @@ INSERT INTO app_config (id, locked, lock_message) VALUES (1, false, '') ON CONFL
 
 
 
--- Best-effort uniqueness (duplicate-tolerant RPC logic does not depend on these).
+-- Uniqueness is enforced by the table constraints (including primary keys),
+-- so the standalone uq_* duplicates were removed (Oct 2026) to save disk IO
+-- budget. Re-running this file drops them again if they were recreated.
+-- RPC logic is duplicate-tolerant and never references these index names.
 
-DO $$ BEGIN CREATE UNIQUE INDEX IF NOT EXISTS uq_daily_games ON daily_games(username, game, day); EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'uq_daily_games skipped: %', SQLERRM; END $$;
+DROP INDEX IF EXISTS public.uq_daily_games;
 
-DO $$ BEGIN CREATE UNIQUE INDEX IF NOT EXISTS uq_quest_claims ON quest_claims(username, quest_key, day); EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'uq_quest_claims skipped: %', SQLERRM; END $$;
+DROP INDEX IF EXISTS public.uq_quest_claims;
 
-DO $$ BEGIN CREATE UNIQUE INDEX IF NOT EXISTS uq_typing_user ON typing(username); EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'uq_typing_user skipped: %', SQLERRM; END $$;
+DROP INDEX IF EXISTS public.uq_typing_user;
 
-DO $$ BEGIN CREATE UNIQUE INDEX IF NOT EXISTS uq_cosmetics_user ON user_cosmetics(username); EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'uq_cosmetics_user skipped: %', SQLERRM; END $$;
+DROP INDEX IF EXISTS public.uq_cosmetics_user;
 
 -- Staff audit trail: who did what to whom, when. Append-only (no UPDATE
 -- or DELETE path anywhere) and auto-pruned after 90 days. Created BEFORE
