@@ -1116,6 +1116,7 @@
     stamp().then(function (live) {
       if (!live) return;
       if (stored && stored !== live) {
+        try { localStorage.setItem(KEY, live); } catch (e) {}
         if (busy()) { setTimeout(function () { location.reload(); }, 60000); }
         else location.reload();
         return;
