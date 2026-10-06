@@ -3806,7 +3806,10 @@ async function sha256hexFp(str) {
         (data || []).slice().reverse().forEach(r => {
           if (r.target_username && r.target_username !== me) return; // not mine: ignore entirely
           if (seenTrollIds.has(trollKey(r))) return; // already processed: do NOTHING
-          seenTrollIds.add(trollKey(r));
+          // NOTE: do NOT add to seen here — dispatchTroll owns the seen-set.
+          // Adding before dispatch made every polled row look already
+          // processed, so live poll delivery could never fire (only boot
+          // and realtime could). That was the whole "needs refresh" bug.
           if (PERSISTENT_TRICKS.indexOf(r.event_type) === -1) {
             // Instant one-shots missed by a dropped realtime channel still
             // fire here exactly once (id is already in the seen set above,
