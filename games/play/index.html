@@ -82,11 +82,15 @@
     }
 
     .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--text-primary);
-      letter-spacing: -0.3px;
+      letter-spacing: -0.005em;
     }
+    .nav-logo svg { display: block; }
 
     .nav-right {
       display: flex;
@@ -1360,6 +1364,8 @@
     .tmatch:hover { background: var(--surface-hover) !important; }
     .logout-btn { transition: color 150ms ease-out, background 150ms ease-out !important; }
     .logout-btn:hover { background: rgba(255, 255, 255, 0.06) !important; }
+    .page-header { animation: riseSoft 500ms var(--ease-apple) backwards; }
+    .search-wrap { animation: riseSoft 500ms var(--ease-apple) 80ms backwards; }
   </style>
   <script>
   /* Self-update: if a newer deploy exists, reload once so devices never sit
@@ -1413,7 +1419,7 @@
   <nav>
     <div style="display:flex;align-items:center;gap:12px">
       <button class="logout-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Open menu"><span class="mi">menu</span></button>
-      <div class="nav-logo"><span class="mi">bolt</span> Lightspeed</div>
+      <div class="nav-logo"><svg width="26" height="26" viewBox="0 0 48 48" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16 L18 34"/><path d="M24 6 L30 42 L42 42"/></g></svg> Lightspeed</div>
     </div>
     <div class="nav-right">
       <span class="xp-chip" id="xpChip" title="Your XP"><span class="mi">star</span> <span id="xpBal">0</span></span>

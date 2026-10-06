@@ -92,10 +92,15 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), 0 8px 32px rgba(0,0,0,0.35);
     }
     .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 600;
+      letter-spacing: -0.005em;
       color: var(--text-primary);
     }
+    .nav-logo svg { display: block; }
     .logout-btn {
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 14px;
@@ -939,11 +944,11 @@
     body { background: var(--bg) !important; color: var(--text-1) !important; }
     .card { background: var(--surface) !important; border: none !important; border-radius: 28px !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; padding: 28px !important; }
     .card h1 { font-size: 28px !important; line-height: 32px !important; font-weight: 600 !important; letter-spacing: 0.004em !important; }
-    .card h2 { font-size: 20px !important; line-height: 26px !important; font-weight: 600 !important; letter-spacing: 0.004em !important; }
+    .card h2 { font-size: 28px !important; line-height: 32px !important; font-weight: 600 !important; letter-spacing: 0.004em !important; }
     .card p.sub { font-size: 15px !important; line-height: 22px !important; color: var(--text-2) !important; }
     .field label, .stat-label { font-size: 14px !important; line-height: 18px !important; font-weight: 400 !important; color: var(--text-2) !important; letter-spacing: normal !important; text-transform: none !important; }
     .stat-label { font-size: 12px !important; line-height: 16px !important; }
-    .stat-num { font-weight: 600 !important; letter-spacing: 0.004em !important; font-variant-numeric: tabular-nums !important; }
+    .stat-num { font-size: 40px !important; line-height: 44px !important; font-weight: 600 !important; letter-spacing: 0.004em !important; font-variant-numeric: tabular-nums !important; }
     th { font-size: 12px !important; font-weight: 500 !important; color: var(--text-2) !important; text-transform: none !important; letter-spacing: normal !important; }
     table th, table td { padding: 16px 12px !important; border-bottom: 1px solid var(--separator) !important; font-variant-numeric: tabular-nums !important; }
     .field input, .field textarea, .field select, .inline-form input, .deny-box input { background: var(--surface) !important; border: none !important; border-radius: 14px !important; box-shadow: none !important; min-height: 52px !important; font-size: 17px !important; color: var(--text-1) !important; }
@@ -983,7 +988,14 @@
     .modal { background: var(--surface) !important; border: none !important; border-radius: 28px !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; padding: 28px !important; }
     .modal h2 { font-size: 20px !important; line-height: 26px !important; font-weight: 600 !important; color: var(--text-1) !important; }
     .modal p.sub { font-size: 15px !important; line-height: 22px !important; color: var(--text-2) !important; }
-    .empty-state { font-size: 15px !important; color: var(--text-2) !important; }
+    .empty-state { font-size: 15px !important; color: var(--text-2) !important; padding: 48px 16px !important; }
+    /* Section entrance: staggered rise, login rhythm. */
+    .section.active > * { animation: riseSoft 350ms var(--ease-apple) backwards; }
+    .section.active > *:nth-child(2) { animation-delay: 50ms; }
+    .section.active > *:nth-child(3) { animation-delay: 100ms; }
+    .section.active > *:nth-child(4) { animation-delay: 150ms; }
+    .section.active > *:nth-child(5) { animation-delay: 200ms; }
+    .section.active > *:nth-child(6) { animation-delay: 250ms; }
     footer { font-size: 12px !important; color: var(--text-3) !important; letter-spacing: normal !important; }
     /* ===== APPLE ADMIN DEEP PASS: every section, same quiet language. */
     .dash-preview { border-top: none !important; }
@@ -1134,7 +1146,7 @@
   </div>
 
   <nav>
-    <div class="nav-logo"><span class="mi">bolt</span> Lightspeed · Admin</div>
+    <div class="nav-logo"><svg width="26" height="26" viewBox="0 0 48 48" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16 L18 34"/><path d="M24 6 L30 42 L42 42"/></g></svg> Lightspeed · Admin</div>
     <div><button class="logout-btn" id="adminLogout" onclick="adminLogout()" style="display:none">Sign out</button></div>
   </nav>
 
