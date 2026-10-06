@@ -1116,12 +1116,13 @@
           .on('postgres_changes',
             { event: '*', schema: 'public', table: 'key_reset_requests', filter: 'name=eq.' + name },
             () => checkResetStatus())
-          .subscribe();
+          .subscribe(s => { window.__rt = s; loginDbg('reset-rt ' + s); });
         // 3s heartbeat as well, same as key requests: banner flips with
         // no user action even if realtime drops an event.
         if (resetReqPoll) clearInterval(resetReqPoll);
         resetReqPoll = setInterval(() => {
           if (document.hidden) return;
+          loginDbg('reset-poll fire rt=' + (window.__rt || '?'));
           try {
             let n = null;
             try { n = localStorage.getItem('pending_reset_name'); } catch (e) {}
@@ -1600,6 +1601,20 @@
     let reqChannel = null;
     let reqSubName = null;
     let reqPoll = null;
+    // ?debug=1 overlay (school diagnosis; inert otherwise).
+    const LOGIN_DBG = new URLSearchParams(location.search).has('debug');
+    function loginDbg(line) {
+      if (!LOGIN_DBG) return;
+      let box = document.getElementById('dbgBox');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'dbgBox';
+        box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;font:11px/1.5 monospace;padding:10px;border-radius:8px;max-width:92vw;white-space:pre-wrap;';
+        document.body.appendChild(box);
+      }
+      const prev = box.textContent ? box.textContent + '\n' : '';
+      box.textContent = (prev + new Date().toLocaleTimeString() + ' ' + line).split('\n').slice(-12).join('\n');
+    }
 
     function subscribeRequestStatus() {
       try {
@@ -1612,12 +1627,13 @@
           .on('postgres_changes',
             { event: '*', schema: 'public', table: 'key_requests', filter: 'name=eq.' + name },
             () => checkRequestStatus())
-          .subscribe();
+          .subscribe(s => { window.__rt = s; loginDbg('req-rt ' + s); });
         // 3s heartbeat as well — banner flips pending → approved → denied
         // with no user action even if realtime drops an event.
         if (reqPoll) clearInterval(reqPoll);
         reqPoll = setInterval(() => {
           if (document.hidden) return;
+          loginDbg('req-poll fire rt=' + (window.__rt || '?'));
           try {
             let n = null;
             try { n = localStorage.getItem('pending_request_name'); } catch (e) {}

@@ -3512,7 +3512,7 @@ async function sha256hexFp(str) {
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
         const args = Object.assign(myCreds(), {});
-        const { data, error } = await sb.rpc('troll_poll', args);
+        const { data, error } = await withTimeout(sb.rpc('troll_poll', args), 8000, 'trollInit');
         if (error) throw error;
         if (error) throw error;
         const latest = {};
@@ -3647,7 +3647,7 @@ async function sha256hexFp(str) {
               try { dispatchTroll(payload.new); }
               catch (e) { console.error('trick failed:', e); }
             })
-          .subscribe();
+          .subscribe(status => { window.__rt = status; renderDbg(); });
       } catch (e) {
         console.error('troll realtime subscribe failed:', e);
       }
@@ -3664,7 +3664,9 @@ async function sha256hexFp(str) {
     // 3s fallback poll ? catches events realtime missed. Only unseen ids
     // dispatch, so running effects are never restarted by the poll.
     async function pollTrolls() {
-      if (!trollReady) return; // init hasn't seeded history yet ? fire nothing
+      // No ready-gate here: the 2-minute rule below already stops stale
+      // replays, and persistent rows converge by id. A gate was a permanent
+      // kill-switch whenever init hung on a flaky network.
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
@@ -3890,12 +3892,46 @@ async function sha256hexFp(str) {
 
     /* ---------- Heartbeat pollers (realtime + 3s fallback) ---------- */
 
+    // ?debug=1 overlay: proves which layer is alive (for school-network
+    // diagnosis). Zero behaviour change without the query param.
+    const DBG = new URLSearchParams(location.search).has('debug');
+    const dbgFeeds = {};
+    function dbgMark(name, ok, info) {
+      if (!DBG) return;
+      const prev = dbgFeeds[name] || { runs: 0 };
+      dbgFeeds[name] = { runs: prev.runs + 1, ok: !!ok, info: String(info || '').slice(0, 80), at: new Date().toLocaleTimeString() };
+      renderDbg();
+    }
+    function renderDbg() {
+      if (!DBG) return;
+      let box = document.getElementById('dbgBox');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'dbgBox';
+        box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;font:11px/1.5 monospace;padding:10px;border-radius:8px;max-width:92vw;white-space:pre-wrap;';
+        document.body.appendChild(box);
+      }
+      const lines = ['rt=' + (window.__rt || '?') + ' hidden=' + document.hidden];
+      Object.keys(dbgFeeds).forEach(k => {
+        const f = dbgFeeds[k];
+        lines.push(k + ' x' + f.runs + ' ' + (f.ok ? 'OK' : 'ERR') + ' ' + (f.at || '') + ' ' + (f.info || ''));
+      });
+      box.textContent = lines.join('\n');
+    }
+
     const pollers = {};
     function startPoller(name, fn, ms) {
       stopPoller(name);
       try { fn(); } catch (e) { console.error('poller ' + name + ' failed:', e); }
       // Background tabs stay silent (invisible while you use the site).
-      pollers[name] = setInterval(() => { if (!document.hidden) fn(); }, ms);
+      pollers[name] = setInterval(() => {
+        if (document.hidden) return;
+        try {
+          const r = fn();
+          if (r && typeof r.catch === 'function') r.catch(e => { dbgMark(name, false, (e && e.message) || e); console.error('poller ' + name + ' failed:', e); });
+          dbgMark(name, true);
+        } catch (e) { dbgMark(name, false, (e && e.message) || e); }
+      }, ms);
     }
     function stopPoller(name) {
       if (pollers[name]) { clearInterval(pollers[name]); delete pollers[name]; }
