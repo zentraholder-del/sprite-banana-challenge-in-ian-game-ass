@@ -5097,22 +5097,28 @@ async function sha256hexFp(str) {
       renderRecent();
     (async () => {
       try { if (await siteWall()) return; } catch (e) {}
-      const me = await checkAuth();
+      // Every await below is guarded: one failed request (cold backend,
+      // flaky wifi) must degrade, never silently kill the live features.
+      // A dead boot with a live-looking page was behind "needs refresh".
+      let me = null;
+      try { me = await checkAuth(); } catch (e) { console.error('checkAuth failed:', e); }
       if (me) {
         myName = (localStorage.getItem(LS_USER) || me.used_by || me.username || 'anon').slice(0, 32);
-        await trackPresence('Browsing');
+        try { await trackPresence('Browsing'); } catch (e) { console.error('presence failed:', e); }
         startHeartbeat();
         resetPlayRequest();
-        await loadDms();
+        try { await loadDms(); } catch (e) { console.error('loadDms failed:', e); }
         subscribeDms();
       }
-      loadChat();
-      subscribeChat();
-      initTrollState();
-      checkPlayRequestStatus();
-      loadAnnouncements();
-      subscribeAnnouncements();
-      loadAdminRequestState();
+      try {
+        loadChat();
+        subscribeChat();
+        initTrollState();
+        checkPlayRequestStatus();
+        loadAnnouncements();
+        subscribeAnnouncements();
+        loadAdminRequestState();
+      } catch (e) { console.error('boot feeds failed:', e); }
       startPoller('trolls', pollTrolls, 3000);
       startPoller('announce', loadAnnouncements, 3000);
       startPoller('online', loadOnlineCount, 3000);
