@@ -2523,43 +2523,6 @@ BEGIN
   RETURN json_build_object('success', true);
 END; $$;
 
-CREATE TABLE IF NOT EXISTS game_ratings (
-  username TEXT NOT NULL,
-  game_slug TEXT NOT NULL,
-  rating SMALLINT NOT NULL DEFAULT 1,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (username, game_slug)
-);
-
--- Thumbs up (+1), down (-1), or 0 to clear. One row per player per game.
-CREATE OR REPLACE FUNCTION rate_game(input_username TEXT, input_token TEXT,
-  game_slug TEXT, stars INT)
-RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE ups INT; downs INT; mine INT;
-BEGIN
-  IF NOT session_user_ok(input_username, input_token) THEN
-    RETURN json_build_object('success', false, 'error', 'auth');
-  END IF;
-  IF game_slug IS NULL OR trim(game_slug) = '' OR length(game_slug) > 64 THEN
-    RETURN json_build_object('success', false, 'error', 'Bad game');
-  END IF;
-  IF stars IS NULL OR stars NOT IN (-1, 0, 1) THEN
-    RETURN json_build_object('success', false, 'error', 'Bad rating');
-  END IF;
-  IF stars = 0 THEN
-    DELETE FROM game_ratings WHERE username = input_username AND game_ratings.game_slug = rate_game.game_slug;
-  ELSE
-    INSERT INTO game_ratings (username, game_slug, rating, updated_at)
-    VALUES (input_username, trim(game_slug), stars, NOW())
-    ON CONFLICT (username, game_slug)
-    DO UPDATE SET rating = EXCLUDED.rating, updated_at = NOW();
-  END IF;
-  SELECT COUNT(*) FILTER (WHERE rating = 1), COUNT(*) FILTER (WHERE rating = -1),
-    COALESCE(MAX(rating) FILTER (WHERE username = input_username), 0)
-  INTO ups, downs, mine FROM game_ratings WHERE game_ratings.game_slug = rate_game.game_slug;
-  RETURN json_build_object('success', true, 'up', ups, 'down', downs, 'mine', mine);
-END; $$;
-
 -- Top-3 most liked (30d? no — all-time score) + most played (30d plays).
 CREATE OR REPLACE FUNCTION game_tops(input_username TEXT, input_token TEXT)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -2611,7 +2574,7 @@ BEGIN
   ELSE
     INSERT INTO game_ratings (username, game_slug, rating, updated_at)
     VALUES (input_username, trim(game_slug), stars, NOW())
-    ON CONFLICT (username, game_slug)
+    ON CONFLICT ON CONSTRAINT game_ratings_pkey
     DO UPDATE SET rating = EXCLUDED.rating, updated_at = NOW();
   END IF;
   SELECT COUNT(*) FILTER (WHERE rating = 1), COUNT(*) FILTER (WHERE rating = -1),
