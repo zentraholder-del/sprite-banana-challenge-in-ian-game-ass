@@ -1106,6 +1106,19 @@
     let resetReqPoll = null;
 
     function subscribeResetStatus() {
+      // Heartbeat first, unconditionally (see subscribeRequestStatus).
+      try {
+        if (resetReqPoll) clearInterval(resetReqPoll);
+        resetReqPoll = setInterval(() => {
+          if (document.hidden) return;
+          loginDbg('reset-poll fire rt=' + (window.__rt || '?'));
+          try {
+            let n = null;
+            try { n = localStorage.getItem('pending_reset_name'); } catch (e) {}
+            if (n) checkResetStatus();
+          } catch (e) { console.error(e); }
+        }, 3000);
+      } catch (e) { console.error('reset poll arm failed:', e); }
       try {
         let name = null;
         try { name = localStorage.getItem('pending_reset_name'); } catch (e) {}
@@ -1119,16 +1132,6 @@
           .subscribe(s => { window.__rt = s; loginDbg('reset-rt ' + s); });
         // 3s heartbeat as well, same as key requests: banner flips with
         // no user action even if realtime drops an event.
-        if (resetReqPoll) clearInterval(resetReqPoll);
-        resetReqPoll = setInterval(() => {
-          if (document.hidden) return;
-          loginDbg('reset-poll fire rt=' + (window.__rt || '?'));
-          try {
-            let n = null;
-            try { n = localStorage.getItem('pending_reset_name'); } catch (e) {}
-            if (n) checkResetStatus();
-          } catch (e) { console.error(e); }
-        }, 3000);
       } catch (e) {
         console.error('reset status realtime failed:', e);
       }
@@ -1617,6 +1620,22 @@
     }
 
     function subscribeRequestStatus() {
+      // The heartbeat is armed FIRST and unconditionally: even if the
+      // realtime channel setup below throws, the banner still updates.
+      // (A past failure mode was the poll living inside the same try as
+      // the channel, so one setup throw silenced updates until refresh.)
+      try {
+        if (reqPoll) clearInterval(reqPoll);
+        reqPoll = setInterval(() => {
+          if (document.hidden) return;
+          loginDbg('req-poll fire rt=' + (window.__rt || '?'));
+          try {
+            let n = null;
+            try { n = localStorage.getItem('pending_request_name'); } catch (e) {}
+            if (n) checkRequestStatus();
+          } catch (e) { console.error(e); }
+        }, 3000);
+      } catch (e) { console.error('req poll arm failed:', e); }
       try {
         let name = null;
         try { name = localStorage.getItem('pending_request_name'); } catch (e) {}
@@ -1630,16 +1649,6 @@
           .subscribe(s => { window.__rt = s; loginDbg('req-rt ' + s); });
         // 3s heartbeat as well — banner flips pending → approved → denied
         // with no user action even if realtime drops an event.
-        if (reqPoll) clearInterval(reqPoll);
-        reqPoll = setInterval(() => {
-          if (document.hidden) return;
-          loginDbg('req-poll fire rt=' + (window.__rt || '?'));
-          try {
-            let n = null;
-            try { n = localStorage.getItem('pending_request_name'); } catch (e) {}
-            if (n) checkRequestStatus();
-          } catch (e) { console.error(e); }
-        }, 3000);
       } catch (e) {
         console.error('request status realtime failed:', e);
       }
