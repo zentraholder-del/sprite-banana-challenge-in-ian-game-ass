@@ -1359,6 +1359,47 @@
     .logout-btn { transition: color 150ms ease-out, background 150ms ease-out !important; }
     .logout-btn:hover { background: rgba(255, 255, 255, 0.06) !important; }
   </style>
+  <script>
+  /* Self-update: if a newer deploy exists, reload once so devices never sit
+     on a stale cached copy (stale shells were behind "needs a refresh"). */
+  (function () {
+    var KEY = 'ls_build';
+    function stamp() {
+      return fetch('/assets/version.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { return (j && j.v) || null; })
+        .catch(function () { return null; });
+    }
+    function busy() {
+      try { return !!document.querySelector('.modal.open, .overlay.show, .overlay.visible, dialog[open]'); }
+      catch (e) { return false; }
+    }
+    var stored = null;
+    try { stored = localStorage.getItem(KEY); } catch (e) {}
+    stamp().then(function (live) {
+      if (!live) return;
+      if (stored && stored !== live) {
+        if (busy()) { setTimeout(function () { location.reload(); }, 60000); }
+        else location.reload();
+        return;
+      }
+      try { localStorage.setItem(KEY, live); } catch (e) {}
+    });
+    setInterval(function () {
+      if (document.hidden) return;
+      stamp().then(function (live) {
+        if (!live) return;
+        var cur = null;
+        try { cur = localStorage.getItem(KEY); } catch (e) {}
+        if (cur && cur !== live) {
+          if (busy()) return;
+          try { localStorage.setItem(KEY, live); } catch (e) {}
+          location.reload();
+        } else { try { localStorage.setItem(KEY, live); } catch (e) {} }
+      });
+    }, 300000);
+  })();
+  </script>
 </head>
 <body>
 
