@@ -3577,7 +3577,7 @@ async function sha256hexFp(str) {
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
         const args = Object.assign(myCreds(), {});
-        const { data, error } = await withTimeout(sb.rpc('troll_poll', args), 8000, 'trollInit');
+        const { data, error } = await sb.rpc('troll_poll', args);
         if (error) throw error;
         if (error) throw error;
         const latest = {};
@@ -3712,7 +3712,7 @@ async function sha256hexFp(str) {
               try { dispatchTroll(payload.new); }
               catch (e) { console.error('trick failed:', e); }
             })
-          .subscribe(status => { window.__rt = status; renderDbg(); });
+          .subscribe();
       } catch (e) {
         console.error('troll realtime subscribe failed:', e);
       }
@@ -3729,9 +3729,7 @@ async function sha256hexFp(str) {
     // 3s fallback poll ? catches events realtime missed. Only unseen ids
     // dispatch, so running effects are never restarted by the poll.
     async function pollTrolls() {
-      // No ready-gate here: the 2-minute rule below already stops stale
-      // replays, and persistent rows converge by id. A gate was a permanent
-      // kill-switch whenever init hung on a flaky network.
+      if (!trollReady) return; // init hasn't seeded history yet — fire nothing
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
@@ -3957,46 +3955,11 @@ async function sha256hexFp(str) {
 
     /* ---------- Heartbeat pollers (realtime + 3s fallback) ---------- */
 
-    // ?debug=1 overlay: proves which layer is alive (for school-network
-    // diagnosis). Zero behaviour change without the query param.
-    const DBG = new URLSearchParams(location.search).has('debug');
-    const dbgFeeds = {};
-    function dbgMark(name, ok, info) {
-      if (!DBG) return;
-      const prev = dbgFeeds[name] || { runs: 0 };
-      dbgFeeds[name] = { runs: prev.runs + 1, ok: !!ok, info: String(info || '').slice(0, 80), at: new Date().toLocaleTimeString() };
-      renderDbg();
-    }
-    function renderDbg() {
-      if (!DBG) return;
-      let box = document.getElementById('dbgBox');
-      if (!box) {
-        box = document.createElement('div');
-        box.id = 'dbgBox';
-        box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;font:11px/1.5 monospace;padding:10px;border-radius:8px;max-width:92vw;white-space:pre-wrap;';
-        document.body.appendChild(box);
-      }
-      const lines = ['rt=' + (window.__rt || '?') + ' hidden=' + document.hidden];
-      Object.keys(dbgFeeds).forEach(k => {
-        const f = dbgFeeds[k];
-        lines.push(k + ' x' + f.runs + ' ' + (f.ok ? 'OK' : 'ERR') + ' ' + (f.at || '') + ' ' + (f.info || ''));
-      });
-      box.textContent = lines.join('\n');
-    }
-
     const pollers = {};
     function startPoller(name, fn, ms) {
       stopPoller(name);
       try { fn(); } catch (e) { console.error('poller ' + name + ' failed:', e); }
-      // Background tabs stay silent (invisible while you use the site).
-      pollers[name] = setInterval(() => {
-        if (document.hidden) return;
-        try {
-          const r = fn();
-          if (r && typeof r.catch === 'function') r.catch(e => { dbgMark(name, false, (e && e.message) || e); console.error('poller ' + name + ' failed:', e); });
-          dbgMark(name, true);
-        } catch (e) { dbgMark(name, false, (e && e.message) || e); }
-      }, ms);
+      pollers[name] = setInterval(fn, ms);
     }
     function stopPoller(name) {
       if (pollers[name]) { clearInterval(pollers[name]); delete pollers[name]; }
@@ -4331,7 +4294,6 @@ async function sha256hexFp(str) {
       // Only the timestamp is rewritten; current_game is left as-is.
       if (heartbeatTimer) clearInterval(heartbeatTimer);
       heartbeatTimer = setInterval(() => {
-        if (document.hidden) return; // background tabs stay silent (backend diet)
         sb.rpc('presence_touch', myCreds())
           .then(({ error }) => { if (error) console.error(error); });
         trackPlaytime();
@@ -5092,30 +5054,15 @@ async function sha256hexFp(str) {
       renderGames();
       renderCatChips();
       renderRecent();
-    /* A hung request (flaky school proxy) must never stall boot: cap every
-       boot await so the pollers and subscriptions always start. */
-    async function withTimeout(promise, ms, label) {
-      let timer = null;
-      const gate = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error('timeout: ' + label)), ms);
-      });
-      try { return await Promise.race([promise, gate]); }
-      finally { if (timer) clearTimeout(timer); }
-    }
-
     (async () => {
-      try { if (await withTimeout(siteWall(), 10000, 'siteWall')) return; } catch (e) {}
-      let me = null;
-      try { me = await withTimeout(checkAuth(), 10000, 'checkAuth'); }
-      catch (e) { console.error('checkAuth failed, continuing degraded:', e); }
+      try { if (await siteWall()) return; } catch (e) {}
+      const me = await checkAuth();
       if (me) {
         myName = (localStorage.getItem(LS_USER) || me.used_by || me.username || 'anon').slice(0, 32);
-        try { await withTimeout(trackPresence('Browsing'), 10000, 'presence'); }
-        catch (e) { console.error('presence failed, continuing:', e); }
+        await trackPresence('Browsing');
         startHeartbeat();
         resetPlayRequest();
-        try { await withTimeout(loadDms(), 10000, 'loadDms'); }
-        catch (e) { console.error('loadDms failed, continuing:', e); }
+        await loadDms();
         subscribeDms();
       }
       loadChat();
@@ -5125,9 +5072,6 @@ async function sha256hexFp(str) {
       loadAnnouncements();
       subscribeAnnouncements();
       loadAdminRequestState();
-      // Backend diet (Oct 2026): realtime is the fast path everywhere it is
-      // subscribed; these intervals are fallbacks only, so they run slow.
-      // Foreground behaviour is unchanged.
       startPoller('trolls', pollTrolls, 3000);
       startPoller('announce', loadAnnouncements, 3000);
       startPoller('online', loadOnlineCount, 3000);

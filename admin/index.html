@@ -1766,8 +1766,7 @@ async function sha256hexFp(str) {
     function startPoller(name, fn, ms) {
       stopPoller(name);
       try { fn(); } catch (e) { console.error('poller ' + name + ' failed:', e); }
-      // Background tabs stay silent (invisible while you use the site).
-      pollers[name] = setInterval(() => { if (!document.hidden) fn(); }, ms);
+      pollers[name] = setInterval(fn, ms);
     }
     function stopPoller(name) {
       if (pollers[name]) { clearInterval(pollers[name]); delete pollers[name]; }
