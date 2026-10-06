@@ -3613,12 +3613,24 @@ async function sha256hexFp(str) {
     // Initial sync: seed seenTrollIds with ALL historical ids first,
     // then start effects where the latest row per event_type|scope is on.
     // Out-of-scope rows are ignored entirely (never added, never run).
+    // Caps how long init may block the poll gate: a hung first call must
+    // open the gate, never seal it. (A sealed gate = polls never run =
+    // "needs a refresh", with zero errors anywhere.)
+    async function withTimeout(promise, ms, label) {
+      let timer = null;
+      const gate = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('timeout: ' + label)), ms);
+      });
+      try { return await Promise.race([promise, gate]); }
+      finally { if (timer) clearTimeout(timer); }
+    }
+
     async function initTrollState() {
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       try {
         const args = Object.assign(myCreds(), {});
-        const { data, error } = await sb.rpc('troll_poll', args);
+        const { data, error } = await withTimeout(sb.rpc('troll_poll', args), 8000, 'trollInit');
         if (error) throw error;
         if (error) throw error;
         const latest = {};
@@ -3759,7 +3771,12 @@ async function sha256hexFp(str) {
           .on('postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'troll_events' },
             payload => {
-              try { dispatchTroll(payload.new); }
+              const row = (payload && payload.new) || {};
+              // RLS-stripped ghost: anonymous subscribers receive the event
+              // with the row emptied, so there is nothing to dispatch. The
+              // 3s poll carries the full row via RPC — let it through there.
+              if (!row.event_type) return;
+              try { dispatchTroll(row); }
               catch (e) { console.error('trick failed:', e); }
             })
           .subscribe();
