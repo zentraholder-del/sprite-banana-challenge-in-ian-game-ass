@@ -1698,32 +1698,12 @@ async function sha256hexFp(str) {
     /* ---------- heartbeat pollers (one interval per feed) ----------
        Switching tabs stops the old tab's pollers and starts the new
        tab's, with an immediate fetch before the first interval fires. */
-    /* ---------- adaptive fallback pollers (realtime health tracked) -----
-       Same school-network story as the hub: while a channel proves the
-       realtime cable alive, feeds run slow; when it goes quiet they run
-       fast. Staff sees live data either way, no refresh needed. */
-    let realtimeUp = false;
-    let realtimeVerdictAt = 0;
-    function noteRealtime(status) {
-      if (status === 'SUBSCRIBED') { realtimeUp = true; realtimeVerdictAt = Date.now(); }
-      else if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR' || status === 'CLOSED') { realtimeUp = false; }
-    }
-    setInterval(() => { if (Date.now() - realtimeVerdictAt > 45000) realtimeUp = false; }, 30000);
     const pollers = {};
-    const pollLast = {};
-    function startPoller(name, fn, slowMs, fastMs) {
+    function startPoller(name, fn, ms) {
       stopPoller(name);
       try { fn(); } catch (e) { console.error('poller ' + name + ' failed:', e); }
-      pollLast[name] = Date.now();
-      const tick = Math.min(slowMs, fastMs || slowMs, 3000);
-      pollers[name] = setInterval(() => {
-        if (document.hidden) return; // background tabs stay silent
-        const gap = realtimeUp ? slowMs : (fastMs || slowMs);
-        const now = Date.now();
-        if (now - (pollLast[name] || 0) < gap) return;
-        pollLast[name] = now;
-        try { fn(); } catch (e) { console.error('poller ' + name + ' failed:', e); }
-      }, tick);
+      // Background tabs stay silent (invisible while you use the site).
+      pollers[name] = setInterval(() => { if (!document.hidden) fn(); }, ms);
     }
     function stopPoller(name) {
       if (pollers[name]) { clearInterval(pollers[name]); delete pollers[name]; }
@@ -2065,22 +2045,20 @@ async function sha256hexFp(str) {
       } else {
         nextSec.classList.add('active');
       }
-      // Backend diet (Oct 2026): staff tabs poll slowly; switching tabs still
-    // fetches immediately. Foreground behaviour is unchanged.
-    if (name === 'dashboard') { startPoller('stats', loadDashboard, 10000, 3000); loadLockStatus(); startPoller('lockstat', loadLockStatus, 30000); }
-      if (name === 'requests') startPoller('requests', loadRequests, 10000, 3000);
-      if (name === 'tourneys') startPoller('tourneys', loadTourneysAdmin, 10000, 5000);
-      if (name === 'resets') startPoller('resets', loadResetRequests, 10000, 3000);
-      if (name === 'adminreqs') startPoller('adminreqs', loadAdminRequests, 10000, 3000);
-      if (name === 'keys') startPoller('keys', loadKeys, 30000);
-      if (name === 'blacklist') { startPoller('blacklist', loadBlacklist, 30000); loadDevices(); startPoller('devlist', loadDevices, 30000); }
-      if (name === 'messages') { startPoller('announce', loadAnnouncements, 10000, 3000); startPoller('chatmod', loadChatMod, 10000, 3000); loadSlowStatus(); }
-      if (name === 'users') { startPoller('users', loadUsers, 10000, 3000); startPoller('dms', pollDms, 10000, 3000); startPoller('watch', loadWatch, 10000, 3000); }
-      if (name === 'playerdms') startPoller('spydms', loadDmSpy, 10000, 5000);
-      if (name === 'reports') startPoller('reports', loadReports, 10000, 5000);
-      if (name === 'troll') { loadTrollTargets(); loadCustomScare(); startPoller('trollstates', refreshTrollStates, 30000); }
-      if (name === 'activity') startPoller('activity', loadActivity, 15000);
-      if (name === 'audit') startPoller('audit', loadAudit, 15000);
+    if (name === 'dashboard') { startPoller('stats', loadDashboard, 3000); loadLockStatus(); startPoller('lockstat', loadLockStatus, 10000); }
+    if (name === 'requests') startPoller('requests', loadRequests, 3000);
+    if (name === 'tourneys') startPoller('tourneys', loadTourneysAdmin, 3000);
+    if (name === 'resets') startPoller('resets', loadResetRequests, 3000);
+    if (name === 'adminreqs') startPoller('adminreqs', loadAdminRequests, 3000);
+    if (name === 'keys') startPoller('keys', loadKeys, 10000);
+    if (name === 'blacklist') { startPoller('blacklist', loadBlacklist, 10000); loadDevices(); startPoller('devlist', loadDevices, 10000); }
+    if (name === 'messages') { startPoller('announce', loadAnnouncements, 3000); startPoller('chatmod', loadChatMod, 3000); loadSlowStatus(); }
+    if (name === 'users') { startPoller('users', loadUsers, 3000); startPoller('dms', pollDms, 3000); startPoller('watch', loadWatch, 3000); }
+    if (name === 'playerdms') startPoller('spydms', loadDmSpy, 3000);
+    if (name === 'reports') startPoller('reports', loadReports, 3000);
+    if (name === 'troll') { loadTrollTargets(); loadCustomScare(); startPoller('trollstates', refreshTrollStates, 10000); }
+    if (name === 'activity') startPoller('activity', loadActivity, 5000);
+    if (name === 'audit') startPoller('audit', loadAudit, 5000);
       if (name === 'perms') renderPermsMatrix();
     }
 
@@ -4518,7 +4496,7 @@ try {
             () => {
               if (document.getElementById('sec-users').classList.contains('active')) loadUsers();
             })
-          .subscribe(status => noteRealtime(status));
+          .subscribe();
     }
 
     function openDm(btn) {
@@ -4615,7 +4593,7 @@ try {
               (m.from_username === 'admin' && m.to_username === dmTarget);
             if (relevant) { loadDmHistory(true); loadDmContacts(); }
           })
-        .subscribe(status => noteRealtime(status));
+        .subscribe();
     }
 
     /* Bump together with schema_version() in supabase_migration.sql */
