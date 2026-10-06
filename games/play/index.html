@@ -3577,8 +3577,8 @@ async function sha256hexFp(str) {
       let me = 'anon';
       try { me = (localStorage.getItem(LS_USER) || myName || 'anon').slice(0, 32); } catch (e) {}
       if (row.target_username && row.target_username !== me) return; // not for me: ignore entirely
-      if (!fromInit && row.id !== undefined && row.id !== null && seenTrollIds.has(row.id)) return; // exact-once across realtime + poll
-      if (row.id !== undefined && row.id !== null) seenTrollIds.add(row.id);
+      if (!fromInit && seenTrollIds.has(trollKey(row))) return; // exact-once across realtime + poll
+      seenTrollIds.add(trollKey(row));
       const scope = row.target_username || '*';
       const key = row.event_type + '|' + scope;
       const state = row.payload && row.payload.state;
@@ -3624,7 +3624,7 @@ async function sha256hexFp(str) {
         const latest = {};
         for (const row of (data || [])) {
           if (row.target_username && row.target_username !== me) continue;
-          seenTrollIds.add(row.id);
+          seenTrollIds.add(trollKey(row));
           const key = row.event_type + '|' + (row.target_username != null ? row.target_username : '*');
           if (!latest[key]) latest[key] = row;
         }
@@ -3738,6 +3738,15 @@ async function sha256hexFp(str) {
     // reset, never cleared. Out-of-scope rows are ignored entirely and
     // never added.
     const seenTrollIds = new Set();
+    // Identity that survives a stale RPC missing `id`: prefer the row id,
+    // fall back to a content signature. Realtime dispatch, init seeding and
+    // the poll MUST all use this same function or exact-once breaks.
+    function trollKey(r) {
+      if (!r) return 'nil';
+      if (r.id !== undefined && r.id !== null) return 'id:' + r.id;
+      const p = (r.payload && r.payload.state) || '';
+      return 'sig:' + r.event_type + '|' + (r.target_username || '*') + '|' + (r.created_at || '') + '|' + p;
+    }
     // False until initTrollState finishes seeding. The poll refuses to run
     // before that, so it can never replay history on a fresh load.
     let trollReady = false;
@@ -3779,8 +3788,8 @@ async function sha256hexFp(str) {
         if (error) throw error;
         (data || []).slice().reverse().forEach(r => {
           if (r.target_username && r.target_username !== me) return; // not mine: ignore entirely
-          if (r.id === undefined || r.id === null || seenTrollIds.has(r.id)) return; // already processed: do NOTHING
-          seenTrollIds.add(r.id);
+          if (seenTrollIds.has(trollKey(r))) return; // already processed: do NOTHING
+          seenTrollIds.add(trollKey(r));
           if (PERSISTENT_TRICKS.indexOf(r.event_type) === -1) {
             // Instant one-shots missed by a dropped realtime channel still
             // fire here exactly once (id is already in the seen set above,
