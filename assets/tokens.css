@@ -175,3 +175,71 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============ LIQUID GLASS SYSTEM ============
+   Frosted translucency + top-edge light + deep soft shadow. Real
+   backdrop-blur is for floating chrome only (nav, sheets, menus, fabs,
+   toasts) — on pure black, blur is invisible, so tiles use the same
+   look with plain translucency (much cheaper on school iPads). */
+:root {
+  --glass-bg: rgba(29, 29, 31, 0.55);
+  --glass-bg-strong: rgba(29, 29, 31, 0.72);
+  --glass-edge: rgba(255, 255, 255, 0.12);
+  --glass-hi: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
+  --glass-blur: blur(20px) saturate(180%);
+}
+[data-theme="light"] {
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-strong: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(0, 0, 0, 0.08);
+  --glass-hi: rgba(255, 255, 255, 0.6);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow);
+}
+.glass-tile {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow);
+}
+/* Light sweep for primary buttons and hovered tiles. */
+.glass-sheen { position: relative; overflow: hidden; }
+.glass-sheen::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.18) 50%, transparent 60%);
+  transform: translateX(-120%);
+}
+.glass-sheen:hover::after { animation: sheenMove 700ms var(--ease-apple); }
+
+/* Shared motion language: fast in, Apple ease, nothing loops
+   (except shimmer/spinner, which signal busy). */
+@keyframes glassIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.92); }
+  60% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes sheenMove {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120%); }
+}
+@keyframes shimmerSlide {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes riseSoft {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anim-in { animation: glassIn 350ms var(--ease-apple) backwards; }
+.anim-pop { animation: popIn 300ms var(--ease-apple) backwards; }
+.anim-rise { animation: riseSoft 300ms var(--ease-apple) backwards; }

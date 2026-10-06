@@ -1293,6 +1293,71 @@
     .profile-sub { font-size: 13px !important; }
     .sched-alert-card { background: var(--surface) !important; border: none !important; border-radius: 20px !important; box-shadow: none !important; }
     .sched-alert-card h2 { font-size: 20px !important; line-height: 26px !important; font-weight: 600 !important; }
+    /* ===== LIQUID GLASS HUB: tiles you want to touch. */
+    nav {
+      background: var(--glass-bg-strong) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border-bottom: 1px solid var(--glass-edge) !important;
+      box-shadow: inset 0 1px 0 var(--glass-hi) !important;
+    }
+    .game-card {
+      background: var(--glass-bg) !important;
+      border: 1px solid var(--glass-edge) !important;
+      box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow) !important;
+      transition: transform 200ms var(--ease-apple), background 200ms var(--ease-apple), box-shadow 200ms var(--ease-apple) !important;
+      animation: glassIn 350ms var(--ease-apple) backwards !important;
+    }
+    .games-grid > *:nth-child(1) { animation-delay: 0ms; }
+    .games-grid > *:nth-child(2) { animation-delay: 40ms; }
+    .games-grid > *:nth-child(3) { animation-delay: 80ms; }
+    .games-grid > *:nth-child(4) { animation-delay: 120ms; }
+    .games-grid > *:nth-child(5) { animation-delay: 160ms; }
+    .games-grid > *:nth-child(6) { animation-delay: 200ms; }
+    .games-grid > *:nth-child(7) { animation-delay: 240ms; }
+    .games-grid > *:nth-child(8) { animation-delay: 280ms; }
+    .game-card:hover { transform: translateY(-4px) !important; background: var(--glass-bg-strong) !important; }
+    .game-card:active { transform: translateY(-1px) scale(0.98) !important; }
+    .game-thumb { overflow: hidden !important; }
+    .game-thumb img, .game-thumb .mono-tile { transition: transform 300ms var(--ease-apple) !important; }
+    .game-card:hover .game-thumb img, .game-card:hover .game-thumb .mono-tile { transform: scale(1.05) !important; }
+    .search-wrap input { transition: box-shadow 150ms ease-out, background 200ms ease-out !important; }
+    .search-wrap input:hover { background: var(--surface-hover) !important; }
+    .leader-row, .quest-row { transition: background 150ms ease-out !important; }
+    .leader-row:hover, .quest-row:hover { background: rgba(255, 255, 255, 0.03) !important; }
+    .fav-btn { transition: background 150ms ease-out, color 150ms ease-out, transform 100ms ease-out !important; }
+    .fav-btn:active { transform: scale(0.94) !important; }
+    .fav-star.on { animation: popIn 300ms var(--ease-apple) !important; }
+    .mini-btn, .chat-form button { transition: background 150ms ease-out, transform 100ms ease-out !important; }
+    .chat-fab, .dm-fab, .admin-fab { transition: transform 150ms var(--ease-apple), background 150ms ease-out, box-shadow 200ms ease-out !important; }
+    .chat-fab:hover, .dm-fab:hover, .admin-fab:hover { box-shadow: inset 0 1px 0 var(--glass-hi), 0 12px 40px rgba(0, 0, 0, 0.55) !important; }
+    .chat-msg { animation: riseSoft 250ms var(--ease-apple) backwards !important; }
+    .chat-form input, .chat-form textarea { transition: box-shadow 150ms ease-out, background 200ms ease-out !important; }
+    .modal {
+      background: var(--glass-bg-strong) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-edge) !important;
+      box-shadow: inset 0 1px 0 var(--glass-hi), 0 24px 80px rgba(0, 0, 0, 0.6) !important;
+      animation: glassIn 300ms var(--ease-apple) !important;
+    }
+    .overlay.show { animation: overlayIn 200ms ease-out !important; }
+    .dd-panel {
+      background: var(--glass-bg-strong) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-edge) !important;
+    }
+    .toast {
+      background: var(--glass-bg-strong) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-edge) !important;
+    }
+    .tmatch { transition: background 150ms ease-out, transform 150ms var(--ease-apple) !important; }
+    .tmatch:hover { background: var(--surface-hover) !important; }
+    .logout-btn { transition: color 150ms ease-out, background 150ms ease-out !important; }
+    .logout-btn:hover { background: rgba(255, 255, 255, 0.06) !important; }
   </style>
 </head>
 <body>

@@ -1019,6 +1019,70 @@
       background-repeat: no-repeat; background-position: right 14px center;
     }
     select:focus { box-shadow: 0 0 0 3px rgba(41,151,255,0.55); }
+    /* ===== LIQUID GLASS ADMIN: frosted rail, panels, tiles that press. */
+    .tabs.sidebar {
+      background: var(--glass-bg-strong) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-edge) !important;
+      border-radius: 20px !important;
+      box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow) !important;
+    }
+    .tabs.sidebar button, .tabs.sidebar a.tablink { transition: background 150ms ease-out, color 150ms ease-out, transform 100ms ease-out !important; }
+    .tabs.sidebar button:active { transform: scale(0.97) !important; }
+    .card {
+      background: var(--glass-bg) !important;
+      border: 1px solid var(--glass-edge) !important;
+      box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-shadow) !important;
+    }
+    .section.active { animation: glassIn 300ms var(--ease-apple) !important; }
+    .btn { transition: background 150ms ease-out, transform 100ms ease-out !important; }
+    .btn:active { transform: scale(0.97) !important; }
+    .mini-btn { transition: background 150ms ease-out, transform 100ms ease-out !important; }
+    .mini-btn:active { transform: scale(0.95) !important; }
+    .trick-btn { transition: background 200ms ease-out, transform 150ms var(--ease-apple) !important; }
+    .trick-btn:hover { transform: translateY(-2px) !important; }
+    .trick-btn:active { transform: scale(0.95) !important; }
+    .trick-btn.on { box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 24px rgba(48, 209, 88, 0.25) !important; }
+    .seg-btn { transition: background 200ms ease-out, color 200ms ease-out !important; }
+    .tabs button { transition: background 150ms ease-out, color 150ms ease-out !important; }
+    .rankpills button { transition: background 150ms ease-out, color 150ms ease-out, transform 100ms ease-out !important; }
+    .rankpills button:active { transform: scale(0.95) !important; }
+    .stat-card, .user-card, .req-card { transition: background 200ms ease-out, transform 200ms var(--ease-apple) !important; }
+    .user-card:hover, .req-card:hover { background: var(--surface-hover) !important; }
+    table tbody tr { transition: background 150ms ease-out !important; }
+    table tbody tr:hover { background: rgba(255, 255, 255, 0.03) !important; }
+    .dm-contact { transition: background 150ms ease-out, transform 150ms var(--ease-apple) !important; }
+    .dm-contact:hover { transform: translateX(2px) !important; }
+    .icon-btn { transition: background 150ms ease-out, transform 100ms ease-out !important; }
+    .icon-btn:active { transform: scale(0.92) !important; }
+    .modal {
+      background: var(--glass-bg-strong) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-edge) !important;
+      box-shadow: inset 0 1px 0 var(--glass-hi), 0 24px 80px rgba(0, 0, 0, 0.6) !important;
+      animation: glassIn 300ms var(--ease-apple) !important;
+    }
+    .overlay.show { animation: overlayIn 200ms ease-out !important; }
+    .dd-panel {
+      background: var(--glass-bg-strong) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-edge) !important;
+    }
+    .dd-opt { transition: background 150ms ease-out, padding-left 150ms ease-out !important; }
+    .dd-opt:hover { padding-left: 18px !important; }
+    .toast {
+      background: var(--glass-bg-strong) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-edge) !important;
+    }
+    .req-card.flash { animation: cardFlash 1.2s ease-out !important; }
+    .avatar { animation: popIn 350ms var(--ease-apple) backwards !important; }
+    input[type=file]::file-selector-button { transition: background 150ms ease-out, transform 100ms ease-out !important; }
+    input[type=file]::file-selector-button:active { transform: scale(0.96) !important; }
   </style>
 </head>
 <body>
