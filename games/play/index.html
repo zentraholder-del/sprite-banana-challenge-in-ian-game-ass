@@ -202,8 +202,10 @@
     /* XP / shop / quests / trivia / friends */
     .xp-chip {
       display: inline-flex; align-items: center; gap: 6px;
-      background: var(--surface-2); border: 1.5px solid var(--separator); border-radius: 20px;
-      padding: 6px 12px; font-size: 12px; font-weight: 700; color: #f59e0b;
+      background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-edge); border-radius: 20px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600; color: #f59e0b;
+      font-variant-numeric: tabular-nums;
     }
     .nav-right .xp-chip { margin-right: 4px; }
     .shop-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
