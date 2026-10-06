@@ -1104,6 +1104,16 @@
     let resetReqChannel = null;
     let resetReqSubName = null;
     let resetReqPoll = null;
+    let resetReqLast = 0;
+    // Realtime health (school networks often block it): while no channel
+    // proves the cable alive, status polls run fast; once proven, slow.
+    let loginRtUp = false;
+    let loginRtVerdictAt = 0;
+    function noteLoginRt(status) {
+      if (status === 'SUBSCRIBED') { loginRtUp = true; loginRtVerdictAt = Date.now(); }
+      else if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR' || status === 'CLOSED') { loginRtUp = false; }
+    }
+    setInterval(() => { if (Date.now() - loginRtVerdictAt > 45000) loginRtUp = false; }, 30000);
 
     function subscribeResetStatus() {
       try {
@@ -1116,18 +1126,22 @@
           .on('postgres_changes',
             { event: '*', schema: 'public', table: 'key_reset_requests', filter: 'name=eq.' + name },
             () => checkResetStatus())
-          .subscribe();
-        // 10s fallback (backend diet) as well, same as key requests: banner flips with
-        // no user action even if realtime drops an event.
+          .subscribe(status => noteLoginRt(status));
+        // Adaptive fallback as well (fast when realtime is down, slow diet
+        // when it is proven): banner flips with no user action and no refresh.
         if (resetReqPoll) clearInterval(resetReqPoll);
+        resetReqLast = Date.now();
         resetReqPoll = setInterval(() => {
           if (document.hidden) return;
+          const now = Date.now();
+          if (now - resetReqLast < (loginRtUp ? 10000 : 3000)) return;
+          resetReqLast = now;
           try {
             let n = null;
             try { n = localStorage.getItem('pending_reset_name'); } catch (e) {}
             if (n) checkResetStatus();
           } catch (e) { console.error(e); }
-        }, 10000);
+        }, 3000);
       } catch (e) {
         console.error('reset status realtime failed:', e);
       }
@@ -1600,6 +1614,7 @@
     let reqChannel = null;
     let reqSubName = null;
     let reqPoll = null;
+    let reqLast = 0;
 
     function subscribeRequestStatus() {
       try {
@@ -1612,18 +1627,22 @@
           .on('postgres_changes',
             { event: '*', schema: 'public', table: 'key_requests', filter: 'name=eq.' + name },
             () => checkRequestStatus())
-          .subscribe();
-        // 10s fallback (backend diet) — banner flips pending → approved → denied
-        // with no user action even if realtime drops an event.
+          .subscribe(status => noteLoginRt(status));
+        // Adaptive fallback — banner flips pending → approved → denied
+        // with no user action and no refresh, even if realtime is blocked.
         if (reqPoll) clearInterval(reqPoll);
+        reqLast = Date.now();
         reqPoll = setInterval(() => {
           if (document.hidden) return;
+          const now = Date.now();
+          if (now - reqLast < (loginRtUp ? 10000 : 3000)) return;
+          reqLast = now;
           try {
             let n = null;
             try { n = localStorage.getItem('pending_request_name'); } catch (e) {}
             if (n) checkRequestStatus();
           } catch (e) { console.error(e); }
-        }, 10000);
+        }, 3000);
       } catch (e) {
         console.error('request status realtime failed:', e);
       }
