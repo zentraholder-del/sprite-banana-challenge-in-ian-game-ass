@@ -1471,6 +1471,20 @@
 
     <div class="staff-bar" id="staffBar"><span>Checking staff…</span></div>
 
+    <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+    <div id="recentWrap" style="display:none;margin-bottom:4px">
+      <div class="result-count" style="margin:0 0 8px">Recently played</div>
+      <div id="recentRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()"><span class="mi" style="font-size:16px">star</span> Favorites</button>
+      <button class="fav-btn" id="randomBtn" onclick="randomGame()"><span class="mi" style="font-size:16px">casino</span> Random</button>
+    </div>
+    <div class="result-count" id="resultCount"></div>
+
+    <div class="games-grid" id="gamesGrid">
+    </div>
+
     <div class="leader-card" id="leaderCard">
       <h3><span class="mi">leaderboard</span> Most played today</h3>
       <div id="leaderList"><div class="skel" style="height:32px"></div></div>
@@ -1488,7 +1502,7 @@
 
     <div class="leader-card" id="schoolBoardCard">
       <h3><span class="mi">school</span> SST vs Lenham</h3>
-      <div id="schoolScore" style="font-size:20px;font-weight:800;color:var(--text-primary);text-align:center;margin-bottom:10px">…</div>
+      <div id="schoolScore" style="font-size:20px;font-weight:600;color:var(--text-primary);text-align:center;margin-bottom:10px;font-variant-numeric:tabular-nums">…</div>
       <div style="height:12px;border-radius:8px;overflow:hidden;display:flex;background:var(--surface-2)">
         <div id="schoolBarSST" style="background:#e1352b;width:50%;transition:width 0.4s ease-out"></div>
         <div id="schoolBarLen" style="background:#22c55e;width:50%;transition:width 0.4s ease-out"></div>
@@ -1511,24 +1525,11 @@
       <div id="playedList"><div class="skel" style="height:32px"></div></div>
     </div>
 
-    <div id="catRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
-    <div id="recentWrap" style="display:none;margin-bottom:4px">
-      <div class="result-count" style="margin:0 0 8px">Recently played</div>
-      <div id="recentRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-      <button class="fav-btn" id="favFilterBtn" onclick="toggleFavFilter()"><span class="mi" style="font-size:16px">star</span> Favorites</button>
-      <button class="fav-btn" id="randomBtn" onclick="randomGame()"><span class="mi" style="font-size:16px">casino</span> Random</button>
-    </div>
-    <div class="result-count" id="resultCount"></div>
-
-    <div class="games-grid" id="gamesGrid">
-    </div>
   </div>
 
   </div><!-- /.shell -->
 
-  <footer>LIGHTSPEED &copy; 2026</footer>
+  <footer>© 2026 Lightspeed</footer>
 
   <!-- TOURNAMENT BRACKET -->
   <div class="overlay" id="tourneyOverlay" onclick="if(event.target===this)closeTourney()">
